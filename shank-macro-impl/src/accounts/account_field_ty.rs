@@ -7,7 +7,7 @@ use syn::TypePath;
 use syn::{Error as ParseError, Result as ParseResult};
 
 // -----------------
-// Types
+// Account Types
 // -----------------
 #[derive(Debug, PartialEq)]
 pub enum Ty {
