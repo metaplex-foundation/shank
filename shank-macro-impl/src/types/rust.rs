@@ -1,4 +1,7 @@
+use std::{convert::TryFrom, str::FromStr};
+
 use serde::{Deserialize, Serialize};
+use syn::Type;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -23,9 +26,20 @@ pub enum RustType {
     Vec(Box<RustType>),
 }
 
+impl TryFrom<&Type> for RustType {
+    type Error = anyhow::Error;
+
+    fn try_from(ty: &Type) -> Result<Self, Self::Error> {
+        let s = format!("{:?}", ty);
+        RustType::from_str(&s)
+    }
+}
+
 impl std::str::FromStr for RustType {
     type Err = anyhow::Error;
 
+    // TODO(thlorenz): actually processing the `syn::Type` is more verbose but also cleaner and
+    // definitely more efficient than this approach which came directly from anchor
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut s = s.to_string();
         fn array_from_str(inner: &str) -> RustType {

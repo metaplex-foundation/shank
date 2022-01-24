@@ -1,10 +1,10 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{parse_accounts_struct, AccountsStruct};
+use super::{parse_account_struct, AccountStruct};
 
-fn parse(input: TokenStream) -> AccountsStruct {
-    parse_accounts_struct(input)
+fn parse(input: TokenStream) -> AccountStruct {
+    parse_account_struct(input)
 }
 
 mod accounts_mpl_examples_auction_house {
@@ -43,11 +43,8 @@ mod accounts_mpl_examples_metaplex {
         let res = parse(quote! {
             pub struct AuctionManagerStateV2 {
                 pub status: AuctionManagerStatus,
-                /// When all configs are validated the auction is started and auction manager moves to Running
                 pub safety_config_items_validated: u64,
-                /// how many bids have been pushed to accept payment
                 pub bids_pushed_to_accept_payment: u64,
-
                 pub has_participation: bool,
             }
         });

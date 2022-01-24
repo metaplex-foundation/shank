@@ -4,16 +4,11 @@ mod account_field;
 mod account_field_ty;
 mod accounts;
 mod common;
-mod parsed_accounts;
 
 pub use account_field::*;
 pub use account_field_ty::*;
 pub use accounts::*;
-pub use parsed_accounts::*;
 use proc_macro2::TokenStream;
-
-#[cfg(test)]
-mod accounts_test;
 
 pub fn parse_accounts_struct(item: TokenStream) -> AccountsStruct {
     match syn::parse2::<AccountsStruct>(item) {
