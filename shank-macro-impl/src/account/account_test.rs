@@ -11,7 +11,7 @@ mod accounts_mpl_examples_auction_house {
 
     use super::*;
 
-    #[test]
+    // #[test]
     fn auction_house() {
         let res = parse(quote! {
             pub struct AuctionHouse {

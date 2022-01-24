@@ -1,15 +1,11 @@
 use std::convert::{TryFrom, TryInto};
 
-use anyhow::Result;
-use syn::{Field, Ident};
+use syn::{
+    parse::{Parse, ParseStream},
+    Error as ParseError, Field, Ident, ItemStruct, Result as ParseResult,
+};
 
 use crate::types::RustType;
-
-#[derive(Debug)]
-pub struct UnprocessedAccountStruct {
-    pub ident: Ident,
-    pub fields: Vec<Field>,
-}
 
 #[derive(Debug)]
 pub struct StructField {
@@ -18,11 +14,14 @@ pub struct StructField {
 }
 
 impl TryFrom<&Field> for StructField {
-    type Error = anyhow::Error;
+    type Error = ParseError;
 
-    fn try_from(f: &Field) -> Result<Self, Self::Error> {
+    fn try_from(f: &Field) -> ParseResult<Self> {
         let ident = f.ident.as_ref().unwrap().clone();
-        let rust_type: RustType = (&f.ty).try_into()?;
+        let rust_type: RustType = match (&f.ty).try_into() {
+            Ok(ty) => ty,
+            Err(err) => return Err(ParseError::new_spanned(ident, err.to_string())),
+        };
         Ok(Self { ident, rust_type })
     }
 }
@@ -33,19 +32,29 @@ pub struct AccountStruct {
     pub fields: Vec<StructField>,
 }
 
-impl TryFrom<UnprocessedAccountStruct> for AccountStruct {
-    type Error = anyhow::Error;
-
-    fn try_from(strct: UnprocessedAccountStruct) -> Result<Self, Self::Error> {
-        let fields: Vec<StructField> = strct
-            .fields
-            .into_iter()
-            .flat_map(|f| StructField::try_from(&f))
-            .collect();
-
-        Ok(AccountStruct {
-            ident: strct.ident,
-            fields,
-        })
+impl Parse for AccountStruct {
+    fn parse(input: ParseStream) -> ParseResult<Self> {
+        let strct = <ItemStruct as Parse>::parse(input)?;
+        parse_account_item_struct(&strct)
     }
+}
+
+fn parse_account_item_struct(item: &ItemStruct) -> ParseResult<AccountStruct> {
+    let fields = match &item.fields {
+        syn::Fields::Named(fields) => fields
+            .named
+            .iter()
+            .map(StructField::try_from)
+            .collect::<ParseResult<Vec<StructField>>>()?,
+        _ => {
+            return Err(ParseError::new_spanned(
+                &item.fields,
+                "failed to parse fields make sure they are all named",
+            ))
+        }
+    };
+    Ok(AccountStruct {
+        ident: item.ident.clone(),
+        fields,
+    })
 }

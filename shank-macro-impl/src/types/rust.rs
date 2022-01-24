@@ -31,7 +31,7 @@ impl TryFrom<&Type> for RustType {
 
     fn try_from(ty: &Type) -> Result<Self, Self::Error> {
         let s = format!("{:?}", ty);
-        RustType::from_str(&s)
+        RustType::from_str(dbg!(&s))
     }
 }
 
