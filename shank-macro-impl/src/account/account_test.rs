@@ -1,17 +1,25 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use super::{parse_account_struct, AccountStruct};
+use super::{parse_account_struct, AccountStruct, StructField};
+use assert_matches::assert_matches;
 
 fn parse(input: TokenStream) -> AccountStruct {
     parse_account_struct(input)
+}
+
+fn match_field(field: &StructField, field_ident: &str, type_ident: &str) {
+    assert_matches!(field, StructField { ident, rust_type } => {
+        assert_eq!(ident, field_ident);
+        assert_eq!(rust_type.ident, type_ident);
+    });
 }
 
 mod accounts_mpl_examples_auction_house {
 
     use super::*;
 
-    // #[test]
+    #[test]
     fn auction_house() {
         let res = parse(quote! {
             pub struct AuctionHouse {
@@ -30,7 +38,21 @@ mod accounts_mpl_examples_auction_house {
                 pub can_change_sale_price: bool,
             }
         });
-        eprintln!("{:#?}", res)
+
+        assert_eq!(res.ident.to_string(), "AuctionHouse");
+        match_field(&res.fields[0], "auction_house_fee_account", "Pubkey");
+        match_field(&res.fields[1], "auction_house_treasury", "Pubkey");
+        match_field(&res.fields[2], "treasury_withdrawal_destination", "Pubkey");
+        match_field(&res.fields[3], "fee_withdrawal_destination", "Pubkey");
+        match_field(&res.fields[4], "treasury_mint", "Pubkey");
+        match_field(&res.fields[5], "authority", "Pubkey");
+        match_field(&res.fields[6], "creator", "Pubkey");
+        match_field(&res.fields[7], "bump", "u8");
+        match_field(&res.fields[8], "treasury_bump", "u8");
+        match_field(&res.fields[9], "fee_payer_bump", "u8");
+        match_field(&res.fields[10], "seller_fee_basis_points", "u16");
+        match_field(&res.fields[11], "requires_sign_off", "bool");
+        match_field(&res.fields[12], "can_change_sale_price", "bool");
     }
 }
 
@@ -48,6 +70,10 @@ mod accounts_mpl_examples_metaplex {
                 pub has_participation: bool,
             }
         });
-        eprintln!("{:#?}", res)
+        assert_eq!(res.ident.to_string(), "AuctionManagerStateV2");
+        match_field(&res.fields[0], "status", "AuctionManagerStatus");
+        match_field(&res.fields[1], "safety_config_items_validated", "u64");
+        match_field(&res.fields[2], "bids_pushed_to_accept_payment", "u64");
+        match_field(&res.fields[3], "has_participation", "bool");
     }
 }

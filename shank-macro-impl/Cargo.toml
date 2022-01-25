@@ -18,3 +18,6 @@ heck = "0.3.3"
 anyhow = "1.0.48"
 
 serde = { version = "1.0.130", features = ["derive"] }
+
+[dev-dependencies]
+assert_matches = "1.5.0"

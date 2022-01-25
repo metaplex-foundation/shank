@@ -48,13 +48,6 @@ impl Debug for TypeKind {
 }
 
 impl TypeKind {
-    fn self_unaliased(self, owner_name: String) -> Self {
-        match self {
-            TypeKind::Value(val) => Self::Value(val.self_unaliased(owner_name)),
-            _ => self,
-        }
-    }
-
     pub fn is_primitive(&self) -> bool {
         if let TypeKind::Primitive(_) = self {
             true
@@ -213,12 +206,6 @@ impl Debug for Value {
 }
 
 impl Value {
-    fn self_unaliased(self, owner_name: String) -> Self {
-        match self {
-            Value::Custom(name) if name == "Self" => Self::Custom(owner_name),
-            _ => self,
-        }
-    }
     fn is_string_like(&self) -> bool {
         use Value::*;
         match self {

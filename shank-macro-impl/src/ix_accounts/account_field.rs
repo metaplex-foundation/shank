@@ -15,6 +15,7 @@ pub enum AccountField {
 }
 
 impl AccountField {
+    #[allow(dead_code)]
     fn ident(&self) -> &Ident {
         match self {
             AccountField::Field(field) => &field.ident,

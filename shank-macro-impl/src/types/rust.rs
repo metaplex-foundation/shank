@@ -95,7 +95,7 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn multidimensional_array() {
+    fn idl_type_from_str_multidimensional_array() {
         assert_eq!(
             IdlRustType::from_str("[[u8;16];32]").unwrap(),
             IdlRustType::Array(
@@ -106,7 +106,7 @@ mod tests {
     }
 
     #[test]
-    fn array() {
+    fn idl_type_from_str_array() {
         assert_eq!(
             IdlRustType::from_str("[Pubkey;16]").unwrap(),
             IdlRustType::Array(Box::new(IdlRustType::PublicKey), 16)
@@ -114,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn array_with_underscored_length() {
+    fn idl_type_from_str_array_with_underscored_length() {
         assert_eq!(
             IdlRustType::from_str("[u8;50_000]").unwrap(),
             IdlRustType::Array(Box::new(IdlRustType::U8), 50_000)
@@ -122,7 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn option() {
+    fn idl_type_from_str_option() {
         assert_eq!(
             IdlRustType::from_str("Option<bool>").unwrap(),
             IdlRustType::Option(Box::new(IdlRustType::Bool))
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn vector() {
+    fn idl_type_from_str_vector() {
         assert_eq!(
             IdlRustType::from_str("Vec<bool>").unwrap(),
             IdlRustType::Vec(Box::new(IdlRustType::Bool))

@@ -10,7 +10,7 @@ use syn::{Error as ParseError, Result as ParseResult};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RustType {
-    ident: Ident,
+    pub ident: Ident,
 
     pub kind: TypeKind,
     pub reference: ParsedReference,

@@ -1,4 +1,7 @@
-use std::convert::{TryFrom, TryInto};
+use std::{
+    convert::{TryFrom, TryInto},
+    fmt::Display,
+};
 
 use syn::{
     parse::{Parse, ParseStream},
@@ -7,10 +10,22 @@ use syn::{
 
 use crate::types::RustType;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StructField {
     pub ident: syn::Ident,
     pub rust_type: RustType,
+}
+
+impl Display for StructField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{key}: {ty} ({kind:?})",
+            key = self.ident,
+            ty = self.rust_type.ident,
+            kind = self.rust_type.kind
+        )
+    }
 }
 
 impl TryFrom<&Field> for StructField {
