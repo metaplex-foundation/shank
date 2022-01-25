@@ -29,6 +29,74 @@ impl TryFrom<&Type> for RustType {
     }
 }
 
+pub struct IdentWrap(Ident);
+impl From<&str> for IdentWrap {
+    fn from(s: &str) -> Self {
+        let inner = format_ident!("{}", s);
+        Self(inner)
+    }
+}
+
+// -----------------
+// RustType creation helper methods
+// -----------------
+impl RustType {
+    pub fn owned<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
+        let ident_wrap: IdentWrap = ident.into();
+        RustType {
+            ident: ident_wrap.0,
+            kind,
+            reference: ParsedReference::Owned,
+            context: RustTypeContext::Default,
+        }
+    }
+    pub fn owned_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+        RustType::owned(ident, TypeKind::Primitive(primitive))
+    }
+    pub fn owned_string<T: Into<IdentWrap>>(ident: T) -> Self {
+        RustType::owned(ident, TypeKind::Value(Value::String))
+    }
+    pub fn owned_custom_value<T: Into<IdentWrap>>(ident: T, value: &str) -> Self {
+        RustType::owned(ident, TypeKind::Value(Value::Custom(value.to_string())))
+    }
+    pub fn owned_vec_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+        RustType::owned(
+            ident,
+            TypeKind::Composite(
+                Composite::Vec,
+                Some(Box::new(RustType::owned_primitive("inner", primitive))),
+                None,
+            ),
+        )
+    }
+
+    pub fn owned_array_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+        size: usize,
+    ) -> Self {
+        RustType::owned(
+            ident,
+            TypeKind::Composite(
+                Composite::Array(size),
+                Some(Box::new(RustType::owned_primitive("inner", primitive))),
+                None,
+            ),
+        )
+    }
+
+    pub fn owned_option_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+        RustType::owned(
+            ident,
+            TypeKind::Composite(
+                Composite::Option,
+                Some(Box::new(RustType::owned_primitive("inner", primitive))),
+                None,
+            ),
+        )
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum RustTypeContext {
     Default,

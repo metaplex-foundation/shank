@@ -99,3 +99,71 @@ impl TryFrom<RustType> for IdlType {
         Ok(idl_ty)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn idl_from_rust_type_primivives() {
+        for (rust_prim, idl_expected) in vec![
+            (Primitive::U8, IdlType::U8),
+            (Primitive::U16, IdlType::U16),
+            (Primitive::I128, IdlType::I128),
+            (Primitive::Bool, IdlType::Bool),
+            (Primitive::USize, IdlType::U64),
+        ] {
+            let rust_ty = RustType::owned_primitive("prim", rust_prim);
+            let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+            assert_eq!(idl_ty, idl_expected);
+        }
+    }
+    #[test]
+    fn idl_from_rust_type_string() {
+        let rust_ty = RustType::owned_string("s");
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::String);
+    }
+
+    #[test]
+    fn idl_from_rust_type_publickey() {
+        let rust_ty = RustType::owned_custom_value("pk", "PublicKey");
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::PublicKey);
+    }
+
+    #[test]
+    fn idl_from_rust_type_custom() {
+        let rust_ty = RustType::owned_custom_value("custom", "SomeUserStruct");
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::Defined("SomeUserStruct".to_string()));
+    }
+
+    #[test]
+    fn idl_from_rust_type_vec() {
+        let rust_ty = RustType::owned_vec_primitive("vec_u16", Primitive::U16);
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::Vec(Box::new(IdlType::U16)));
+    }
+
+    #[test]
+    fn idl_from_rust_type_vec_u8() {
+        let rust_ty = RustType::owned_vec_primitive("bytes", Primitive::U8);
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::Bytes);
+    }
+
+    #[test]
+    fn idl_from_rust_type_array_u8() {
+        let rust_ty = RustType::owned_array_primitive("bytes", Primitive::U8, 5);
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::Array(Box::new(IdlType::U8), 5));
+    }
+
+    #[test]
+    fn idl_from_rust_type_option_i64() {
+        let rust_ty = RustType::owned_option_primitive("bytes", Primitive::I64);
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::Option(Box::new(IdlType::I64)));
+    }
+}
