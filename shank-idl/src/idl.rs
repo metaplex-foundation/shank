@@ -3,7 +3,7 @@
 /// anchor crate instead.
 use serde::{Deserialize, Serialize};
 
-pub type IdlType = shank_macro_impl::types::RustType
+use crate::idl_type::IdlType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Idl {

@@ -8,6 +8,7 @@ use std::path::PathBuf;
 
 mod file;
 pub mod idl;
+mod idl_type;
 mod manifest;
 
 pub fn extract_idl(file: &str) -> Result<Option<Idl>> {
