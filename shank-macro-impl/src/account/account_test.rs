@@ -1,5 +1,9 @@
+use std::ops::Deref;
+
 use proc_macro2::TokenStream;
 use quote::quote;
+
+use crate::types::{Composite, TypeKind};
 
 use super::{parse_account_struct, AccountStruct, StructField};
 use assert_matches::assert_matches;
@@ -21,6 +25,18 @@ fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
         assert_eq!(rust_type.ident, "Vec");
         let vec_inner = rust_type.kind.inner_composite_rust_type().expect("should have inner vec type");
         assert_eq!(vec_inner.ident, inner_ty, "inner vec type");
+    });
+}
+
+fn match_array_field(field: &StructField, field_ident: &str, inner_ty: &str, size: usize) {
+    assert_matches!(field, StructField { ident, rust_type } => {
+        assert_eq!(ident, field_ident);
+        assert_eq!(rust_type.ident, "Array");
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
+            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+            assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
+            assert_eq!(*array_size, size, "array size");
+        });
     });
 }
 
@@ -104,5 +120,21 @@ mod account_collection_examples {
         match_vec_field(&res.fields[1], "u64s", "u64");
         match_vec_field(&res.fields[2], "strings", "String");
         match_vec_field(&res.fields[3], "pubkeys", "Pubkey");
+    }
+
+    #[test]
+    fn sized_array() {
+        let res = parse(quote! {
+            pub struct AccountWithSizedArrays {
+                pub u8s: [u8; 32],
+                pub u64s: [u64; 16],
+                pub strings: [String; 2],
+                pub pubkeys: [Pubkey; 22],
+            }
+        });
+        match_array_field(&res.fields[0], "u8s", "u8", 32);
+        match_array_field(&res.fields[1], "u64s", "u64", 16);
+        match_array_field(&res.fields[2], "strings", "String", 2);
+        match_array_field(&res.fields[3], "pubkeys", "Pubkey", 22);
     }
 }

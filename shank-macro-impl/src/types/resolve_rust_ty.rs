@@ -1,8 +1,9 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, ops::Deref};
 
+use quote::format_ident;
 use syn::{
-    spanned::Spanned, AngleBracketedGenericArguments, GenericArgument, Ident, PathArguments,
-    PathSegment, Type, TypePath,
+    spanned::Spanned, AngleBracketedGenericArguments, Expr, ExprLit, GenericArgument, Ident, Lit,
+    Path, PathArguments, PathSegment, Type, TypeArray, TypePath,
 };
 
 use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
@@ -36,32 +37,83 @@ pub enum RustTypeContext {
     CustomItem,
 }
 
+fn ident_and_kind_from_path(path: &Path) -> (Ident, TypeKind) {
+    let PathSegment {
+        ident, arguments, ..
+    } = path.segments.first().unwrap();
+    (ident.clone(), ident_to_kind(&ident, &arguments))
+}
+
+fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
+    match expr {
+        Expr::Lit(ExprLit {
+            lit: Lit::Int(val), ..
+        }) => {
+            let size = match val.base10_parse::<usize>() {
+                Ok(size) => size,
+                Err(err) => {
+                    eprintln!("'{:?}' -> {}", val, err);
+                    return Err(ParseError::new(val.span(), "Failed to parse into usize"));
+                }
+            };
+            Ok(size)
+        }
+        _ => {
+            eprintln!("{:#?}", expr);
+            Err(ParseError::new(
+                expr.span(),
+                "Expected a Lit(ExprLit(Int)) expression when extracting length",
+            ))
+        }
+    }
+}
+
 pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustType> {
     let (ty, reference) = match ty {
         Type::Reference(r) => {
             let pr = ParsedReference::from(r);
             (r.elem.as_ref(), pr)
         }
-        Type::Path(_) => (ty, ParsedReference::Owned),
-        _ => {
+        Type::Array(_) | Type::Path(_) => (ty, ParsedReference::Owned),
+        ty => {
+            eprintln!("{:#?}", ty);
             return Err(ParseError::new(
                 ty.span(),
-                "Only Reference or Path types supported",
+                "Only owned or reference Path/Array types supported",
             ));
         }
     };
 
-    let (ident, kind) = match ty {
+    let (ident, kind): (Ident, TypeKind) = match ty {
         Type::Path(TypePath { path, .. }) => {
-            let PathSegment {
-                ident, arguments, ..
-            } = path.segments.first().unwrap();
-            (ident, ident_to_kind(ident, arguments))
+            let (ident, kind) = ident_and_kind_from_path(path);
+            (ident, kind)
+        }
+        Type::Array(TypeArray { elem, len, .. }) => {
+            let (inner_ident, inner_kind) = match elem.deref() {
+                Type::Path(TypePath { path, .. }) => ident_and_kind_from_path(path),
+                _ => {
+                    eprintln!("{:#?}", ty);
+                    return Err(ParseError::new(
+                        ty.span(),
+                        "Only owned or reference Path/Array types supported",
+                    ));
+                }
+            };
+            let len = len_from_expr(len)?;
+            let inner_ty = RustType {
+                kind: inner_kind.clone(),
+                ident: inner_ident.clone(),
+                reference: ParsedReference::Owned,
+                context: RustTypeContext::CollectionItem,
+            };
+            let kind = TypeKind::Composite(Composite::Array(len), Some(Box::new(inner_ty)), None);
+            (format_ident!("Array"), kind)
         }
         _ => {
             return Err(ParseError::new(
                 ty.span(),
-                "Only Path types spported inside references as well",
+                "Only Path or Array types supported",
             ));
         }
     };

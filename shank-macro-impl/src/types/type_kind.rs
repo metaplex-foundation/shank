@@ -104,6 +104,14 @@ impl TypeKind {
         }
     }
 
+    pub fn is_array(&self) -> bool {
+        if let TypeKind::Composite(Composite::Array(_), _, _) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn is_option(&self) -> bool {
         if let TypeKind::Composite(Composite::Option, _, _) = self {
             true
@@ -116,7 +124,10 @@ impl TypeKind {
         match self {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
-            TypeKind::Composite(Composite::Vec, inner, _) => inner.as_ref().map(|x| (*x.clone())),
+            TypeKind::Composite(Composite::Vec, inner, _)
+            | TypeKind::Composite(Composite::Array(_), inner, _) => {
+                inner.as_ref().map(|x| (*x.clone()))
+            }
             TypeKind::Composite(_, _, _) => None,
             TypeKind::Unit => None,
             TypeKind::Unknown => None,
@@ -245,6 +256,7 @@ impl Value {
 #[derive(Clone, PartialEq)]
 pub enum Composite {
     Vec,
+    Array(usize),
     Option,
     HashMap,
     Custom(String),
@@ -254,6 +266,7 @@ impl Debug for Composite {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Composite::Vec => write!(f, "Composite::Vec"),
+            Composite::Array(size) => write!(f, "Composite::Array({})", size),
             Composite::Option => write!(f, "Composite::Option"),
             Composite::HashMap => write!(f, "Composite::HashMap"),
             Composite::Custom(name) => {
