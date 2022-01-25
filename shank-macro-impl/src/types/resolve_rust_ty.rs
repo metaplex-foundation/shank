@@ -142,6 +142,8 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 "i32" => return TypeKind::Primitive(Primitive::I32),
                 "u64" => return TypeKind::Primitive(Primitive::U64),
                 "i64" => return TypeKind::Primitive(Primitive::I64),
+                "u128" => return TypeKind::Primitive(Primitive::U128),
+                "i128" => return TypeKind::Primitive(Primitive::I128),
                 "usize" => return TypeKind::Primitive(Primitive::USize),
                 "bool" => return TypeKind::Primitive(Primitive::Bool),
                 _ => {}

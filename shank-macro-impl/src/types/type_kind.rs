@@ -170,6 +170,8 @@ pub enum Primitive {
     I32,
     U64,
     I64,
+    U128,
+    I128,
     USize,
     Bool,
 }
@@ -185,6 +187,8 @@ impl Debug for Primitive {
             Primitive::I32 => "Primitive::I32",
             Primitive::U64 => "Primitive::U64",
             Primitive::I64 => "Primitive::I64",
+            Primitive::U128 => "Primitive::U128",
+            Primitive::I128 => "Primitive::I128",
             Primitive::USize => "Primitive::Usize",
             Primitive::Bool => "Primitive::Bool",
         };

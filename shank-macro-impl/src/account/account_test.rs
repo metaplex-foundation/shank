@@ -112,14 +112,16 @@ mod account_collection_examples {
             pub struct AccountWithVecs {
                 pub u8s: Vec<u8>,
                 pub u64s: Vec<u64>,
+                pub u128s: Vec<u128>,
                 pub strings: Vec<String>,
                 pub pubkeys: Vec<Pubkey>,
             }
         });
         match_vec_field(&res.fields[0], "u8s", "u8");
         match_vec_field(&res.fields[1], "u64s", "u64");
-        match_vec_field(&res.fields[2], "strings", "String");
-        match_vec_field(&res.fields[3], "pubkeys", "Pubkey");
+        match_vec_field(&res.fields[2], "u128s", "u128");
+        match_vec_field(&res.fields[3], "strings", "String");
+        match_vec_field(&res.fields[4], "pubkeys", "Pubkey");
     }
 
     #[test]
