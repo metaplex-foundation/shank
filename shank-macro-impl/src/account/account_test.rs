@@ -15,6 +15,15 @@ fn match_field(field: &StructField, field_ident: &str, type_ident: &str) {
     });
 }
 
+fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
+    assert_matches!(field, StructField { ident, rust_type } => {
+        assert_eq!(ident, field_ident);
+        assert_eq!(rust_type.ident, "Vec");
+        let vec_inner = rust_type.kind.inner_composite_rust_type().expect("should have inner vec type");
+        assert_eq!(vec_inner.ident, inner_ty, "inner vec type");
+    });
+}
+
 mod accounts_mpl_examples_auction_house {
 
     use super::*;
@@ -75,5 +84,25 @@ mod accounts_mpl_examples_metaplex {
         match_field(&res.fields[1], "safety_config_items_validated", "u64");
         match_field(&res.fields[2], "bids_pushed_to_accept_payment", "u64");
         match_field(&res.fields[3], "has_participation", "bool");
+    }
+}
+
+mod account_collection_examples {
+    use super::*;
+
+    #[test]
+    fn vec() {
+        let res = parse(quote! {
+            pub struct AccountWithVecs {
+                pub u8s: Vec<u8>,
+                pub u64s: Vec<u64>,
+                pub strings: Vec<String>,
+                pub pubkeys: Vec<Pubkey>,
+            }
+        });
+        match_vec_field(&res.fields[0], "u8s", "u8");
+        match_vec_field(&res.fields[1], "u64s", "u64");
+        match_vec_field(&res.fields[2], "strings", "String");
+        match_vec_field(&res.fields[3], "pubkeys", "Pubkey");
     }
 }
