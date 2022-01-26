@@ -1,0 +1,37 @@
+name: Build+Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build_and_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            RUST: nightly
+
+          - os: windows-latest
+            RUST: nightly
+
+          - os: macos-latest
+            RUST: nightly
+
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.RUST }}
+
+      - uses: actions/checkout@master
+
+      - name: Build and Run Tests
+        run: cargo test
