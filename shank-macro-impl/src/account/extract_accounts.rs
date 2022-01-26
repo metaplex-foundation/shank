@@ -1,6 +1,7 @@
 use syn::{Attribute, Meta, MetaList, NestedMeta};
 
 use super::{parse_account_item_struct, AccountStruct};
+use anyhow::{format_err, Result};
 
 pub const DERIVE_ACCOUNT_ATTR: &str = "ShankAccount";
 
@@ -54,18 +55,16 @@ fn filter_account_structs<'a>(
 
 pub fn extract_account_structs<'a>(
     structs: impl Iterator<Item = &'a syn::ItemStruct>,
-) -> Vec<AccountStruct> {
-    let filtered = filter_account_structs(structs);
-    filtered
-        .into_iter()
-        .flat_map(|x| match parse_account_item_struct(x) {
-            Ok(account) => Some(account),
-            Err(err) => {
-                eprintln!("Encountered an error parsing {} Account.\n{}", x.ident, err);
-                None
-            }
-        })
-        .collect()
+) -> Result<Vec<AccountStruct>> {
+    let mut account_structs = Vec::new();
+
+    for x in filter_account_structs(structs) {
+        let strct = parse_account_item_struct(x).map_err(|err| {
+            format_err!("Encountered an error parsing {} Account.\n{}", x.ident, err)
+        })?;
+        account_structs.push(strct);
+    }
+    Ok(account_structs)
 }
 
 #[cfg(test)]
@@ -130,7 +129,7 @@ mod tests {
         let all_structs =
             vec![&other_struct, &account_struct, &account_struct_with_fields].into_iter();
 
-        let accounts = extract_account_structs(all_structs);
+        let accounts = extract_account_structs(all_structs).expect("extracts accounts");
         assert_eq!(accounts.len(), 2, "two accounts");
         assert_matches!(&accounts[0], AccountStruct { ident, fields } => {
             assert_eq!(ident, "AccountStruct");

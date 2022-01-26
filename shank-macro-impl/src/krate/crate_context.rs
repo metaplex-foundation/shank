@@ -17,6 +17,8 @@ impl CrateContext {
     }
 
     pub fn structs(&self) -> impl Iterator<Item = &syn::ItemStruct> {
+        // TODO(thlorenz): Since we use those structs multiple times might be better
+        // to return a Vec in order to avoid running the filter code each time
         self.modules.iter().flat_map(|(_, ctx)| ctx.structs())
     }
 
