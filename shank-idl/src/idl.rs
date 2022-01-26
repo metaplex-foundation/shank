@@ -3,7 +3,9 @@
 /// anchor crate instead.
 use serde::{Deserialize, Serialize};
 
-use crate::idl_type::IdlType;
+use crate::idl_field::IdlField;
+
+use super::{idl_type::IdlType, idl_type_definition::IdlTypeDefinition};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Idl {
@@ -71,13 +73,6 @@ pub struct IdlAccount {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct IdlField {
-    pub name: String,
-    #[serde(rename = "type")]
-    pub ty: IdlType,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct IdlEvent {
     pub name: String,
     pub fields: Vec<IdlEventField>,
@@ -89,34 +84,6 @@ pub struct IdlEventField {
     #[serde(rename = "type")]
     pub ty: IdlType,
     pub index: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct IdlTypeDefinition {
-    pub name: String,
-    #[serde(rename = "type")]
-    pub ty: IdlTypeDefinitionTy,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase", tag = "kind")]
-pub enum IdlTypeDefinitionTy {
-    Struct { fields: Vec<IdlField> },
-    Enum { variants: Vec<IdlEnumVariant> },
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct IdlEnumVariant {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub fields: Option<EnumFields>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum EnumFields {
-    Named(Vec<IdlField>),
-    Tuple(Vec<IdlType>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

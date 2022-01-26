@@ -3,7 +3,9 @@ use std::convert::{TryFrom, TryInto};
 use anyhow::{Error, Result};
 
 use serde::{Deserialize, Serialize};
-use shank_macro_impl::types::{Composite, Primitive, RustType, TypeKind, Value};
+use shank_macro_impl::types::{
+    Composite, Primitive, RustType, TypeKind, Value,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -69,14 +71,18 @@ impl TryFrom<RustType> for IdlType {
                             IdlType::Vec(Box::new(inner_idl))
                         }
                     }
-                    None => anyhow::bail!("Rust Vec Composite needs inner type"),
+                    None => {
+                        anyhow::bail!("Rust Vec Composite needs inner type")
+                    }
                 },
                 Composite::Array(size) => match inner1 {
                     Some(inner) => {
                         let inner_idl: IdlType = (*inner).try_into()?;
                         IdlType::Array(Box::new(inner_idl), size)
                     }
-                    None => anyhow::bail!("Rust Array Composite needs inner type"),
+                    None => {
+                        anyhow::bail!("Rust Array Composite needs inner type")
+                    }
                 },
 
                 Composite::Option => match inner1 {
@@ -84,17 +90,25 @@ impl TryFrom<RustType> for IdlType {
                         let inner_idl: IdlType = (*inner).try_into()?;
                         IdlType::Option(Box::new(inner_idl))
                     }
-                    None => anyhow::bail!("Rust Option Composite needs inner type"),
+                    None => {
+                        anyhow::bail!("Rust Option Composite needs inner type")
+                    }
                 },
                 Composite::HashMap => {
-                    anyhow::bail!("Rust HashMap Composite IDL type not yet supported")
+                    anyhow::bail!(
+                        "Rust HashMap Composite IDL type not yet supported"
+                    )
                 }
                 Composite::Custom(_) => {
-                    anyhow::bail!("Rust Custom Composite IDL type not yet supported")
+                    anyhow::bail!(
+                        "Rust Custom Composite IDL type not yet supported"
+                    )
                 }
             },
             TypeKind::Unit => anyhow::bail!("IDL types cannot be Unit ()"),
-            TypeKind::Unknown => anyhow::bail!("Can only convert known types to IDL type"),
+            TypeKind::Unknown => {
+                anyhow::bail!("Can only convert known types to IDL type")
+            }
         };
         Ok(idl_ty)
     }
@@ -114,7 +128,8 @@ mod tests {
             (Primitive::USize, IdlType::U64),
         ] {
             let rust_ty = RustType::owned_primitive("prim", rust_prim);
-            let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+            let idl_ty: IdlType =
+                rust_ty.try_into().expect("Failed to convert");
             assert_eq!(idl_ty, idl_expected);
         }
     }
@@ -155,7 +170,8 @@ mod tests {
 
     #[test]
     fn idl_from_rust_type_array_u8() {
-        let rust_ty = RustType::owned_array_primitive("bytes", Primitive::U8, 5);
+        let rust_ty =
+            RustType::owned_array_primitive("bytes", Primitive::U8, 5);
         let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
         assert_eq!(idl_ty, IdlType::Array(Box::new(IdlType::U8), 5));
     }

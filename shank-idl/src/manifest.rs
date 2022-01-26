@@ -97,7 +97,9 @@ impl Manifest {
     }
 
     // Climbs each parent directory from a given starting directory until we find a Cargo.toml.
-    pub fn discover_from_path(start_from: PathBuf) -> Result<Option<WithPath<Manifest>>> {
+    pub fn discover_from_path(
+        start_from: PathBuf,
+    ) -> Result<Option<WithPath<Manifest>>> {
         let mut cwd_opt = Some(start_from.as_path());
 
         while let Some(cwd) = cwd_opt {
