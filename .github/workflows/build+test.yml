@@ -2,7 +2,7 @@ name: Build+Test
 
 on:
   push:
-    branches: [master, thlorenz/feat/accounts]
+    branches: [master]
   pull_request:
     branches: [master]
 
