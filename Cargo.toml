@@ -1,5 +1,9 @@
 [workspace]
 members=[
+  "shank-idl",
   "shank-macro",
   "shank-macro-impl"
+]
+exclude=[
+  "./shank-idl/tests/fixtures/"
 ]

@@ -1,5 +1,5 @@
 [package]
-name = "shank-macro"
+name = "shank_macro"
 version = "0.0.0"
 description = "Shank Macro"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]

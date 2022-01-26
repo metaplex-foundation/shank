@@ -1,5 +1,5 @@
 [package]
-name = "shank-macro-impl"
+name = "shank_macro_impl"
 version = "0.0.0"
 description = "Shank Macro Implementation"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
@@ -14,3 +14,10 @@ syn = { version = "1.0.82", features = ["extra-traits", "full"] }
 quote = "1.0.10"
 proc-macro2 = "1.0.32"
 proc-macro-error = "1.0.4"
+heck = "0.3.3"
+anyhow = "1.0.48"
+
+serde = { version = "1.0.130", features = ["derive"] }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
