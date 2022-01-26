@@ -1,0 +1,133 @@
+{
+  "version": "0.1.0",
+  "name": "TODO: program name",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "AuctionHouse",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auction_house_fee_account",
+            "type": "publicKey"
+          },
+          {
+            "name": "auction_house_treasury",
+            "type": "publicKey"
+          },
+          {
+            "name": "treasury_withdrawal_destination",
+            "type": "publicKey"
+          },
+          {
+            "name": "fee_withdrawal_destination",
+            "type": "publicKey"
+          },
+          {
+            "name": "treasury_mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "treasury_bump",
+            "type": "u8"
+          },
+          {
+            "name": "fee_payer_bump",
+            "type": "u8"
+          },
+          {
+            "name": "seller_fee_basis_points",
+            "type": "u16"
+          },
+          {
+            "name": "requires_sign_off",
+            "type": "bool"
+          },
+          {
+            "name": "can_change_sale_price",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Metadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "defined": "Key"
+            }
+          },
+          {
+            "name": "update_authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "data",
+            "type": {
+              "defined": "Data"
+            }
+          },
+          {
+            "name": "primary_sale_happened",
+            "type": "bool"
+          },
+          {
+            "name": "is_mutable",
+            "type": "bool"
+          },
+          {
+            "name": "edition_nonce",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "token_standard",
+            "type": {
+              "option": {
+                "defined": "TokenStandard"
+              }
+            }
+          },
+          {
+            "name": "collection",
+            "type": {
+              "option": {
+                "defined": "Collection"
+              }
+            }
+          },
+          {
+            "name": "uses",
+            "type": {
+              "option": {
+                "defined": "Uses"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

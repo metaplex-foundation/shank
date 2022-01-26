@@ -4,3 +4,6 @@ members=[
   "shank-macro",
   "shank-macro-impl"
 ]
+exclude=[
+  "./shank-idl/tests/fixtures/"
+]
