@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "name": "TODO: program name",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "Metadata",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "defined": "Key"
+            }
+          },
+          {
+            "name": "update_authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "mint",
+            "type": "publicKey"
+          },
+          {
+            "name": "data",
+            "type": {
+              "defined": "Data"
+            }
+          },
+          {
+            "name": "primary_sale_happened",
+            "type": "bool"
+          },
+          {
+            "name": "is_mutable",
+            "type": "bool"
+          },
+          {
+            "name": "edition_nonce",
+            "type": {
+              "option": "u8"
+            }
+          },
+          {
+            "name": "token_standard",
+            "type": {
+              "option": {
+                "defined": "TokenStandard"
+              }
+            }
+          },
+          {
+            "name": "collection",
+            "type": {
+              "option": {
+                "defined": "Collection"
+              }
+            }
+          },
+          {
+            "name": "uses",
+            "type": {
+              "option": {
+                "defined": "Uses"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

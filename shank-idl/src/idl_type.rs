@@ -53,7 +53,7 @@ impl TryFrom<RustType> for IdlType {
             TypeKind::Value(val) => match val {
                 Value::CString | Value::String | Value::Str => IdlType::String,
                 Value::Custom(name) => {
-                    if name == "PublicKey" {
+                    if name == "Pubkey" {
                         IdlType::PublicKey
                     } else {
                         IdlType::Defined(name)
@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn idl_from_rust_type_publickey() {
-        let rust_ty = RustType::owned_custom_value("pk", "PublicKey");
+        let rust_ty = RustType::owned_custom_value("pk", "Pubkey");
         let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
         assert_eq!(idl_ty, IdlType::PublicKey);
     }

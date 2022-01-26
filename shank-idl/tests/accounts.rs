@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use shank_idl::parse_file;
+use shank_idl::{idl::Idl, parse_file};
 
 fn fixtures_dir() -> PathBuf {
     let root_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -10,7 +10,13 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn account_from_single_file() {
     let file = fixtures_dir().join("single_file").join("account.rs");
-    let idl = parse_file(&file, "1.0.0".to_string()).unwrap();
+    let idl = parse_file(&file, "1.0.0".to_string())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/accounts/single_file/idl.json"
+    ))
+    .unwrap();
 
-    eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+    assert_eq!(idl, expected_idl);
 }
