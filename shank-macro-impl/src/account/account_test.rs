@@ -28,7 +28,12 @@ fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
     });
 }
 
-fn match_array_field(field: &StructField, field_ident: &str, inner_ty: &str, size: usize) {
+fn match_array_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_ty: &str,
+    size: usize,
+) {
     assert_matches!(field, StructField { ident, rust_type } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
@@ -67,7 +72,11 @@ mod accounts_mpl_examples_auction_house {
         assert_eq!(res.ident.to_string(), "AuctionHouse");
         match_field(&res.fields[0], "auction_house_fee_account", "Pubkey");
         match_field(&res.fields[1], "auction_house_treasury", "Pubkey");
-        match_field(&res.fields[2], "treasury_withdrawal_destination", "Pubkey");
+        match_field(
+            &res.fields[2],
+            "treasury_withdrawal_destination",
+            "Pubkey",
+        );
         match_field(&res.fields[3], "fee_withdrawal_destination", "Pubkey");
         match_field(&res.fields[4], "treasury_mint", "Pubkey");
         match_field(&res.fields[5], "authority", "Pubkey");

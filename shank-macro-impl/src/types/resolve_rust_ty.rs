@@ -2,8 +2,9 @@ use std::{convert::TryFrom, ops::Deref};
 
 use quote::format_ident;
 use syn::{
-    spanned::Spanned, AngleBracketedGenericArguments, Expr, ExprLit, GenericArgument, Ident, Lit,
-    Path, PathArguments, PathSegment, Type, TypeArray, TypePath,
+    spanned::Spanned, AngleBracketedGenericArguments, Expr, ExprLit,
+    GenericArgument, Ident, Lit, Path, PathArguments, PathSegment, Type,
+    TypeArray, TypePath,
 };
 
 use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
@@ -50,16 +51,28 @@ impl RustType {
             context: RustTypeContext::Default,
         }
     }
-    pub fn owned_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+    pub fn owned_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+    ) -> Self {
         RustType::owned(ident, TypeKind::Primitive(primitive))
     }
     pub fn owned_string<T: Into<IdentWrap>>(ident: T) -> Self {
         RustType::owned(ident, TypeKind::Value(Value::String))
     }
-    pub fn owned_custom_value<T: Into<IdentWrap>>(ident: T, value: &str) -> Self {
-        RustType::owned(ident, TypeKind::Value(Value::Custom(value.to_string())))
+    pub fn owned_custom_value<T: Into<IdentWrap>>(
+        ident: T,
+        value: &str,
+    ) -> Self {
+        RustType::owned(
+            ident,
+            TypeKind::Value(Value::Custom(value.to_string())),
+        )
     }
-    pub fn owned_vec_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+    pub fn owned_vec_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+    ) -> Self {
         RustType::owned(
             ident,
             TypeKind::Composite(
@@ -85,7 +98,10 @@ impl RustType {
         )
     }
 
-    pub fn owned_option_primitive<T: Into<IdentWrap>>(ident: T, primitive: Primitive) -> Self {
+    pub fn owned_option_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+    ) -> Self {
         RustType::owned(
             ident,
             TypeKind::Composite(
@@ -121,7 +137,10 @@ fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
                 Ok(size) => size,
                 Err(err) => {
                     eprintln!("'{:?}' -> {}", val, err);
-                    return Err(ParseError::new(val.span(), "Failed to parse into usize"));
+                    return Err(ParseError::new(
+                        val.span(),
+                        "Failed to parse into usize",
+                    ));
                 }
             };
             Ok(size)
@@ -136,7 +155,10 @@ fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
     }
 }
 
-pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustType> {
+pub fn resolve_rust_ty(
+    ty: &Type,
+    context: RustTypeContext,
+) -> ParseResult<RustType> {
     let (ty, reference) = match ty {
         Type::Reference(r) => {
             let pr = ParsedReference::from(r);
@@ -159,7 +181,9 @@ pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustT
         }
         Type::Array(TypeArray { elem, len, .. }) => {
             let (inner_ident, inner_kind) = match elem.deref() {
-                Type::Path(TypePath { path, .. }) => ident_and_kind_from_path(path),
+                Type::Path(TypePath { path, .. }) => {
+                    ident_and_kind_from_path(path)
+                }
                 _ => {
                     eprintln!("{:#?}", ty);
                     return Err(ParseError::new(
@@ -175,7 +199,11 @@ pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustT
                 reference: ParsedReference::Owned,
                 context: RustTypeContext::CollectionItem,
             };
-            let kind = TypeKind::Composite(Composite::Array(len), Some(Box::new(inner_ty)), None);
+            let kind = TypeKind::Composite(
+                Composite::Array(len),
+                Some(Box::new(inner_ty)),
+                None,
+            );
             (format_ident!("Array"), kind)
         }
         _ => {
@@ -229,7 +257,10 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
         }
 
         // Composite Types
-        PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) => {
+        PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+            args,
+            ..
+        }) => {
             match args.len() {
                 // -----------------
                 // Single Type Parameter

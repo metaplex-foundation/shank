@@ -16,12 +16,18 @@ pub enum TypeKind {
 impl PartialEq for TypeKind {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (TypeKind::Primitive(prim1), TypeKind::Primitive(prim2)) => prim1 == prim2,
+            (TypeKind::Primitive(prim1), TypeKind::Primitive(prim2)) => {
+                prim1 == prim2
+            }
             (TypeKind::Value(val1), TypeKind::Value(val2)) => val1 == val2,
             (
                 TypeKind::Composite(com1, first_ty1, second_ty1),
                 TypeKind::Composite(com2, first_ty2, second_ty2),
-            ) => com1 == com2 && first_ty1 == first_ty2 && second_ty1 == second_ty2,
+            ) => {
+                com1 == com2
+                    && first_ty1 == first_ty2
+                    && second_ty1 == second_ty2
+            }
             (TypeKind::Unit, TypeKind::Unit) => true,
             (TypeKind::Unknown, TypeKind::Unknown) => true,
             _ => false,

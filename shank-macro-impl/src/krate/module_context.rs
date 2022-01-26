@@ -29,7 +29,9 @@ pub struct ParsedModule {
 }
 
 impl ParsedModule {
-    pub fn parse_recursive(root: &Path) -> Result<BTreeMap<String, ParsedModule>, anyhow::Error> {
+    pub fn parse_recursive(
+        root: &Path,
+    ) -> Result<BTreeMap<String, ParsedModule>, anyhow::Error> {
         let root_content = std::fs::read_to_string(root)?;
         Self::parse_content_recursive(root, root_content)
     }
@@ -68,7 +70,8 @@ impl ParsedModule {
         while let Some(to_parse) = unparsed.pop() {
             let path = format!("{}::{}", to_parse.path, to_parse.name);
             let name = to_parse.name;
-            let module = Self::from_item_mod(&to_parse.file, &path, to_parse.item)?;
+            let module =
+                Self::from_item_mod(&to_parse.file, &path, to_parse.item)?;
 
             unparsed.extend(module.submodules().map(|item| UnparsedModule {
                 item: item.clone(),
@@ -103,7 +106,8 @@ impl ParsedModule {
                 // The module is referencing some other file, so we need to load that
                 // to parse the items it has.
                 let parent_dir = parent_file.parent().unwrap();
-                let parent_filename = parent_file.file_stem().unwrap().to_str().unwrap();
+                let parent_filename =
+                    parent_file.file_stem().unwrap().to_str().unwrap();
                 let parent_mod_dir = parent_dir.join(parent_filename);
 
                 let possible_file_paths = vec![
@@ -116,9 +120,13 @@ impl ParsedModule {
                 let mod_file_path = possible_file_paths
                     .into_iter()
                     .find(|p| p.exists())
-                    .ok_or_else(|| ParseError::new_spanned(&item, "could not find file"))?;
+                    .ok_or_else(|| {
+                        ParseError::new_spanned(&item, "could not find file")
+                    })?;
                 let mod_file_content = std::fs::read_to_string(&mod_file_path)
-                    .map_err(|_| ParseError::new_spanned(&item, "could not read file"))?;
+                    .map_err(|_| {
+                        ParseError::new_spanned(&item, "could not read file")
+                    })?;
                 let mod_file = syn::parse_file(&mod_file_content)?;
 
                 Self::new(
@@ -131,7 +139,12 @@ impl ParsedModule {
         })
     }
 
-    fn new(path: String, file: PathBuf, name: String, items: Vec<syn::Item>) -> Self {
+    fn new(
+        path: String,
+        file: PathBuf,
+        name: String,
+        items: Vec<syn::Item>,
+    ) -> Self {
         Self {
             name,
             file,
@@ -193,7 +206,8 @@ mod tests {
         fn from_code(code: TokenStream) -> Self {
             let s = code.to_string();
             let p = Path::new("/single_module.rs");
-            let parsed = ParsedModule::parse_content_recursive(p, s).expect("Failed to parse");
+            let parsed = ParsedModule::parse_content_recursive(p, s)
+                .expect("Failed to parse");
             let m = parsed.get("crate").expect("Could not find root module");
 
             Self {

@@ -35,7 +35,9 @@ impl TryFrom<&Field> for StructField {
         let ident = f.ident.as_ref().unwrap().clone();
         let rust_type: RustType = match (&f.ty).try_into() {
             Ok(ty) => ty,
-            Err(err) => return Err(ParseError::new_spanned(ident, err.to_string())),
+            Err(err) => {
+                return Err(ParseError::new_spanned(ident, err.to_string()))
+            }
         };
         Ok(Self { ident, rust_type })
     }
@@ -54,7 +56,9 @@ impl Parse for AccountStruct {
     }
 }
 
-pub fn parse_account_item_struct(item: &ItemStruct) -> ParseResult<AccountStruct> {
+pub fn parse_account_item_struct(
+    item: &ItemStruct,
+) -> ParseResult<AccountStruct> {
     let fields = match &item.fields {
         syn::Fields::Named(fields) => fields
             .named

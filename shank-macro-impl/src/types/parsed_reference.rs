@@ -49,7 +49,9 @@ impl ParsedReference {
         match self {
             ParsedReference::Owned => self,
             ParsedReference::Ref(_) => ParsedReference::Ref(Some(lifetime)),
-            ParsedReference::RefMut(_) => ParsedReference::RefMut(Some(lifetime)),
+            ParsedReference::RefMut(_) => {
+                ParsedReference::RefMut(Some(lifetime))
+            }
         }
     }
 
@@ -60,7 +62,9 @@ impl ParsedReference {
     pub fn ensured_lifetime(&self, lifetime: syn::Ident) -> Self {
         match self {
             ParsedReference::Ref(None) => ParsedReference::Ref(Some(lifetime)),
-            ParsedReference::RefMut(None) => ParsedReference::RefMut(Some(lifetime)),
+            ParsedReference::RefMut(None) => {
+                ParsedReference::RefMut(Some(lifetime))
+            }
             _ => self.clone(),
         }
     }

@@ -2,9 +2,9 @@ use std::fmt::Debug;
 
 use super::common::{ident_string, tts_to_string};
 
-use syn::spanned::Spanned;
-use syn::TypePath;
-use syn::{Error as ParseError, Result as ParseResult};
+use syn::{
+    spanned::Spanned, Error as ParseError, Result as ParseResult, TypePath,
+};
 
 // -----------------
 // Account Types
@@ -88,7 +88,12 @@ pub struct ProgramTy {
 pub fn parse_account_field_ty(f: &syn::Field) -> ParseResult<Ty> {
     let path = match &f.ty {
         syn::Type::Path(ty_path) => ty_path.path.clone(),
-        _ => return Err(ParseError::new(f.ty.span(), "invalid account type given")),
+        _ => {
+            return Err(ParseError::new(
+                f.ty.span(),
+                "invalid account type given",
+            ))
+        }
     };
     let ty = match ident_string(f)?.as_str() {
         "ProgramState" => Ty::ProgramState(parse_program_state(&path)?),
@@ -99,13 +104,20 @@ pub fn parse_account_field_ty(f: &syn::Field) -> ParseResult<Ty> {
         "AccountInfo" => Ty::AccountInfo,
         "UncheckedAccount" => Ty::UncheckedAccount,
         "Loader" => Ty::Loader(parse_program_account_zero_copy(&path)?),
-        "AccountLoader" => Ty::AccountLoader(parse_program_account_loader(&path)?),
+        "AccountLoader" => {
+            Ty::AccountLoader(parse_program_account_loader(&path)?)
+        }
         "Account" => Ty::Account(parse_account_ty(&path)?),
         "Program" => Ty::Program(parse_program_ty(&path)?),
         "Signer" => Ty::Signer,
         "SystemAccount" => Ty::SystemAccount,
         "ProgramData" => Ty::ProgramData,
-        _ => return Err(ParseError::new(f.ty.span(), "invalid account type given")),
+        _ => {
+            return Err(ParseError::new(
+                f.ty.span(),
+                "invalid account type given",
+            ))
+        }
     };
 
     Ok(ty)
@@ -146,7 +158,9 @@ fn parse_program_account_zero_copy(path: &syn::Path) -> ParseResult<LoaderTy> {
     })
 }
 
-fn parse_program_account_loader(path: &syn::Path) -> ParseResult<AccountLoaderTy> {
+fn parse_program_account_loader(
+    path: &syn::Path,
+) -> ParseResult<AccountLoaderTy> {
     let account_ident = parse_account(path)?;
     Ok(AccountLoaderTy {
         account_type_path: account_ident,
@@ -216,7 +230,9 @@ fn parse_account(mut path: &syn::Path) -> ParseResult<syn::TypePath> {
                 ));
             }
             match &args.args[1] {
-                syn::GenericArgument::Type(syn::Type::Path(ty_path)) => Ok(ty_path.clone()),
+                syn::GenericArgument::Type(syn::Type::Path(ty_path)) => {
+                    Ok(ty_path.clone())
+                }
                 _ => Err(ParseError::new(
                     args.args[1].span(),
                     "first bracket argument must be a lifetime",
