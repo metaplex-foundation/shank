@@ -30,9 +30,16 @@ pub struct ParsedModule {
 
 impl ParsedModule {
     pub fn parse_recursive(root: &Path) -> Result<BTreeMap<String, ParsedModule>, anyhow::Error> {
+        let root_content = std::fs::read_to_string(root)?;
+        Self::parse_content_recursive(root, root_content)
+    }
+
+    fn parse_content_recursive(
+        root: &Path,
+        root_content: String,
+    ) -> Result<BTreeMap<String, ParsedModule>, anyhow::Error> {
         let mut modules = BTreeMap::new();
 
-        let root_content = std::fs::read_to_string(root)?;
         let root_file = syn::parse_file(&root_content)?;
         let root_mod = Self::new(
             String::new(),
@@ -159,5 +166,135 @@ impl ParsedModule {
             syn::Item::Const(item) => Some(item),
             _ => None,
         })
+    }
+}
+
+// -----------------
+// Tests
+// -----------------
+#[cfg(test)]
+mod tests {
+
+    use assert_matches::assert_matches;
+    use proc_macro2::TokenStream;
+    use quote::quote;
+
+    use super::*;
+
+    #[derive(Debug)]
+    struct SingleModule {
+        submodules: Vec<syn::ItemMod>,
+        structs: Vec<syn::ItemStruct>,
+        enums: Vec<syn::ItemEnum>,
+        consts: Vec<syn::ItemConst>,
+    }
+
+    impl SingleModule {
+        fn from_code(code: TokenStream) -> Self {
+            let s = code.to_string();
+            let p = Path::new("/single_module.rs");
+            let parsed = ParsedModule::parse_content_recursive(p, s).expect("Failed to parse");
+            let m = parsed.get("crate").expect("Could not find root module");
+
+            Self {
+                submodules: m.submodules().cloned().collect(),
+                structs: m.structs().cloned().collect(),
+                enums: m.enums().cloned().collect(),
+                consts: m.consts().cloned().collect(),
+            }
+        }
+    }
+
+    #[test]
+    fn parse_single_module_one_struct() {
+        let parsed = SingleModule::from_code(quote! { struct MyStruct {} });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 0, "submodules");
+            assert_eq!(structs.len(), 1, "structs");
+            assert_eq!(enums.len(), 0, "enums");
+            assert_eq!(consts.len(), 0, "consts");
+
+            assert_eq!(structs.first().expect("at least one struct").ident, "MyStruct");
+        });
+    }
+
+    #[test]
+    fn parse_single_module_one_enum() {
+        let parsed = SingleModule::from_code(quote! { enum Direction { Up }  });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 0, "submodules");
+            assert_eq!(structs.len(), 0, "structs");
+            assert_eq!(enums.len(), 1, "enums");
+            assert_eq!(consts.len(), 0, "consts");
+
+            let en = enums.first().expect("at least one enum");
+            assert_eq!(en.ident, "Direction");
+            assert_eq!(en.variants.len(), 1, "enum variants");
+        });
+    }
+
+    #[test]
+    fn parse_single_module_one_const() {
+        let parsed = SingleModule::from_code(quote! { const ONE: u8 = 1;  });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 0, "submodules");
+            assert_eq!(structs.len(), 0, "structs");
+            assert_eq!(enums.len(), 0, "enums");
+            assert_eq!(consts.len(), 1, "consts");
+
+            let co = consts.first().expect("at least one const");
+            assert_eq!(co.ident, "ONE");
+        });
+    }
+
+    #[test]
+    fn parse_single_module_one_empty_submod() {
+        let parsed = SingleModule::from_code(quote! { mod submod {} });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 1, "submodules");
+            assert_eq!(structs.len(), 0, "structs");
+            assert_eq!(enums.len(), 0, "enums");
+            assert_eq!(consts.len(), 0, "consts");
+
+            let mo = submodules.first().expect("at least one const");
+            assert_eq!(mo.content.as_ref().unwrap().1.len(), 0, "submod content");
+        });
+    }
+
+    #[test]
+    fn parse_single_module_one_submod_with_struct() {
+        let parsed = SingleModule::from_code(quote! {
+            mod submod {
+                struct InnerStruct {}
+            }
+        });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 1, "submodules");
+            assert_eq!(structs.len(), 0, "structs");
+            assert_eq!(enums.len(), 0, "enums");
+            assert_eq!(consts.len(), 0, "consts");
+
+            let mo = submodules.first().expect("at least one const");
+            assert_eq!(mo.content.as_ref().unwrap().1.len(), 1, "submod content");
+        });
+    }
+
+    #[test]
+    fn parse_single_module_two_structs_one_enum_one_const() {
+        let parsed = SingleModule::from_code(quote! {
+            struct MyStruct {}
+            enum Direction { Up }
+            const HELLO: &str = "Hola";
+        });
+        assert_matches!(&parsed, SingleModule { submodules, structs, enums, consts } => {
+            assert_eq!(submodules.len(), 0, "submodules");
+            assert_eq!(structs.len(), 1, "structs");
+            assert_eq!(enums.len(), 1, "enums");
+            assert_eq!(consts.len(), 1, "consts");
+
+            assert_eq!(structs.first().expect("at least one struct").ident, "MyStruct");
+            assert_eq!(enums.first().expect("at least one enum").ident, "Direction");
+            assert_eq!(consts.first().expect("at least one const").ident, "HELLO");
+        });
     }
 }
