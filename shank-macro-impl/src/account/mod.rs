@@ -1,8 +1,10 @@
 use proc_macro2::TokenStream;
 
 mod account;
+mod extract_accounts;
 
 pub use account::*;
+pub use extract_accounts::*;
 
 #[cfg(test)]
 mod account_test;

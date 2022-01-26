@@ -54,7 +54,7 @@ impl Parse for AccountStruct {
     }
 }
 
-fn parse_account_item_struct(item: &ItemStruct) -> ParseResult<AccountStruct> {
+pub fn parse_account_item_struct(item: &ItemStruct) -> ParseResult<AccountStruct> {
     let fields = match &item.fields {
         syn::Fields::Named(fields) => fields
             .named
