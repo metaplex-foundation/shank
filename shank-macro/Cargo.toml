@@ -3,8 +3,10 @@ name = "shank_macro"
 version = "0.0.0"
 description = "Shank Macro"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
-repository = "https://github.com/metaplex-foundation/metaplex"
+repository = "https://github.com/metaplex-foundation/shank"
 license = "Apache-2.0"
 edition = "2018"
 
-[dependencies]
+[lib]
+proc-macro = true
+doctest=false
