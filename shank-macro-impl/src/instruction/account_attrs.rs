@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use syn::{
     punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
-    MetaList, NestedMeta, Result as ParseResult, Token,
+    MetaList, MetaNameValue, NestedMeta, Result as ParseResult, Token,
 };
 
 const IX_ACCOUNT: &str = "account";
@@ -79,15 +79,27 @@ impl InstructionAccount {
 
         let mut writable = false;
         let mut signer = false;
-        let desc = None;
+        let mut desc = None;
 
         // continue at the current location (past the optional index and name)
         loop {
             match cursor {
                 Some(meta) => {
-                    if let Some((ident, name)) =
+                    if let Some((ident, name, value)) =
+                        string_assign_from_nested_meta(meta)?
+                    {
+                        // desc = "account description"
+                        match name.as_str() {
+                            "desc" | "description" => desc = Some(value),
+                            _ => return Err(ParseError::new_spanned(
+                                ident,
+                                "Ony desc/description can be assigned strings",
+                            )),
+                        };
+                    } else if let Some((ident, name)) =
                         identifier_from_nested_meta(meta)
                     {
+                        // signer, writable ...
                         match name.as_str() {
                             "signer" | "sign" | "sig" | "s" => signer = true,
                             "writable" | "write" | "writ" | "mut" | "w" => {
@@ -97,12 +109,12 @@ impl InstructionAccount {
                                 return Err(ParseError::new_spanned(
                                     ident,
                                     "Invalid/unkown account configuration",
-                                ))
+                                ));
                             }
                         };
                     } else {
-                        // assignment attrs
-                        todo!()
+                        // TODO: fail
+                        eprintln!("{:#?}", meta);
                     }
                 }
                 None => break,
@@ -134,13 +146,42 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
     }
 }
 
+// -----------------
+// Meta Extractors
+// -----------------
+fn string_assign_from_nested_meta(
+    nested_meta: &NestedMeta,
+) -> ParseResult<Option<(Ident, String, String)>> {
+    match nested_meta {
+        NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+            path, lit, ..
+        })) => {
+            let ident = path.get_ident();
+            if let Some(ident) = ident {
+                let token =  match lit {
+                    Lit::Str(lit) => Ok(lit.value()),
+                    _ => Err(ParseError::new_spanned(ident, "#[account(desc)] arg needs to be assigning to a string")),
+                }?;
+                Ok(Some((ident.clone(), ident.to_string(), token)))
+            } else {
+                Ok(None)
+            }
+        }
+        _ => Ok(None),
+    }
+}
+
 fn identifier_from_nested_meta(
     nested_meta: &NestedMeta,
 ) -> Option<(Ident, String)> {
     match nested_meta {
-        NestedMeta::Meta(meta) => {
-            meta.path().get_ident().map(|x| (x.clone(), x.to_string()))
-        }
+        NestedMeta::Meta(meta) => match meta {
+            Meta::Path(_) => {
+                meta.path().get_ident().map(|x| (x.clone(), x.to_string()))
+            }
+            // ignore named values and lists
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -148,6 +189,10 @@ fn identifier_from_nested_meta(
 fn identifier_from_meta(meta: &Meta) -> Option<String> {
     meta.path().get_ident().map(|x| x.to_string())
 }
+
+// -----------------
+// Tests
+// -----------------
 
 #[cfg(test)]
 mod tests {
@@ -218,11 +263,11 @@ mod tests {
     #[test]
     fn account_signer() {
         let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(0, authority, signer)]
-                Indexed
-            }
+        #[derive(Instruction)]
+        pub enum Instructions {
+            #[account(0, authority, signer)]
+            Indexed
+        }
         })
         .expect("Should parse fine");
         assert_eq!(
@@ -295,6 +340,29 @@ mod tests {
                 writable: true,
                 signer: false,
                 desc: None,
+            }
+        );
+    }
+
+    #[test]
+    fn account_desc() {
+        let accounts_indexed = parse_first_enum_variant_attrs(quote! {
+            #[derive(Instruction)]
+            pub enum Instructions {
+                #[account(0, funnel, desc = "Readonly indexed account description")]
+                Indexed
+            }
+        })
+        .expect("Should parse fine");
+
+        assert_eq!(
+            accounts_indexed.0[0],
+            InstructionAccount {
+                index: Some(0,),
+                name: "funnel".to_string(),
+                writable: false,
+                signer: false,
+                desc: Some("Readonly indexed account description".to_string()),
             }
         );
     }
