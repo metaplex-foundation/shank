@@ -50,7 +50,6 @@ impl InstructionAccount {
     fn parse_account_attr_args(
         nested: &Punctuated<NestedMeta, Token![,]>,
     ) -> ParseResult<InstructionAccount> {
-        let mut iter = nested.into_iter();
         if nested.is_empty() {
             return Err(ParseError::new_spanned(
                 nested,
@@ -59,75 +58,67 @@ impl InstructionAccount {
         }
 
         let mut index: Option<u32> = None;
-        let (first, mut cursor) = (iter.next(), iter.next());
-        let name = match first.unwrap() {
-            // #[account(0, account_name)]
-            NestedMeta::Lit(Lit::Int(idx)) => {
-                index = Some(idx.base10_parse()?);
-                let name = cursor
-                    .map(|x| identifier_from_nested_meta(x)).flatten()
-                    .map(|(_, name)| name)
-                    .ok_or(ParseError::new_spanned(first, "#[account(idx, account_name)] is missing account_name"));
-                cursor = iter.next();
-                name
-            }
-            // #[account(account_name)]
-            NestedMeta::Meta(meta) => identifier_from_meta(meta)
-                .ok_or(ParseError::new_spanned(first, "Invalid account name")),
-            _ => Err(ParseError::new_spanned(first, "First #[account] arg needs to be its index or its name without quotes"))
-        }?;
-
         let mut writable = false;
         let mut signer = false;
         let mut desc = None;
+        let mut account_name = None;
 
-        // continue at the current location (past the optional index and name)
-        loop {
-            match cursor {
-                Some(meta) => {
-                    if let Some((ident, name, value)) =
-                        string_assign_from_nested_meta(meta)?
-                    {
-                        // desc = "account description"
-                        match name.as_str() {
-                            "desc" | "description" => desc = Some(value),
-                            _ => return Err(ParseError::new_spanned(
-                                ident,
-                                "Ony desc/description can be assigned strings",
-                            )),
-                        };
-                    } else if let Some((ident, name)) =
-                        identifier_from_nested_meta(meta)
-                    {
-                        // signer, writable ...
-                        match name.as_str() {
-                            "signer" | "sign" | "sig" | "s" => signer = true,
-                            "writable" | "write" | "writ" | "mut" | "w" => {
-                                writable = true;
-                            }
-                            _ => {
-                                return Err(ParseError::new_spanned(
-                                    ident,
-                                    "Invalid/unkown account configuration",
-                                ));
-                            }
-                        };
-                    } else {
-                        // TODO: fail
-                        eprintln!("{:#?}", meta);
+        for meta in nested {
+            if let Some((ident, name, value)) =
+                string_assign_from_nested_meta(meta)?
+            {
+                // desc = "account description"
+                match name.as_str() {
+                    "desc" | "description" => desc = Some(value),
+                    "name" => account_name = Some(value),
+                    _ => return Err(ParseError::new_spanned(
+                        ident,
+                        "Ony desc/description or name can be assigned strings",
+                    )),
+                };
+            } else if let Some((ident, name)) =
+                identifier_from_nested_meta(meta)
+            {
+                // signer, writable ...
+                match name.as_str() {
+                    "signer" | "sign" | "sig" | "s" => signer = true,
+                    "writable" | "write" | "writ" | "mut" | "w" => {
+                        writable = true;
+                    }
+                    _ => {
+                        return Err(ParseError::new_spanned(
+                            ident,
+                            "Invalid/unkown account meta configuration",
+                        ));
+                    }
+                };
+            } else {
+                // account index (optional)
+                match meta {
+                    NestedMeta::Lit(Lit::Int(idx)) => {
+                        index = Some(idx.base10_parse()?);
+                    }
+                    _ => {
+                        return Err(ParseError::new_spanned(
+                            meta,
+                            "Invalid account specification",
+                        ));
                     }
                 }
-                None => break,
             }
-            cursor = iter.next();
         }
-        Ok(Self {
-            index,
-            name,
-            writable,
-            signer,
-            desc,
-        })
+        match account_name {
+            Some(name) => Ok(Self {
+                index,
+                name,
+                writable,
+                signer,
+                desc,
+            }),
+            None => {
+                Err(ParseError::new_spanned(nested, "Missing account name"))
+            }
+        }
     }
 }
 
@@ -186,10 +177,6 @@ fn identifier_from_nested_meta(
     }
 }
 
-fn identifier_from_meta(meta: &Meta) -> Option<String> {
-    meta.path().get_ident().map(|x| x.to_string())
-}
-
 // -----------------
 // Tests
 // -----------------
@@ -214,16 +201,12 @@ mod tests {
         attrs.try_into()
     }
 
-    //#[account(authority, [ w, s], "The authority initializing the dashboard")]
-    //#[account(dashboard, [ w ], "The account to store dashboard data")]
-    // #[account(0, authority, signer, desc = "hello")]
-
     #[test]
     fn account_readonly() {
         let accounts_indexed = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(0, authority)]
+                #[account(0, name="authority")]
                 Indexed
             }
         })
@@ -242,7 +225,7 @@ mod tests {
         let accounts = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(authority)]
+                #[account(name="authority")]
                 NotIndexed
             }
         })
@@ -263,11 +246,11 @@ mod tests {
     #[test]
     fn account_signer() {
         let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-        #[derive(Instruction)]
-        pub enum Instructions {
-            #[account(0, authority, signer)]
-            Indexed
-        }
+            #[derive(Instruction)]
+                pub enum Instructions {
+                    #[account(0, signer, name = "authority")]
+                    Indexed
+                }
         })
         .expect("Should parse fine");
         assert_eq!(
@@ -284,7 +267,7 @@ mod tests {
         let accounts = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(authority, sign)]
+                #[account(name="authority", sign)]
                 NotIndexed
             }
         })
@@ -307,7 +290,7 @@ mod tests {
         let accounts_indexed = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(0, authority, writable)]
+                #[account(0, name="authority", writable)]
                 Indexed
             }
         })
@@ -326,7 +309,7 @@ mod tests {
         let accounts = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(authority, w)]
+                #[account(w, name="authority")]
                 NotIndexed
             }
         })
@@ -349,7 +332,7 @@ mod tests {
         let accounts_indexed = parse_first_enum_variant_attrs(quote! {
             #[derive(Instruction)]
             pub enum Instructions {
-                #[account(0, funnel, desc = "Readonly indexed account description")]
+                #[account(0, name ="funnel", desc = "Readonly indexed account description")]
                 Indexed
             }
         })
