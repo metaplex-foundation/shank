@@ -2,10 +2,14 @@ use anyhow::Result;
 use std::{convert::TryInto, path::Path};
 
 use crate::{
-    idl::{Idl, IdlConst, IdlErrorCode, IdlEvent, IdlInstruction, IdlState},
+    idl::{Idl, IdlConst, IdlErrorCode, IdlEvent, IdlState},
+    idl_instruction::{IdlInstruction, IdlInstructions},
     idl_type_definition::IdlTypeDefinition,
 };
-use shank_macro_impl::{account::extract_account_structs, krate::CrateContext};
+use shank_macro_impl::{
+    account::extract_account_structs, instruction::extract_instruction_enums,
+    krate::CrateContext,
+};
 
 // Parse an entire interface file.
 pub fn parse_file(
@@ -48,16 +52,25 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
     }
     Ok(accounts)
 }
+
+fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
+    let instruction_enums = extract_instruction_enums(ctx.enums())?;
+    let mut instructions: Vec<IdlInstruction> = Vec::new();
+    // TODO(thlorenz): Should we enforce only one Instruction Enum?
+    // TODO(thlorenz): Better way to combine those
+    for ix in instruction_enums {
+        let idl_instructions: IdlInstructions = ix.try_into()?;
+        for ix in idl_instructions.0 {
+            instructions.push(ix);
+        }
+    }
+    Ok(instructions)
+}
+
 fn constants(_ctx: &CrateContext) -> Result<Vec<IdlConst>> {
     // TODO(thlorenz): Implement
     let constants: Vec<IdlConst> = Vec::new();
     Ok(constants)
-}
-
-fn instructions(_ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
-    // TODO(thlorenz): Implement
-    let instructions: Vec<IdlInstruction> = Vec::new();
-    Ok(instructions)
 }
 
 fn state(_ctx: &CrateContext) -> Result<Option<IdlState>> {

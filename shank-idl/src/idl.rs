@@ -3,7 +3,7 @@
 /// anchor crate instead.
 use serde::{Deserialize, Serialize};
 
-use crate::idl_field::IdlField;
+use crate::idl_instruction::IdlInstruction;
 
 use super::{idl_type::IdlType, idl_type_definition::IdlTypeDefinition};
 
@@ -41,35 +41,6 @@ pub struct IdlState {
     #[serde(rename = "struct")]
     pub strct: IdlTypeDefinition,
     pub methods: Vec<IdlInstruction>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct IdlInstruction {
-    pub name: String,
-    pub accounts: Vec<IdlAccountItem>,
-    pub args: Vec<IdlField>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct IdlAccounts {
-    pub name: String,
-    pub accounts: Vec<IdlAccountItem>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(untagged)]
-pub enum IdlAccountItem {
-    IdlAccount(IdlAccount),
-    IdlAccounts(IdlAccounts),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct IdlAccount {
-    pub name: String,
-    pub is_mut: bool,
-    pub is_signer: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
