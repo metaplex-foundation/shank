@@ -16,8 +16,8 @@ pub struct InstructionAccount {
     pub desc: Option<String>,
 }
 
-#[derive(Debug)]
-struct InstructionAccounts(Vec<InstructionAccount>);
+#[derive(Debug, PartialEq)]
+pub struct InstructionAccounts(pub Vec<InstructionAccount>);
 
 impl InstructionAccount {
     fn is_account_attr(attr: &Attribute) -> Option<&Attribute> {
@@ -126,14 +126,28 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
     type Error = ParseError;
 
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
-        // TODO(thlorenz): verify that either all or none have indexes + that they match the index
-        // inside the vec
-        let vec: ParseResult<Vec<InstructionAccount>> = attrs
+        let accounts = attrs
             .into_iter()
             .filter_map(InstructionAccount::is_account_attr)
             .map(InstructionAccount::from_account_attr)
-            .collect();
-        Ok(InstructionAccounts(vec?))
+            .collect::<ParseResult<Vec<InstructionAccount>>>()?;
+
+        for (idx, acc) in accounts.iter().enumerate() {
+            match acc.index {
+                Some(acc_idx) if acc_idx != idx as u32 => {
+                    return Err(ParseError::new_spanned(
+                        attrs.get(idx).map(|x| x.path.get_ident()),
+                        format!(
+                            "Account index {} does not match it's position {}",
+                            acc_idx, idx,
+                        ),
+                    ));
+                }
+                _ => {}
+            }
+        }
+
+        Ok(InstructionAccounts(accounts))
     }
 }
 
@@ -174,179 +188,5 @@ fn identifier_from_nested_meta(
             _ => None,
         },
         _ => None,
-    }
-}
-
-// -----------------
-// Tests
-// -----------------
-
-#[cfg(test)]
-mod tests {
-
-    use std::convert::TryInto;
-
-    use super::*;
-    use proc_macro2::TokenStream;
-    use quote::quote;
-    use syn::ItemEnum;
-
-    fn parse_first_enum_variant_attrs(
-        code: TokenStream,
-    ) -> ParseResult<InstructionAccounts> {
-        let parsed =
-            syn::parse2::<ItemEnum>(code).expect("Should parse successfully");
-        let attrs: &[Attribute] =
-            parsed.variants.first().unwrap().attrs.as_ref();
-        attrs.try_into()
-    }
-
-    #[test]
-    fn account_readonly() {
-        let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(0, name="authority")]
-                Indexed
-            }
-        })
-        .expect("Should parse fine");
-        assert_eq!(
-            accounts_indexed.0[0],
-            InstructionAccount {
-                index: Some(0,),
-                name: "authority".to_string(),
-                writable: false,
-                signer: false,
-                desc: None,
-            }
-        );
-
-        let accounts = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(name="authority")]
-                NotIndexed
-            }
-        })
-        .expect("Should parse fine");
-
-        assert_eq!(
-            accounts.0[0],
-            InstructionAccount {
-                index: None,
-                name: "authority".to_string(),
-                writable: false,
-                signer: false,
-                desc: None,
-            }
-        );
-    }
-
-    #[test]
-    fn account_signer() {
-        let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-                pub enum Instructions {
-                    #[account(0, signer, name = "authority")]
-                    Indexed
-                }
-        })
-        .expect("Should parse fine");
-        assert_eq!(
-            accounts_indexed.0[0],
-            InstructionAccount {
-                index: Some(0,),
-                name: "authority".to_string(),
-                writable: false,
-                signer: true,
-                desc: None,
-            }
-        );
-
-        let accounts = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(name="authority", sign)]
-                NotIndexed
-            }
-        })
-        .expect("Should parse fine");
-
-        assert_eq!(
-            accounts.0[0],
-            InstructionAccount {
-                index: None,
-                name: "authority".to_string(),
-                writable: false,
-                signer: true,
-                desc: None,
-            }
-        );
-    }
-
-    #[test]
-    fn account_writable() {
-        let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(0, name="authority", writable)]
-                Indexed
-            }
-        })
-        .expect("Should parse fine");
-        assert_eq!(
-            accounts_indexed.0[0],
-            InstructionAccount {
-                index: Some(0,),
-                name: "authority".to_string(),
-                writable: true,
-                signer: false,
-                desc: None,
-            }
-        );
-
-        let accounts = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(w, name="authority")]
-                NotIndexed
-            }
-        })
-        .expect("Should parse fine");
-
-        assert_eq!(
-            accounts.0[0],
-            InstructionAccount {
-                index: None,
-                name: "authority".to_string(),
-                writable: true,
-                signer: false,
-                desc: None,
-            }
-        );
-    }
-
-    #[test]
-    fn account_desc() {
-        let accounts_indexed = parse_first_enum_variant_attrs(quote! {
-            #[derive(Instruction)]
-            pub enum Instructions {
-                #[account(0, name ="funnel", desc = "Readonly indexed account description")]
-                Indexed
-            }
-        })
-        .expect("Should parse fine");
-
-        assert_eq!(
-            accounts_indexed.0[0],
-            InstructionAccount {
-                index: Some(0,),
-                name: "funnel".to_string(),
-                writable: false,
-                signer: false,
-                desc: Some("Readonly indexed account description".to_string()),
-            }
-        );
     }
 }
