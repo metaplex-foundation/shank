@@ -1,8 +1,17 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+use proc_macro::TokenStream;
+
+// -----------------
+// #[derive(ShankAccount)]
+// -----------------
+#[proc_macro_derive(ShankAccount)]
+pub fn shank_account(_input: TokenStream) -> TokenStream {
+    TokenStream::new()
+}
+
+// -----------------
+// #[derive(ShankInstructions)]
+// -----------------
+#[proc_macro_derive(ShankInstruction, attributes(account))]
+pub fn shank_instruction(_input: TokenStream) -> TokenStream {
+    TokenStream::new()
 }
