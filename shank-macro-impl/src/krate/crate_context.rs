@@ -17,13 +17,15 @@ impl CrateContext {
     }
 
     pub fn structs(&self) -> impl Iterator<Item = &syn::ItemStruct> {
-        // TODO(thlorenz): Since we use those structs multiple times might be better
-        // to return a Vec in order to avoid running the filter code each time
         self.modules.iter().flat_map(|(_, ctx)| ctx.structs())
     }
 
-    pub fn enums(&self) -> impl Iterator<Item = &syn::ItemEnum> {
-        self.modules.iter().flat_map(|(_, ctx)| ctx.enums())
+    pub fn enums(&self) -> impl Iterator<Item = (String, &syn::ItemEnum)> {
+        self.modules.iter().flat_map(|(s, ctx)| {
+            ctx.enums()
+                .map(|x| (s.clone(), x))
+                .collect::<Vec<(String, &syn::ItemEnum)>>()
+        })
     }
 
     pub fn modules(&self) -> impl Iterator<Item = ModuleContext> {

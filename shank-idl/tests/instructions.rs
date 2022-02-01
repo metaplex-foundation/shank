@@ -43,3 +43,13 @@ fn instruction_from_single_file_with_args() {
 
     assert_eq!(idl, expected_idl);
 }
+
+#[test]
+fn instruction_from_single_file_invalid_attr() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("instruction_invalid_attr.rs");
+    let res =
+        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
+    eprintln!("ERR: {:#?}", res);
+}
