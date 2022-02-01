@@ -101,11 +101,11 @@ mod tests {
         let accounts =
             extract_account_structs(all_structs).expect("extracts accounts");
         assert_eq!(accounts.len(), 2, "two accounts");
-        assert_matches!(&accounts[0], ParsedStruct { ident, fields } => {
+        assert_matches!(&accounts[0], ParsedStruct { ident, fields, .. } => {
             assert_eq!(ident, "AccountStruct");
             assert_eq!(fields.len(), 0);
         });
-        assert_matches!(&accounts[1], ParsedStruct { ident, fields } => {
+        assert_matches!(&accounts[1], ParsedStruct { ident, fields, .. } => {
             assert_eq!(ident, "AccountStructWithFields");
             assert_eq!(fields.len(), 2);
         });

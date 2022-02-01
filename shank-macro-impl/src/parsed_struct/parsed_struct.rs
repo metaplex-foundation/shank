@@ -5,10 +5,11 @@ use std::{
 
 use syn::{
     parse::{Parse, ParseStream},
-    Error as ParseError, Field, Ident, ItemStruct, Result as ParseResult,
+    Attribute, Error as ParseError, Field, Ident, ItemStruct,
+    Result as ParseResult,
 };
 
-use crate::types::RustType;
+use crate::{parsers::get_derive_names, types::RustType};
 
 #[derive(Debug, Clone)]
 pub struct StructField {
@@ -47,6 +48,7 @@ impl TryFrom<&Field> for StructField {
 pub struct ParsedStruct {
     pub ident: Ident,
     pub fields: Vec<StructField>,
+    pub attrs: Vec<Attribute>,
 }
 
 impl Parse for ParsedStruct {
@@ -76,6 +78,13 @@ impl TryFrom<&ItemStruct> for ParsedStruct {
         Ok(ParsedStruct {
             ident: item.ident.clone(),
             fields,
+            attrs: item.attrs.clone(),
         })
+    }
+}
+
+impl ParsedStruct {
+    pub fn get_derive_names(&self) -> Vec<String> {
+        get_derive_names(&self.attrs)
     }
 }
