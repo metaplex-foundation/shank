@@ -1,5 +1,9 @@
-use anyhow::Result;
-use std::{convert::TryInto, path::Path};
+use anyhow::{format_err, Result};
+
+use std::{
+    convert::{TryFrom, TryInto},
+    path::Path,
+};
 
 use crate::{
     idl::{Idl, IdlConst, IdlErrorCode, IdlEvent, IdlState},
@@ -7,14 +11,29 @@ use crate::{
     idl_type_definition::IdlTypeDefinition,
 };
 use shank_macro_impl::{
-    account::extract_account_structs, instruction::extract_instruction_enums,
+    account::extract_account_structs,
+    custom_type::{CustomStruct, DetectCustomStructConfig},
+    instruction::extract_instruction_enums,
     krate::CrateContext,
 };
 
-// Parse an entire interface file.
+// -----------------
+// ParseIdlConfig
+// -----------------
+#[derive(Default, Debug)]
+pub struct ParseIdlConfig {
+    detect_custom_struct: DetectCustomStructConfig,
+}
+
+// -----------------
+// Parse File
+// -----------------
+
+/// Parse an entire interface file.
 pub fn parse_file(
     filename: impl AsRef<Path>,
     version: String,
+    config: &ParseIdlConfig,
 ) -> Result<Option<Idl>> {
     let ctx = CrateContext::parse(filename)?;
 
@@ -22,7 +41,7 @@ pub fn parse_file(
     let instructions = instructions(&ctx)?;
     let state = state(&ctx)?;
     let accounts = accounts(&ctx)?;
-    let types = types(&ctx)?;
+    let types = types(&ctx, &config.detect_custom_struct)?;
     let events = events(&ctx)?;
     let errors = errors(&ctx)?;
 
@@ -56,8 +75,9 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
     let instruction_enums = extract_instruction_enums(ctx.enums())?;
     let mut instructions: Vec<IdlInstruction> = Vec::new();
-    // TODO(thlorenz): Should we enforce only one Instruction Enum?
-    // TODO(thlorenz): Better way to combine those
+    // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
+    // TODO(thlorenz): Should unfold that only arg?
+    // TODO(thlorenz): Better way to combine those if we don't to the above.
     for ix in instruction_enums {
         let idl_instructions: IdlInstructions = ix.try_into()?;
         for ix in idl_instructions.0 {
@@ -78,9 +98,28 @@ fn state(_ctx: &CrateContext) -> Result<Option<IdlState>> {
     Ok(None)
 }
 
-fn types(_ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
-    // TODO(thlorenz): Implement
-    let types: Vec<IdlTypeDefinition> = Vec::new();
+fn types(
+    ctx: &CrateContext,
+    detect_custom_struct: &DetectCustomStructConfig,
+) -> Result<Vec<IdlTypeDefinition>> {
+    let custom_structs = ctx
+        .structs()
+        .filter(|x| {
+            CustomStruct::are_custom_struct_attrs(
+                &x.attrs,
+                detect_custom_struct,
+            )
+        })
+        .map(|x| {
+            CustomStruct::try_from(x).map_err(|err| format_err!("{}", err))
+        })
+        .collect::<Result<Vec<CustomStruct>>>()?;
+
+    let types = custom_structs
+        .into_iter()
+        .map(IdlTypeDefinition::try_from)
+        .collect::<Result<Vec<IdlTypeDefinition>>>()?;
+
     Ok(types)
 }
 

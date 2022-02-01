@@ -1,6 +1,7 @@
-use crate::parsers::get_derive_attr;
+use std::convert::TryFrom;
 
-use super::{parse_account_item_struct, AccountStruct};
+use crate::{parsed_struct::ParsedStruct, parsers::get_derive_attr};
+
 use anyhow::{format_err, Result};
 
 pub const DERIVE_ACCOUNT_ATTR: &str = "ShankAccount";
@@ -18,11 +19,11 @@ fn filter_account_structs<'a>(
 
 pub fn extract_account_structs<'a>(
     structs: impl Iterator<Item = &'a syn::ItemStruct>,
-) -> Result<Vec<AccountStruct>> {
+) -> Result<Vec<ParsedStruct>> {
     let mut account_structs = Vec::new();
 
     for x in filter_account_structs(structs) {
-        let strct = parse_account_item_struct(x).map_err(|err| {
+        let strct = ParsedStruct::try_from(x).map_err(|err| {
             format_err!(
                 "Encountered an error parsing {} Account.\n{}",
                 x.ident,
@@ -100,11 +101,11 @@ mod tests {
         let accounts =
             extract_account_structs(all_structs).expect("extracts accounts");
         assert_eq!(accounts.len(), 2, "two accounts");
-        assert_matches!(&accounts[0], AccountStruct { ident, fields } => {
+        assert_matches!(&accounts[0], ParsedStruct { ident, fields, .. } => {
             assert_eq!(ident, "AccountStruct");
             assert_eq!(fields.len(), 0);
         });
-        assert_matches!(&accounts[1], AccountStruct { ident, fields } => {
+        assert_matches!(&accounts[1], ParsedStruct { ident, fields, .. } => {
             assert_eq!(ident, "AccountStructWithFields");
             assert_eq!(fields.len(), 2);
         });

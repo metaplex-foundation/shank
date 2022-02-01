@@ -5,7 +5,8 @@ use std::{
 
 use syn::{
     parse::{Parse, ParseStream},
-    Error as ParseError, Field, Ident, ItemStruct, Result as ParseResult,
+    Attribute, Error as ParseError, Field, Ident, ItemStruct,
+    Result as ParseResult,
 };
 
 use crate::types::RustType;
@@ -44,36 +45,40 @@ impl TryFrom<&Field> for StructField {
 }
 
 #[derive(Debug)]
-pub struct AccountStruct {
+pub struct ParsedStruct {
     pub ident: Ident,
     pub fields: Vec<StructField>,
+    pub attrs: Vec<Attribute>,
 }
 
-impl Parse for AccountStruct {
+impl Parse for ParsedStruct {
     fn parse(input: ParseStream) -> ParseResult<Self> {
         let strct = <ItemStruct as Parse>::parse(input)?;
-        parse_account_item_struct(&strct)
+        ParsedStruct::try_from(&strct)
     }
 }
 
-pub fn parse_account_item_struct(
-    item: &ItemStruct,
-) -> ParseResult<AccountStruct> {
-    let fields = match &item.fields {
-        syn::Fields::Named(fields) => fields
-            .named
-            .iter()
-            .map(StructField::try_from)
-            .collect::<ParseResult<Vec<StructField>>>()?,
-        _ => {
-            return Err(ParseError::new_spanned(
-                &item.fields,
-                "failed to parse fields make sure they are all named",
-            ))
-        }
-    };
-    Ok(AccountStruct {
-        ident: item.ident.clone(),
-        fields,
-    })
+impl TryFrom<&ItemStruct> for ParsedStruct {
+    type Error = ParseError;
+
+    fn try_from(item: &ItemStruct) -> ParseResult<Self> {
+        let fields = match &item.fields {
+            syn::Fields::Named(fields) => fields
+                .named
+                .iter()
+                .map(StructField::try_from)
+                .collect::<ParseResult<Vec<StructField>>>()?,
+            _ => {
+                return Err(ParseError::new_spanned(
+                    &item.fields,
+                    "failed to parse fields make sure they are all named",
+                ))
+            }
+        };
+        Ok(ParsedStruct {
+            ident: item.ident.clone(),
+            fields,
+            attrs: item.attrs.clone(),
+        })
+    }
 }
