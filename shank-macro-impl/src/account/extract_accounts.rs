@@ -1,7 +1,6 @@
-use crate::{
-    parsed_struct::{parse_item_struct, ParsedStruct},
-    parsers::get_derive_attr,
-};
+use std::convert::TryFrom;
+
+use crate::{parsed_struct::ParsedStruct, parsers::get_derive_attr};
 
 use anyhow::{format_err, Result};
 
@@ -24,7 +23,7 @@ pub fn extract_account_structs<'a>(
     let mut account_structs = Vec::new();
 
     for x in filter_account_structs(structs) {
-        let strct = parse_item_struct(x).map_err(|err| {
+        let strct = ParsedStruct::try_from(x).map_err(|err| {
             format_err!(
                 "Encountered an error parsing {} Account.\n{}",
                 x.ident,

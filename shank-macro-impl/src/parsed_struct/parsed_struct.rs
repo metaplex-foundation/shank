@@ -52,26 +52,30 @@ pub struct ParsedStruct {
 impl Parse for ParsedStruct {
     fn parse(input: ParseStream) -> ParseResult<Self> {
         let strct = <ItemStruct as Parse>::parse(input)?;
-        parse_item_struct(&strct)
+        ParsedStruct::try_from(&strct)
     }
 }
 
-pub fn parse_item_struct(item: &ItemStruct) -> ParseResult<ParsedStruct> {
-    let fields = match &item.fields {
-        syn::Fields::Named(fields) => fields
-            .named
-            .iter()
-            .map(StructField::try_from)
-            .collect::<ParseResult<Vec<StructField>>>()?,
-        _ => {
-            return Err(ParseError::new_spanned(
-                &item.fields,
-                "failed to parse fields make sure they are all named",
-            ))
-        }
-    };
-    Ok(ParsedStruct {
-        ident: item.ident.clone(),
-        fields,
-    })
+impl TryFrom<&ItemStruct> for ParsedStruct {
+    type Error = ParseError;
+
+    fn try_from(item: &ItemStruct) -> ParseResult<Self> {
+        let fields = match &item.fields {
+            syn::Fields::Named(fields) => fields
+                .named
+                .iter()
+                .map(StructField::try_from)
+                .collect::<ParseResult<Vec<StructField>>>()?,
+            _ => {
+                return Err(ParseError::new_spanned(
+                    &item.fields,
+                    "failed to parse fields make sure they are all named",
+                ))
+            }
+        };
+        Ok(ParsedStruct {
+            ident: item.ident.clone(),
+            fields,
+        })
+    }
 }
