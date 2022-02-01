@@ -1,7 +1,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use serde::{Deserialize, Serialize};
-use shank_macro_impl::account::StructField;
+use shank_macro_impl::parsed_struct::StructField;
 
 use crate::idl_type::IdlType;
 use anyhow::{Error, Result};

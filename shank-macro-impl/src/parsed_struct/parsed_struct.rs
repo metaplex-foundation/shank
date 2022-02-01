@@ -44,21 +44,19 @@ impl TryFrom<&Field> for StructField {
 }
 
 #[derive(Debug)]
-pub struct AccountStruct {
+pub struct ParsedStruct {
     pub ident: Ident,
     pub fields: Vec<StructField>,
 }
 
-impl Parse for AccountStruct {
+impl Parse for ParsedStruct {
     fn parse(input: ParseStream) -> ParseResult<Self> {
         let strct = <ItemStruct as Parse>::parse(input)?;
-        parse_account_item_struct(&strct)
+        parse_item_struct(&strct)
     }
 }
 
-pub fn parse_account_item_struct(
-    item: &ItemStruct,
-) -> ParseResult<AccountStruct> {
+pub fn parse_item_struct(item: &ItemStruct) -> ParseResult<ParsedStruct> {
     let fields = match &item.fields {
         syn::Fields::Named(fields) => fields
             .named
@@ -72,7 +70,7 @@ pub fn parse_account_item_struct(
             ))
         }
     };
-    Ok(AccountStruct {
+    Ok(ParsedStruct {
         ident: item.ident.clone(),
         fields,
     })

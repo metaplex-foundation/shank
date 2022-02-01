@@ -5,11 +5,11 @@ use quote::quote;
 
 use crate::types::{Composite, TypeKind};
 
-use super::{parse_account_struct, AccountStruct, StructField};
+use super::{parse_struct, ParsedStruct, StructField};
 use assert_matches::assert_matches;
 
-fn parse(input: TokenStream) -> AccountStruct {
-    parse_account_struct(input)
+fn parse(input: TokenStream) -> ParsedStruct {
+    parse_struct(input)
 }
 
 fn match_field(field: &StructField, field_ident: &str, type_ident: &str) {

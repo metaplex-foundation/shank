@@ -2,7 +2,7 @@ use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
-use shank_macro_impl::account::AccountStruct;
+use shank_macro_impl::parsed_struct::ParsedStruct;
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
 
@@ -30,10 +30,10 @@ pub enum IdlTypeDefinitionTy {
     Enum { variants: Vec<IdlEnumVariant> },
 }
 
-impl TryFrom<AccountStruct> for IdlTypeDefinitionTy {
+impl TryFrom<ParsedStruct> for IdlTypeDefinitionTy {
     type Error = Error;
 
-    fn try_from(strct: AccountStruct) -> Result<Self> {
+    fn try_from(strct: ParsedStruct) -> Result<Self> {
         let mut fields = Vec::new();
         for f in strct.fields {
             let idl_field: IdlField = f.try_into()?;
@@ -53,10 +53,10 @@ pub struct IdlTypeDefinition {
     pub ty: IdlTypeDefinitionTy,
 }
 
-impl TryFrom<AccountStruct> for IdlTypeDefinition {
+impl TryFrom<ParsedStruct> for IdlTypeDefinition {
     type Error = Error;
 
-    fn try_from(strct: AccountStruct) -> Result<Self> {
+    fn try_from(strct: ParsedStruct) -> Result<Self> {
         let name = strct.ident.to_string();
         let ty: IdlTypeDefinitionTy = strct.try_into()?;
         Ok(Self { ty, name })
