@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "name": "TODO: program name",
+  "instructions": [
+    {
+      "name": "CreateThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "thing",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "SomeArgs",
+          "type": {
+            "defined": "SomeArgs"
+          }
+        }
+      ],
+      "discriminant": 0
+    },
+    {
+      "name": "CloseThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "Option",
+          "type": {
+            "option": "u8"
+          }
+        }
+      ],
+      "discriminant": 1
+    }
+  ]
+}

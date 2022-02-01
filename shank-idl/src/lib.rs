@@ -8,6 +8,7 @@ use std::path::PathBuf;
 mod file;
 pub mod idl;
 mod idl_field;
+mod idl_instruction;
 mod idl_type;
 mod idl_type_definition;
 mod manifest;

@@ -1,56 +1,17 @@
-use syn::{Attribute, Meta, MetaList, NestedMeta};
+use crate::parsers::get_derive_attr;
 
 use super::{parse_account_item_struct, AccountStruct};
 use anyhow::{format_err, Result};
 
 pub const DERIVE_ACCOUNT_ATTR: &str = "ShankAccount";
 
-fn is_derive_account_attr(attr: &&Attribute) -> bool {
-    let meta = &attr.parse_meta();
-
-    match meta {
-        Ok(Meta::List(MetaList { path, nested, .. })) => {
-            let derive_idx = path
-                .segments
-                .iter()
-                .enumerate()
-                .find(|(_, x)| x.ident == "derive")
-                .map(|(idx, _)| idx);
-            match derive_idx {
-                Some(idx) => match &nested[idx] {
-                    NestedMeta::Meta(Meta::Path(path)) => path
-                        .segments
-                        .iter()
-                        .find(|x| x.ident == DERIVE_ACCOUNT_ATTR)
-                        .is_some(),
-                    NestedMeta::Lit(_) => {
-                        todo!("Handle NestedMeta::Lit for derive nested")
-                    }
-                    _ => false,
-                },
-                None => false,
-            }
-        }
-        Ok(_) => false,
-        Err(_) => false,
-    }
-}
-
 fn filter_account_structs<'a>(
     structs: impl Iterator<Item = &'a syn::ItemStruct>,
 ) -> Vec<&'a syn::ItemStruct> {
     structs
         .filter_map(|item_strct| {
-            let attrs_count = item_strct
-                .attrs
-                .iter()
-                .filter(is_derive_account_attr)
-                .count();
-            match attrs_count {
-                0 => None,
-                1 => Some(item_strct),
-                _ => panic!("Invalid syntax: one event attribute allowed"),
-            }
+            get_derive_attr(&item_strct.attrs, DERIVE_ACCOUNT_ATTR)
+                .map(|_| item_strct)
         })
         .collect()
 }
