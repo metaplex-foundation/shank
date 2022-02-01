@@ -2,7 +2,9 @@ use std::convert::{TryFrom, TryInto};
 
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
-use shank_macro_impl::parsed_struct::ParsedStruct;
+use shank_macro_impl::{
+    custom_type::CustomStruct, parsed_struct::ParsedStruct,
+};
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
 
@@ -59,6 +61,16 @@ impl TryFrom<ParsedStruct> for IdlTypeDefinition {
     fn try_from(strct: ParsedStruct) -> Result<Self> {
         let name = strct.ident.to_string();
         let ty: IdlTypeDefinitionTy = strct.try_into()?;
+        Ok(Self { ty, name })
+    }
+}
+
+impl TryFrom<CustomStruct> for IdlTypeDefinition {
+    type Error = Error;
+
+    fn try_from(strct: CustomStruct) -> Result<Self> {
+        let name = strct.ident.to_string();
+        let ty: IdlTypeDefinitionTy = strct.0.try_into()?;
         Ok(Self { ty, name })
     }
 }

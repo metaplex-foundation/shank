@@ -21,5 +21,5 @@ pub fn extract_idl(file: &str) -> Result<Option<Idl>> {
         std::env::current_dir()?.join(PathBuf::from(&*file).parent().unwrap());
     let cargo = Manifest::discover_from_path(manifest_from_path)?
         .ok_or_else(|| anyhow!("Cargo.toml not found"))?;
-    file::parse_file(&*file, cargo.version())
+    file::parse_file(&*file, cargo.version(), &ParseIdlConfig::default())
 }

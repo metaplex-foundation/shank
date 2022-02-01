@@ -3,17 +3,18 @@ use std::{
 };
 use syn::{
     parse::{Parse, ParseStream},
-    Error as ParseError, ItemStruct, Result as ParseResult,
+    Attribute, Error as ParseError, ItemStruct, Result as ParseResult,
 };
 
 use crate::{
     account::DERIVE_ACCOUNT_ATTR, instruction::DERIVE_INSTRUCTION_ATTR,
-    parsed_struct::ParsedStruct,
+    parsed_struct::ParsedStruct, parsers::get_derive_names,
 };
 
 // -----------------
 // DetectCustomStructConfig
 // -----------------
+#[derive(Debug)]
 pub struct DetectCustomStructConfig {
     /// If any of those derives is detected that struct is considered a Custom Struct
     pub include_derives: HashSet<String>,
@@ -42,7 +43,7 @@ impl Default for DetectCustomStructConfig {
 // -----------------
 // CustomStruct
 // -----------------
-pub struct CustomStruct(ParsedStruct);
+pub struct CustomStruct(pub ParsedStruct);
 
 impl TryFrom<&ItemStruct> for CustomStruct {
     type Error = ParseError;
@@ -69,7 +70,14 @@ impl Deref for CustomStruct {
 
 impl CustomStruct {
     pub fn is_custom_struct(&self, config: &DetectCustomStructConfig) -> bool {
-        let derives = self.get_derive_names();
+        CustomStruct::are_custom_struct_attrs(&self.attrs, config)
+    }
+
+    pub fn are_custom_struct_attrs(
+        attrs: &[Attribute],
+        config: &DetectCustomStructConfig,
+    ) -> bool {
+        let derives = get_derive_names(attrs);
         let mut saw_include = false;
         for derive in derives {
             if config.skip_derives.contains(&derive) {

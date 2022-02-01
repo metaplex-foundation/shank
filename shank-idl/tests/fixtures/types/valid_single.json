@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "name": "TODO: program name",
+  "instructions": [],
+  "types": [
+    {
+      "name": "MyType",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

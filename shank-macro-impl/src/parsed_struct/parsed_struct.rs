@@ -9,7 +9,7 @@ use syn::{
     Result as ParseResult,
 };
 
-use crate::{parsers::get_derive_names, types::RustType};
+use crate::types::RustType;
 
 #[derive(Debug, Clone)]
 pub struct StructField {
@@ -80,11 +80,5 @@ impl TryFrom<&ItemStruct> for ParsedStruct {
             fields,
             attrs: item.attrs.clone(),
         })
-    }
-}
-
-impl ParsedStruct {
-    pub fn get_derive_names(&self) -> Vec<String> {
-        get_derive_names(&self.attrs)
     }
 }

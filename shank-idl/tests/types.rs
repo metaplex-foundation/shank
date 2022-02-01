@@ -4,14 +4,28 @@ use shank_idl::{idl::Idl, parse_file, ParseIdlConfig};
 
 fn fixtures_dir() -> PathBuf {
     let root_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    root_dir.join("tests").join("fixtures").join("instructions")
+    root_dir.join("tests").join("fixtures").join("types")
 }
 
 #[test]
-fn instruction_from_single_file_no_args() {
-    let file = fixtures_dir()
-        .join("single_file")
-        .join("instruction_no_args.rs");
+fn type_valid_single() {
+    let file = fixtures_dir().join("valid_single.rs");
+    let idl =
+        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
+            .expect("Parsing should not fail")
+            .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn type_valid_multiple() {
+    let file = fixtures_dir().join("valid_multiple.rs");
     let idl =
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
             .expect("Parsing should not fail")
@@ -19,7 +33,7 @@ fn instruction_from_single_file_no_args() {
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
 
     let expected_idl: Idl = serde_json::from_str(include_str!(
-        "./fixtures/instructions/single_file/instruction_no_args.json"
+        "./fixtures/types/valid_multiple.json"
     ))
     .unwrap();
 
@@ -27,19 +41,10 @@ fn instruction_from_single_file_no_args() {
 }
 
 #[test]
-fn instruction_from_single_file_with_args() {
-    let file = fixtures_dir()
-        .join("single_file")
-        .join("instruction_with_args.rs");
-    let idl =
+fn type_invalid_single() {
+    let file = fixtures_dir().join("invalid_single.rs");
+    assert!(
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
-
-    let expected_idl: Idl = serde_json::from_str(include_str!(
-        "./fixtures/instructions/single_file/instruction_with_args.json"
-    ))
-    .unwrap();
-
-    assert_eq!(idl, expected_idl);
+            .is_err()
+    )
 }
