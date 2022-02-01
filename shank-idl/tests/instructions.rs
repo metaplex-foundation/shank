@@ -51,5 +51,8 @@ fn instruction_from_single_file_invalid_attr() {
         .join("instruction_invalid_attr.rs");
     let res =
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
-    eprintln!("ERR: {:#?}", res);
+
+    let err = res.unwrap_err();
+    assert!(err.to_string().contains("Invalid"));
+    assert!(err.to_string().contains("instruction_invalid_attr.rs:4:35"));
 }

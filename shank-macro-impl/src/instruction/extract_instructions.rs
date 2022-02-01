@@ -1,13 +1,13 @@
-use syn::Result as ParseResult;
+use crate::parse_result::ShankParseResult;
 
 use super::Instruction;
 
 pub fn extract_instruction_enums<'a>(
     enums: impl Iterator<Item = (String, &'a syn::ItemEnum)>,
-) -> ParseResult<Vec<Instruction>> {
+) -> ShankParseResult<Vec<Instruction>> {
     let ixs = enums
         .map(Instruction::try_from_item_enum)
-        .collect::<ParseResult<Vec<Option<Instruction>>>>()?
+        .collect::<ShankParseResult<Vec<Option<Instruction>>>>()?
         .into_iter()
         .flatten()
         .collect::<Vec<Instruction>>();

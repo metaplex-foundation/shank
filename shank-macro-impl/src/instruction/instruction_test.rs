@@ -1,15 +1,20 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{ItemEnum, Result as ParseResult};
+use syn::ItemEnum;
 
-use crate::types::{Primitive, RustType};
+use crate::{
+    parse_result::ShankParseResult,
+    types::{Primitive, RustType},
+};
 
 use super::instruction::{Instruction, InstructionVariant};
 
-fn parse_instruction(code: TokenStream) -> ParseResult<Option<Instruction>> {
+fn parse_instruction(
+    code: TokenStream,
+) -> ShankParseResult<Option<Instruction>> {
     let item_enum = syn::parse2::<ItemEnum>(code)
         .expect("Should parse ItemEnum successfully");
-    Instruction::try_from_item_enum(&item_enum)
+    Instruction::try_from_item_enum((String::from("test_file"), &item_enum))
 }
 
 fn assert_instruction_variant(

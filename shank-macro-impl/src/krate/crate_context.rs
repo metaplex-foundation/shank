@@ -21,9 +21,10 @@ impl CrateContext {
     }
 
     pub fn enums(&self) -> impl Iterator<Item = (String, &syn::ItemEnum)> {
-        self.modules.iter().flat_map(|(s, ctx)| {
+        self.modules.iter().flat_map(|(_, ctx)| {
+            let file = &ctx.file.to_str().unwrap().to_string();
             ctx.enums()
-                .map(|x| (s.clone(), x))
+                .map(|x| (file.clone(), x))
                 .collect::<Vec<(String, &syn::ItemEnum)>>()
         })
     }

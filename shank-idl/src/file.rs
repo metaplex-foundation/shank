@@ -1,4 +1,4 @@
-use anyhow::{format_err, Result};
+use anyhow::Result;
 
 use std::{
     convert::{TryFrom, TryInto},
@@ -12,10 +12,10 @@ use crate::{
 };
 use shank_macro_impl::{
     account::extract_account_structs,
-    converters::parse_error_into,
     custom_type::{CustomStruct, DetectCustomStructConfig},
     instruction::extract_instruction_enums,
     krate::CrateContext,
+    parse_result::parse_error_into,
 };
 
 // -----------------
@@ -112,6 +112,7 @@ fn types(
                 detect_custom_struct,
             )
         })
+        // TODO(thlorenz): Capture file
         .map(|x| CustomStruct::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomStruct>>>()?;
 
