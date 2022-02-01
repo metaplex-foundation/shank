@@ -112,7 +112,6 @@ fn types(
                 detect_custom_struct,
             )
         })
-        // TODO(thlorenz): Capture file
         .map(|x| CustomStruct::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomStruct>>>()?;
 

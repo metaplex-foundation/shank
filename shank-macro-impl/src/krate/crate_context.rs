@@ -17,6 +17,10 @@ impl CrateContext {
     }
 
     pub fn structs(&self) -> impl Iterator<Item = &syn::ItemStruct> {
+        // TODO(thlorenz): Figure out error handling approach (the one currently used for enums
+        // isn't great) and then apply it here
+        // Compiler errors might be enough if they show location during build which means
+        // our errors don't have to.
         self.modules.iter().flat_map(|(_, ctx)| ctx.structs())
     }
 
