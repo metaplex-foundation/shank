@@ -17,13 +17,20 @@ impl CrateContext {
     }
 
     pub fn structs(&self) -> impl Iterator<Item = &syn::ItemStruct> {
-        // TODO(thlorenz): Since we use those structs multiple times might be better
-        // to return a Vec in order to avoid running the filter code each time
+        // TODO(thlorenz): Figure out error handling approach (the one currently used for enums
+        // isn't great) and then apply it here
+        // Compiler errors might be enough if they show location during build which means
+        // our errors don't have to.
         self.modules.iter().flat_map(|(_, ctx)| ctx.structs())
     }
 
-    pub fn enums(&self) -> impl Iterator<Item = &syn::ItemEnum> {
-        self.modules.iter().flat_map(|(_, ctx)| ctx.enums())
+    pub fn enums(&self) -> impl Iterator<Item = (String, &syn::ItemEnum)> {
+        self.modules.iter().flat_map(|(_, ctx)| {
+            let file = &ctx.file.to_str().unwrap().to_string();
+            ctx.enums()
+                .map(|x| (file.clone(), x))
+                .collect::<Vec<(String, &syn::ItemEnum)>>()
+        })
     }
 
     pub fn modules(&self) -> impl Iterator<Item = ModuleContext> {

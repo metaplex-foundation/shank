@@ -1,4 +1,4 @@
-use anyhow::{format_err, Result};
+use anyhow::Result;
 
 use std::{
     convert::{TryFrom, TryInto},
@@ -15,6 +15,7 @@ use shank_macro_impl::{
     custom_type::{CustomStruct, DetectCustomStructConfig},
     instruction::extract_instruction_enums,
     krate::CrateContext,
+    parse_result::parse_error_into,
 };
 
 // -----------------
@@ -73,7 +74,8 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 }
 
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
-    let instruction_enums = extract_instruction_enums(ctx.enums())?;
+    let instruction_enums =
+        extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
     let mut instructions: Vec<IdlInstruction> = Vec::new();
     // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
     // TODO(thlorenz): Should unfold that only arg?
@@ -110,9 +112,7 @@ fn types(
                 detect_custom_struct,
             )
         })
-        .map(|x| {
-            CustomStruct::try_from(x).map_err(|err| format_err!("{}", err))
-        })
+        .map(|x| CustomStruct::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomStruct>>>()?;
 
     let types = custom_structs

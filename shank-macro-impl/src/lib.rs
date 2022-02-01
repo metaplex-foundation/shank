@@ -3,6 +3,7 @@ pub mod custom_type;
 pub mod instruction;
 pub mod ix_accounts;
 pub mod krate;
+pub mod parse_result;
 pub mod parsed_enum;
 pub mod parsed_struct;
 pub mod parsers;

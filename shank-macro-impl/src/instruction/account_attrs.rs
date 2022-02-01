@@ -88,7 +88,7 @@ impl InstructionAccount {
                     _ => {
                         return Err(ParseError::new_spanned(
                             ident,
-                            "Invalid/unkown account meta configuration",
+                            "Invalid/unknown account meta configuration",
                         ));
                     }
                 };
