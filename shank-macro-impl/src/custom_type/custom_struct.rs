@@ -1,44 +1,12 @@
-use std::{
-    collections::HashSet, convert::TryFrom, iter::FromIterator, ops::Deref,
-};
+use std::{convert::TryFrom, ops::Deref};
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Error as ParseError, ItemStruct, Result as ParseResult,
+    Error as ParseError, ItemStruct, Result as ParseResult,
 };
 
-use crate::{
-    account::DERIVE_ACCOUNT_ATTR, instruction::DERIVE_INSTRUCTION_ATTR,
-    parsed_struct::ParsedStruct, parsers::get_derive_names,
-};
+use crate::parsed_struct::ParsedStruct;
 
-// -----------------
-// DetectCustomStructConfig
-// -----------------
-#[derive(Debug)]
-pub struct DetectCustomStructConfig {
-    /// If any of those derives is detected that struct is considered a Custom Struct
-    pub include_derives: HashSet<String>,
-
-    /// If any of those derives is detected that struct is NOT considered a Custom Struct
-    pub skip_derives: HashSet<String>,
-}
-
-impl Default for DetectCustomStructConfig {
-    fn default() -> Self {
-        Self {
-            include_derives: HashSet::from_iter(
-                vec!["BorshSerialize", "BorshDeserialize"]
-                    .into_iter()
-                    .map(String::from),
-            ),
-            skip_derives: HashSet::from_iter(
-                vec![DERIVE_ACCOUNT_ATTR, DERIVE_INSTRUCTION_ATTR]
-                    .into_iter()
-                    .map(String::from),
-            ),
-        }
-    }
-}
+use super::DetectCustomTypeConfig;
 
 // -----------------
 // CustomStruct
@@ -69,25 +37,8 @@ impl Deref for CustomStruct {
 }
 
 impl CustomStruct {
-    pub fn is_custom_struct(&self, config: &DetectCustomStructConfig) -> bool {
-        CustomStruct::are_custom_struct_attrs(&self.attrs, config)
-    }
-
-    pub fn are_custom_struct_attrs(
-        attrs: &[Attribute],
-        config: &DetectCustomStructConfig,
-    ) -> bool {
-        let derives = get_derive_names(attrs);
-        let mut saw_include = false;
-        for derive in derives {
-            if config.skip_derives.contains(&derive) {
-                return false;
-            }
-            if !saw_include {
-                saw_include = config.include_derives.contains(&derive);
-            }
-        }
-        return saw_include;
+    pub fn is_custom_struct(&self, config: &DetectCustomTypeConfig) -> bool {
+        config.are_custom_type_attrs(&self.attrs)
     }
 }
 

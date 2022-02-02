@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "name": "TODO: program name",
+  "instructions": [],
+  "types": [
+    {
+      "name": "Color",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Red",
+            "fields": ["u8"]
+          },
+          {
+            "name": "Green",
+            "fields": ["u8"]
+          },
+          {
+            "name": "Blue",
+            "fields": ["u8"]
+          },
+          {
+            "name": "White"
+          }
+        ]
+      }
+    }
+  ]
+}

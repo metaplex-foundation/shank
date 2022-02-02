@@ -42,6 +42,22 @@
           }
         ]
       }
+    },
+    {
+      "name": "EnumCustomType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Up",
+            "fields": ["u8"]
+          },
+          {
+            "name": "Down",
+            "fields": ["u8"]
+          }
+        ]
+      }
     }
   ]
 }
