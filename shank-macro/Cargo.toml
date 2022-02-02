@@ -10,3 +10,9 @@ edition = "2018"
 [lib]
 proc-macro = true
 doctest=false
+
+[dependencies]
+shank_macro_impl = { version = "0.0.0", path = "../shank-macro-impl" }
+proc-macro2 = "1.0.32"
+quote = "1.0.10"
+syn = "1.0.82"

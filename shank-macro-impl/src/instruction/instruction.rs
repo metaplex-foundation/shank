@@ -4,55 +4,36 @@ use syn::{Attribute, Error as ParseError, ItemEnum, Result as ParseResult};
 use syn::Ident;
 
 use crate::{
-    parse_result::{ShankParseError, ShankParseResult},
     parsed_enum::{ParsedEnum, ParsedEnumVariant},
     parsers::get_derive_attr,
     types::RustType,
+    DERIVE_INSTRUCTION_ATTR,
 };
 
 use super::account_attrs::{InstructionAccount, InstructionAccounts};
-
-pub const DERIVE_INSTRUCTION_ATTR: &str = "ShankInstruction";
 
 // -----------------
 // Instruction
 // -----------------
 #[derive(Debug)]
 pub struct Instruction {
-    pub file: Option<String>,
     pub ident: Ident,
     pub variants: Vec<InstructionVariant>,
 }
 
 impl Instruction {
     pub fn try_from_item_enum(
-        (file, item_enum): (String, &ItemEnum),
-    ) -> ShankParseResult<Option<Instruction>> {
-        match get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
-            .map(|_| item_enum)
+        item_enum: &ItemEnum,
+        skip_derive_attr_check: bool,
+    ) -> ParseResult<Option<Instruction>> {
+        if skip_derive_attr_check
+            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+                .is_some()
         {
-            Some(ix_enum) => {
-                let parsed_enum: ParsedEnum =
-                    ix_enum.try_into().map_err(|err| {
-                        ShankParseError::from_file_and_parse_error(
-                            file.clone(),
-                            err,
-                        )
-                    })?;
-                (&parsed_enum)
-                    .try_into()
-                    .map(|mut x: Instruction| {
-                        x.file = Some(file.clone());
-                        Some(x)
-                    })
-                    .map_err(|err| {
-                        ShankParseError::from_file_and_parse_error(
-                            file.clone(),
-                            err,
-                        )
-                    })
-            }
-            None => Ok(None),
+            let parsed_enum = ParsedEnum::try_from(item_enum)?;
+            Instruction::try_from(&parsed_enum).map(Some)
+        } else {
+            Ok(None)
         }
     }
 }
@@ -85,7 +66,6 @@ impl TryFrom<&ParsedEnum> for Instruction {
         Ok(Self {
             ident: ident.clone(),
             variants,
-            file: None,
         })
     }
 }

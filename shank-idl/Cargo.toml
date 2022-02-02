@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 shellexpand = "2.1.0"
-shank_macro_impl = { path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.0.0", path = "../shank-macro-impl" }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.72"
 anyhow = "1.0.48"

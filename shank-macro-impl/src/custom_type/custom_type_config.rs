@@ -3,8 +3,7 @@ use std::{collections::HashSet, iter::FromIterator};
 use syn::Attribute;
 
 use crate::{
-    account::DERIVE_ACCOUNT_ATTR, instruction::DERIVE_INSTRUCTION_ATTR,
-    parsers::get_derive_names,
+    parsers::get_derive_names, DERIVE_ACCOUNT_ATTR, DERIVE_INSTRUCTION_ATTR,
 };
 
 #[derive(Debug)]
