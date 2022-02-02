@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "name": "TODO: program name",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "StructAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "opt_vec_opt",
+            "type": {
+              "option": {
+                "vec": {
+                  "option": "u8"
+                }
+              }
+            }
+          },
+          {
+            "name": "vec_opt_pubkey",
+            "type": {
+              "vec": {
+                "option": "publicKey"
+              }
+            }
+          },
+          {
+            "name": "opt_vec_custom_ty",
+            "type": {
+              "option": {
+                "vec": {
+                  "defined": "CustomType"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
