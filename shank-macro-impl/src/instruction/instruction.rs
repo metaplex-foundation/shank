@@ -24,16 +24,16 @@ pub struct Instruction {
 impl Instruction {
     pub fn try_from_item_enum(
         item_enum: &ItemEnum,
+        skip_derive_attr_check: bool,
     ) -> ParseResult<Option<Instruction>> {
-        match get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
-            .map(|_| item_enum)
+        if skip_derive_attr_check
+            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+                .is_some()
         {
-            Some(ix_enum) => {
-                let parsed_enum = ParsedEnum::try_from(ix_enum)?;
-                let instruction = Instruction::try_from(&parsed_enum)?;
-                Ok(Some(instruction))
-            }
-            None => Ok(None),
+            let parsed_enum = ParsedEnum::try_from(item_enum)?;
+            Instruction::try_from(&parsed_enum).map(Some)
+        } else {
+            Ok(None)
         }
     }
 }

@@ -9,7 +9,7 @@ use super::instruction::{Instruction, InstructionVariant};
 fn parse_instruction(code: TokenStream) -> ParseResult<Option<Instruction>> {
     let item_enum = syn::parse2::<ItemEnum>(code)
         .expect("Should parse ItemEnum successfully");
-    Instruction::try_from_item_enum(&item_enum)
+    Instruction::try_from_item_enum(&item_enum, false)
 }
 
 fn assert_instruction_variant(
