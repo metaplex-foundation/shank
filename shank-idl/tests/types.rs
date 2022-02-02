@@ -64,15 +64,3 @@ fn type_invalid_single() {
             .is_err()
     )
 }
-
-#[test]
-fn tictactoe() {
-    let file = Path::new(
-        "/Volumes/d/dev/mp/solana/projects/tictactoe/program/src/lib.rs",
-    );
-    let idl =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
-    eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
-}
