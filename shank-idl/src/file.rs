@@ -12,7 +12,7 @@ use crate::{
 };
 use shank_macro_impl::{
     account::extract_account_structs,
-    custom_type::{CustomStruct, DetectCustomStructConfig},
+    custom_type::{CustomEnum, CustomStruct, DetectCustomTypeConfig},
     instruction::extract_instruction_enums,
     krate::CrateContext,
     parse_result::parse_error_into,
@@ -23,7 +23,7 @@ use shank_macro_impl::{
 // -----------------
 #[derive(Default, Debug)]
 pub struct ParseIdlConfig {
-    detect_custom_struct: DetectCustomStructConfig,
+    detect_custom_struct: DetectCustomTypeConfig,
 }
 
 // -----------------
@@ -102,22 +102,26 @@ fn state(_ctx: &CrateContext) -> Result<Option<IdlState>> {
 
 fn types(
     ctx: &CrateContext,
-    detect_custom_struct: &DetectCustomStructConfig,
+    detect_custom_type: &DetectCustomTypeConfig,
 ) -> Result<Vec<IdlTypeDefinition>> {
     let custom_structs = ctx
         .structs()
-        .filter(|x| {
-            CustomStruct::are_custom_struct_attrs(
-                &x.attrs,
-                detect_custom_struct,
-            )
-        })
+        .filter(|x| detect_custom_type.are_custom_type_attrs(&x.attrs))
         .map(|x| CustomStruct::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomStruct>>>()?;
+
+    // TODO(thlorenz): Purposely not using ShankParseError here since it complicates things and
+    // we most likely will have a better solution
+    let custom_enums = ctx
+        .enums()
+        .filter(|(_, x)| detect_custom_type.are_custom_type_attrs(&x.attrs))
+        .map(|(_, x)| CustomEnum::try_from(x).map_err(parse_error_into))
+        .collect::<Result<Vec<CustomEnum>>>()?;
 
     let types = custom_structs
         .into_iter()
         .map(IdlTypeDefinition::try_from)
+        .chain(custom_enums.into_iter().map(IdlTypeDefinition::try_from))
         .collect::<Result<Vec<IdlTypeDefinition>>>()?;
 
     Ok(types)

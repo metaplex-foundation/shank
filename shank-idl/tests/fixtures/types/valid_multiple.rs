@@ -8,6 +8,12 @@ pub struct OtherCustomType {
     pub field: Option<String>,
 }
 
+#[derive(BorshDeserialize)]
+pub enum EnumCustomType {
+    Up(u8),
+    Down(u8),
+}
+
 /// Misses serialization attrs
 pub struct NotCustomType {
     pub field: u8,

@@ -11,6 +11,7 @@ mod idl_field;
 mod idl_instruction;
 mod idl_type;
 mod idl_type_definition;
+mod idl_variant;
 mod manifest;
 
 pub use file::*;

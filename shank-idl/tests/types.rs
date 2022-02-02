@@ -8,15 +8,31 @@ fn fixtures_dir() -> PathBuf {
 }
 
 #[test]
-fn type_valid_single() {
-    let file = fixtures_dir().join("valid_single.rs");
+fn type_valid_single_struct() {
+    let file = fixtures_dir().join("valid_single_struct.rs");
     let idl =
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
             .expect("Parsing should not fail")
             .expect("File contains IDL");
 
     let expected_idl: Idl = serde_json::from_str(include_str!(
-        "./fixtures/types/valid_single.json"
+        "./fixtures/types/valid_single_struct.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn type_valid_single_emum() {
+    let file = fixtures_dir().join("valid_single_enum.rs");
+    let idl =
+        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
+            .expect("Parsing should not fail")
+            .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_enum.json"
     ))
     .unwrap();
 
