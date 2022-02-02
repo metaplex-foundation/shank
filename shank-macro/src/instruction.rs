@@ -9,10 +9,8 @@ pub fn derive_instruction(input: DeriveInput) -> ParseResult<TokenStream> {
     let item = Item::from(input);
     match item {
         Item::Enum(enum_item) => {
-            match Instruction::try_from_item_enum(&enum_item, true) {
-                Ok(_) => Ok(TokenStream::new()),
-                Err(err) => Ok(err.to_compile_error()),
-            }
+            Instruction::try_from_item_enum(&enum_item, true)
+                .map(|_| TokenStream::new())
         }
         _ => Err(ParseError::new_spanned(
             &attr,
