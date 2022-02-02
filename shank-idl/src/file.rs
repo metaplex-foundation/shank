@@ -114,8 +114,8 @@ fn types(
 
     let custom_enums = ctx
         .enums()
-        .filter(|(_, x)| detect_custom_type.are_custom_type_attrs(&x.attrs))
-        .map(|(_, x)| CustomEnum::try_from(x).map_err(parse_error_into))
+        .filter(|x| detect_custom_type.are_custom_type_attrs(&x.attrs))
+        .map(|x| CustomEnum::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomEnum>>>()?;
 
     let types = custom_structs

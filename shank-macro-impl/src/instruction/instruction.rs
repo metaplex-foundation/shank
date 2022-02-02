@@ -17,24 +17,20 @@ use super::account_attrs::{InstructionAccount, InstructionAccounts};
 // -----------------
 #[derive(Debug)]
 pub struct Instruction {
-    pub file: Option<String>,
     pub ident: Ident,
     pub variants: Vec<InstructionVariant>,
 }
 
 impl Instruction {
     pub fn try_from_item_enum(
-        (file, item_enum): (String, &ItemEnum),
+        item_enum: &ItemEnum,
     ) -> ParseResult<Option<Instruction>> {
         match get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
             .map(|_| item_enum)
         {
             Some(ix_enum) => {
                 let parsed_enum: ParsedEnum = ix_enum.try_into()?;
-                (&parsed_enum).try_into().map(|mut x: Instruction| {
-                    x.file = Some(file.clone());
-                    Some(x)
-                })
+                (&parsed_enum).try_into().map(Some)
             }
             None => Ok(None),
         }
@@ -69,7 +65,6 @@ impl TryFrom<&ParsedEnum> for Instruction {
         Ok(Self {
             ident: ident.clone(),
             variants,
-            file: None,
         })
     }
 }
