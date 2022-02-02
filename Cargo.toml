@@ -1,5 +1,6 @@
 [workspace]
 members=[
+  "shank",
   "shank-idl",
   "shank-macro",
   "shank-macro-impl"
