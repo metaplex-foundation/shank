@@ -29,8 +29,9 @@ impl Instruction {
             .map(|_| item_enum)
         {
             Some(ix_enum) => {
-                let parsed_enum: ParsedEnum = ix_enum.try_into()?;
-                (&parsed_enum).try_into().map(Some)
+                let parsed_enum = ParsedEnum::try_from(ix_enum)?;
+                let instruction = Instruction::try_from(&parsed_enum)?;
+                Ok(Some(instruction))
             }
             None => Ok(None),
         }

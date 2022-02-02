@@ -55,11 +55,8 @@ pub fn attr_is_derive(attr: &&Attribute, derive: &str) -> bool {
 
     match meta {
         Ok(Meta::List(MetaList { path, nested, .. })) => {
-            let found_derive = path
-                .segments
-                .iter()
-                .enumerate()
-                .find(|(_, x)| x.ident == "derive");
+            let found_derive =
+                path.segments.iter().find(|x| x.ident == "derive");
 
             match found_derive {
                 Some(_) => flattened_idents_from_nested_meta(nested)
