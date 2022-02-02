@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use cargo_toml;
+use cargo_toml::{self, Package};
 use std::{
     fs,
     ops::Deref,
@@ -64,28 +64,12 @@ impl Manifest {
             .map_err(Into::into)
     }
 
-    // todo(thlorenz): figure out if we'll actually need this
-    #[allow(unused)]
-    pub fn lib_name(&self) -> Result<String> {
-        if self.lib.is_some() && self.lib.as_ref().unwrap().name.is_some() {
-            Ok(self
-                .lib
-                .as_ref()
-                .unwrap()
-                .name
-                .as_ref()
-                .unwrap()
-                .to_string()
-                .to_snake_case())
-        } else {
-            Ok(self
-                .package
-                .as_ref()
-                .ok_or_else(|| anyhow!("package section not provided"))?
-                .name
-                .to_string()
-                .to_snake_case())
-        }
+    pub fn lib_rel_path(&self) -> Option<String> {
+        self.lib
+            .as_ref()
+            .map(|x| x.path.clone())
+            .flatten()
+            .to_owned()
     }
 
     pub fn version(&self) -> String {
@@ -93,13 +77,6 @@ impl Manifest {
             Some(package) => package.version.to_string(),
             _ => "0.0.0".to_string(),
         }
-    }
-
-    // Climbs each parent directory from the current dir until we find a Cargo.toml
-    // TODO(thlorenz): figure out if we'll actually need this
-    #[allow(unused)]
-    pub fn discover() -> Result<Option<WithPath<Manifest>>> {
-        Manifest::discover_from_path(std::env::current_dir()?)
     }
 
     // Climbs each parent directory from a given starting directory until we find a Cargo.toml.
