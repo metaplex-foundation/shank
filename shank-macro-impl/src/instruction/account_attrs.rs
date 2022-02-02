@@ -138,7 +138,7 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
                     return Err(ParseError::new_spanned(
                         attrs.get(idx).map(|x| x.path.get_ident()),
                         format!(
-                            "Account index {} does not match it's position {}",
+                            "Account index {} does not match its position {}",
                             acc_idx, idx,
                         ),
                     ));
