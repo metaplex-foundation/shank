@@ -1,10 +1,10 @@
 use std::convert::TryFrom;
 
-use crate::{parsed_struct::ParsedStruct, parsers::get_derive_attr};
+use crate::{
+    parsed_struct::ParsedStruct, parsers::get_derive_attr, DERIVE_ACCOUNT_ATTR,
+};
 
 use anyhow::{format_err, Result};
-
-pub const DERIVE_ACCOUNT_ATTR: &str = "ShankAccount";
 
 fn filter_account_structs<'a>(
     structs: impl Iterator<Item = &'a syn::ItemStruct>,

@@ -12,10 +12,10 @@ use crate::{
 };
 use shank_macro_impl::{
     account::extract_account_structs,
+    converters::parse_error_into,
     custom_type::{CustomEnum, CustomStruct, DetectCustomTypeConfig},
     instruction::extract_instruction_enums,
     krate::CrateContext,
-    parse_result::parse_error_into,
 };
 
 // -----------------
@@ -76,10 +76,12 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
     let instruction_enums =
         extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
+
     let mut instructions: Vec<IdlInstruction> = Vec::new();
     // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
     // TODO(thlorenz): Should unfold that only arg?
     // TODO(thlorenz): Better way to combine those if we don't to the above.
+
     for ix in instruction_enums {
         let idl_instructions: IdlInstructions = ix.try_into()?;
         for ix in idl_instructions.0 {
@@ -110,8 +112,6 @@ fn types(
         .map(|x| CustomStruct::try_from(x).map_err(parse_error_into))
         .collect::<Result<Vec<CustomStruct>>>()?;
 
-    // TODO(thlorenz): Purposely not using ShankParseError here since it complicates things and
-    // we most likely will have a better solution
     let custom_enums = ctx
         .enums()
         .filter(|(_, x)| detect_custom_type.are_custom_type_attrs(&x.attrs))

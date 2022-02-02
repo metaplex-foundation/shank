@@ -53,6 +53,6 @@ fn instruction_from_single_file_invalid_attr() {
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
 
     let err = res.unwrap_err();
-    assert!(err.to_string().contains("Invalid"));
-    assert!(err.to_string().contains("instruction_invalid_attr.rs:4:35"));
+    assert!(err.source().unwrap().to_string().contains("Invalid"));
+    assert!(err.to_string().contains("4:35"));
 }
