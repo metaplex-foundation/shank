@@ -15,7 +15,7 @@
             }
           },
           {
-            "name": "update_authority",
+            "name": "updateAuthority",
             "type": "publicKey"
           },
           {
@@ -29,21 +29,21 @@
             }
           },
           {
-            "name": "primary_sale_happened",
+            "name": "primarySaleHappened",
             "type": "bool"
           },
           {
-            "name": "is_mutable",
+            "name": "isMutable",
             "type": "bool"
           },
           {
-            "name": "edition_nonce",
+            "name": "editionNonce",
             "type": {
               "option": "u8"
             }
           },
           {
-            "name": "token_standard",
+            "name": "tokenStandard",
             "type": {
               "option": {
                 "defined": "TokenStandard"

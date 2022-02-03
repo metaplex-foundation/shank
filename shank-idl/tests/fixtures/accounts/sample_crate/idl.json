@@ -9,23 +9,23 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "auction_house_fee_account",
+            "name": "auctionHouseFeeAccount",
             "type": "publicKey"
           },
           {
-            "name": "auction_house_treasury",
+            "name": "auctionHouseTreasury",
             "type": "publicKey"
           },
           {
-            "name": "treasury_withdrawal_destination",
+            "name": "treasuryWithdrawalDestination",
             "type": "publicKey"
           },
           {
-            "name": "fee_withdrawal_destination",
+            "name": "feeWithdrawalDestination",
             "type": "publicKey"
           },
           {
-            "name": "treasury_mint",
+            "name": "treasuryMint",
             "type": "publicKey"
           },
           {
@@ -41,23 +41,23 @@
             "type": "u8"
           },
           {
-            "name": "treasury_bump",
+            "name": "treasuryBump",
             "type": "u8"
           },
           {
-            "name": "fee_payer_bump",
+            "name": "feePayerBump",
             "type": "u8"
           },
           {
-            "name": "seller_fee_basis_points",
+            "name": "sellerFeeBasisPoints",
             "type": "u16"
           },
           {
-            "name": "requires_sign_off",
+            "name": "requiresSignOff",
             "type": "bool"
           },
           {
-            "name": "can_change_sale_price",
+            "name": "canChangeSalePrice",
             "type": "bool"
           }
         ]
@@ -75,7 +75,7 @@
             }
           },
           {
-            "name": "update_authority",
+            "name": "updateAuthority",
             "type": "publicKey"
           },
           {
@@ -89,21 +89,21 @@
             }
           },
           {
-            "name": "primary_sale_happened",
+            "name": "primarySaleHappened",
             "type": "bool"
           },
           {
-            "name": "is_mutable",
+            "name": "isMutable",
             "type": "bool"
           },
           {
-            "name": "edition_nonce",
+            "name": "editionNonce",
             "type": {
               "option": "u8"
             }
           },
           {
-            "name": "token_standard",
+            "name": "tokenStandard",
             "type": {
               "option": {
                 "defined": "TokenStandard"
