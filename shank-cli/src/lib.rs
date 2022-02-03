@@ -18,7 +18,7 @@ pub enum Command {
         idl_json: Option<String>,
 
         /// Directory of program crate for which to generate the IDL.
-        #[clap(short, long)]
+        #[clap(short = 'r', long)]
         crate_root: String,
     },
 }
@@ -34,6 +34,11 @@ pub fn entry(opts: Opts) -> Result<()> {
 
 pub fn idl(idl_json: Option<String>, crate_root: String) -> Result<()> {
     let crate_root = Path::new(&crate_root);
+    let crate_root = if crate_root.is_absolute() {
+        Ok(crate_root.to_path_buf())
+    } else {
+        std::env::current_dir().map(|x| x.join(crate_root))
+    }?;
     let cargo_toml = crate_root.join("Cargo.toml");
     if !cargo_toml.exists() {
         return Err(anyhow!(
