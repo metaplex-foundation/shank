@@ -12,10 +12,9 @@ fn instruction_from_single_file_no_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_no_args.rs");
-    let idl =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
+    let idl = parse_file(&file, &ParseIdlConfig::default())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
 
     // eprintln!("{}", idl.try_into_json().unwrap());
 
@@ -32,10 +31,9 @@ fn instruction_from_single_file_with_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_args.rs");
-    let idl =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
+    let idl = parse_file(&file, &ParseIdlConfig::default())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
 
     let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/instructions/single_file/instruction_with_args.json"
@@ -50,8 +48,7 @@ fn instruction_from_single_file_invalid_attr() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_invalid_attr.rs");
-    let res =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
+    let res = parse_file(&file, &ParseIdlConfig::default());
 
     let err = res.unwrap_err();
     let source_string = err.source().unwrap().to_string();
@@ -64,8 +61,7 @@ fn instruction_from_single_file_invalid_discriminant() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_invalid_discriminant.rs");
-    let res =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
+    let res = parse_file(&file, &ParseIdlConfig::default());
 
     let err = res.unwrap_err().to_string();
     assert!(err.contains("discriminants have to be <= u32::MAX"));

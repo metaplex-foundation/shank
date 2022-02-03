@@ -23,7 +23,9 @@ use shank_macro_impl::{
 // -----------------
 #[derive(Default, Debug)]
 pub struct ParseIdlConfig {
-    detect_custom_struct: DetectCustomTypeConfig,
+    pub program_version: String,
+    pub program_name: String,
+    pub detect_custom_struct: DetectCustomTypeConfig,
 }
 
 // -----------------
@@ -33,7 +35,6 @@ pub struct ParseIdlConfig {
 /// Parse an entire interface file.
 pub fn parse_file(
     filename: impl AsRef<Path>,
-    version: String,
     config: &ParseIdlConfig,
 ) -> Result<Option<Idl>> {
     let ctx = CrateContext::parse(filename)?;
@@ -47,8 +48,8 @@ pub fn parse_file(
     let errors = errors(&ctx)?;
 
     let idl = Idl {
-        version,
-        name: "TODO: program name".to_string(),
+        version: config.program_version.to_string(),
+        name: config.program_name.to_string(),
         constants,
         instructions,
         state,

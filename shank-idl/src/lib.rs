@@ -22,5 +22,15 @@ pub fn extract_idl(file: &str) -> Result<Option<Idl>> {
         std::env::current_dir()?.join(PathBuf::from(&*file).parent().unwrap());
     let cargo = Manifest::discover_from_path(manifest_from_path)?
         .ok_or_else(|| anyhow!("Cargo.toml not found"))?;
-    file::parse_file(&*file, cargo.version(), &ParseIdlConfig::default())
+    let program_name = cargo
+        .lib_name()
+        .map_err(|err| anyhow!("Cargo.toml is missing lib name. {}", err))?;
+    file::parse_file(
+        &*file,
+        &ParseIdlConfig {
+            program_name,
+            program_version: cargo.version(),
+            ..Default::default()
+        },
+    )
 }

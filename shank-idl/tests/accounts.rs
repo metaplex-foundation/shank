@@ -10,10 +10,10 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn account_from_single_file() {
     let file = fixtures_dir().join("single_file").join("account.rs");
-    let idl =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
+    let idl = parse_file(&file, &ParseIdlConfig::default())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    eprintln!("{}", idl.try_into_json().unwrap());
     let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/accounts/single_file/account.json"
     ))
@@ -25,10 +25,9 @@ fn account_from_single_file() {
 #[test]
 fn account_from_single_file_complex_types() {
     let file = fixtures_dir().join("single_file").join("complex_types.rs");
-    let idl =
-        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
-            .expect("Parsing should not fail")
-            .expect("File contains IDL");
+    let idl = parse_file(&file, &ParseIdlConfig::default())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
     let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/accounts/single_file/complex_types.json"
     ))
