@@ -180,6 +180,10 @@ impl ParsedModule {
             _ => None,
         })
     }
+
+    pub fn all_items(&self) -> impl Iterator<Item = &syn::Item> {
+        self.items.iter()
+    }
 }
 
 // -----------------

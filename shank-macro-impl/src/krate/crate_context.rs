@@ -36,6 +36,18 @@ impl CrateContext {
         }
     }
 
+    pub fn all_items(&self) -> impl Iterator<Item = &syn::Item> {
+        self.modules.iter().flat_map(|(_, ctx)| ctx.all_items())
+    }
+
+    pub fn all_items_vec(&self) -> Vec<syn::Item> {
+        self.modules
+            .iter()
+            .flat_map(|(_, ctx)| ctx.all_items())
+            .cloned()
+            .collect()
+    }
+
     pub fn parse(root: impl AsRef<Path>) -> Result<Self, anyhow::Error> {
         Ok(CrateContext {
             modules: ParsedModule::parse_recursive(root.as_ref())?,
