@@ -1,7 +1,8 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
+use log::{debug, info, trace, warn};
 use shank_idl::{extract_idl, manifest::Manifest};
 
 #[derive(Debug, Parser)]
@@ -19,7 +20,7 @@ pub enum Command {
 
         /// Directory of program crate for which to generate the IDL.
         #[clap(short = 'r', long)]
-        crate_root: String,
+        crate_root: Option<String>,
     },
 }
 
@@ -32,13 +33,28 @@ pub fn entry(opts: Opts) -> Result<()> {
     }
 }
 
-pub fn idl(idl_json: Option<String>, crate_root: String) -> Result<()> {
-    let crate_root = Path::new(&crate_root);
-    let crate_root = if crate_root.is_absolute() {
-        Ok(crate_root.to_path_buf())
-    } else {
-        std::env::current_dir().map(|x| x.join(crate_root))
+pub fn try_resolve_path(p: Option<String>, label: &str) -> Result<PathBuf> {
+    let p = match p {
+        Some(crate_root) => Ok(Path::new(&crate_root).to_path_buf()),
+        None => {
+            debug!("No {} provided, assuming current dir", label);
+            std::env::current_dir()
+        }
     }?;
+
+    let p = if p.is_absolute() {
+        Ok(p.to_path_buf())
+    } else {
+        debug!("{} is relative, resolving from current dir", label);
+        std::env::current_dir().map(|x| x.join(p))
+    }?;
+
+    Ok(p)
+}
+
+pub fn idl(idl_json: Option<String>, crate_root: Option<String>) -> Result<()> {
+    let crate_root = try_resolve_path(crate_root, "crate_root")?;
+
     let cargo_toml = crate_root.join("Cargo.toml");
     if !cargo_toml.exists() {
         return Err(anyhow!(
