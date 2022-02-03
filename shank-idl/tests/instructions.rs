@@ -16,7 +16,8 @@ fn instruction_from_single_file_no_args() {
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
             .expect("Parsing should not fail")
             .expect("File contains IDL");
-    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    // eprintln!("{}", idl.try_into_json().unwrap());
 
     let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/instructions/single_file/instruction_no_args.json"
@@ -56,4 +57,17 @@ fn instruction_from_single_file_invalid_attr() {
     let source_string = err.source().unwrap().to_string();
     assert!(source_string.contains("Invalid"));
     assert!(source_string.contains("account meta configuration"));
+}
+
+#[test]
+fn instruction_from_single_file_invalid_discriminant() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("instruction_invalid_discriminant.rs");
+    let res =
+        parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default());
+
+    let err = res.unwrap_err().to_string();
+    assert!(err.contains("discriminants have to be <= u32::MAX"));
+    assert!(err.contains("discriminant of variant 'CreateThing' is 4294967296"));
 }

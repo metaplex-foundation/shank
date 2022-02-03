@@ -24,7 +24,7 @@
           }
         }
       ],
-      "discriminant": 0
+      "discriminant": { "type": "u32", "value": 0 }
     },
     {
       "name": "CloseThing",
@@ -43,7 +43,7 @@
           }
         }
       ],
-      "discriminant": 1
+      "discriminant": { "type": "u32", "value": 1 }
     }
   ]
 }
