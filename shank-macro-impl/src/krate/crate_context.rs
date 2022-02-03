@@ -24,6 +24,10 @@ impl CrateContext {
         self.modules.iter().flat_map(|(_, ctx)| ctx.enums())
     }
 
+    pub fn macros(&self) -> impl Iterator<Item = &syn::ItemMacro> {
+        self.modules.iter().flat_map(|(_, ctx)| ctx.macros())
+    }
+
     pub fn modules(&self) -> impl Iterator<Item = ModuleContext> {
         self.modules
             .iter()
