@@ -4,6 +4,7 @@ pub mod custom_type;
 pub mod instruction;
 pub mod krate;
 pub mod parsed_enum;
+pub mod parsed_macro;
 pub mod parsed_struct;
 pub mod parsers;
 pub mod types;
