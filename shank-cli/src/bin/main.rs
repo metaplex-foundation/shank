@@ -10,7 +10,9 @@ fn main() -> Result<()> {
 }
 
 fn setup_logging() {
-    let colors = ColoredLevelConfig::new().debug(Color::BrightBlue);
+    let colors = ColoredLevelConfig::new()
+        .debug(Color::BrightBlue)
+        .info(Color::BrightYellow);
 
     fern::Dispatch::new()
         .chain(std::io::stdout())

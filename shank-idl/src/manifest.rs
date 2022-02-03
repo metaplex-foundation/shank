@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use cargo_toml::{self, Package};
+use cargo_toml;
 use std::{
     fs,
     ops::Deref,
@@ -70,6 +70,28 @@ impl Manifest {
             .map(|x| x.path.clone())
             .flatten()
             .to_owned()
+    }
+
+    pub fn lib_name(&self) -> Result<String> {
+        if self.lib.is_some() && self.lib.as_ref().unwrap().name.is_some() {
+            Ok(self
+                .lib
+                .as_ref()
+                .unwrap()
+                .name
+                .as_ref()
+                .unwrap()
+                .to_string()
+                .to_snake_case())
+        } else {
+            Ok(self
+                .package
+                .as_ref()
+                .ok_or_else(|| anyhow!("package section not provided"))?
+                .name
+                .to_string()
+                .to_snake_case())
+        }
     }
 
     pub fn version(&self) -> String {

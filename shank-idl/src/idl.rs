@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::idl_instruction::IdlInstruction;
 
 use super::{idl_type::IdlType, idl_type_definition::IdlTypeDefinition};
+use anyhow::{anyhow, Result};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Idl {
@@ -63,4 +64,11 @@ pub struct IdlErrorCode {
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub msg: Option<String>,
+}
+
+impl Idl {
+    pub fn try_into_json(&self) -> Result<String> {
+        serde_json::to_string_pretty(&self)
+            .map_err(|err| anyhow!("Failed to convert to JSON. {}", err))
+    }
 }
