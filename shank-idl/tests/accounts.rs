@@ -29,14 +29,13 @@ fn account_from_single_file_complex_types() {
         parse_file(&file, "1.0.0".to_string(), &ParseIdlConfig::default())
             .expect("Parsing should not fail")
             .expect("File contains IDL");
-    //  let expected_idl: Idl = serde_json::from_str(include_str!(
-    //      "./fixtures/accounts/single_file/account.json"
-    //  ))
-    //  .unwrap();
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/accounts/single_file/complex_types.json"
+    ))
+    .unwrap();
 
-    //  assert_eq!(idl, expected_idl);
-    //
-    eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+    // eprintln!("{}", idl.try_into_json().unwrap());
+    assert_eq!(idl, expected_idl);
 }
 
 #[test]

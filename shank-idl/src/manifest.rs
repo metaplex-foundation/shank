@@ -64,8 +64,14 @@ impl Manifest {
             .map_err(Into::into)
     }
 
-    // todo(thlorenz): figure out if we'll actually need this
-    #[allow(unused)]
+    pub fn lib_rel_path(&self) -> Option<String> {
+        self.lib
+            .as_ref()
+            .map(|x| x.path.clone())
+            .flatten()
+            .to_owned()
+    }
+
     pub fn lib_name(&self) -> Result<String> {
         if self.lib.is_some() && self.lib.as_ref().unwrap().name.is_some() {
             Ok(self
@@ -93,13 +99,6 @@ impl Manifest {
             Some(package) => package.version.to_string(),
             _ => "0.0.0".to_string(),
         }
-    }
-
-    // Climbs each parent directory from the current dir until we find a Cargo.toml
-    // TODO(thlorenz): figure out if we'll actually need this
-    #[allow(unused)]
-    pub fn discover() -> Result<Option<WithPath<Manifest>>> {
-        Manifest::discover_from_path(std::env::current_dir()?)
     }
 
     // Climbs each parent directory from a given starting directory until we find a Cargo.toml.
