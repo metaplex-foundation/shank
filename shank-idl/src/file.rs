@@ -8,6 +8,7 @@ use std::{
 use crate::{
     idl::{Idl, IdlConst, IdlErrorCode, IdlEvent, IdlState},
     idl_instruction::{IdlInstruction, IdlInstructions},
+    idl_metadata::IdlMetadata,
     idl_type_definition::IdlTypeDefinition,
 };
 use shank_macro_impl::{
@@ -46,6 +47,7 @@ pub fn parse_file(
     let types = types(&ctx, &config.detect_custom_struct)?;
     let events = events(&ctx)?;
     let errors = errors(&ctx)?;
+    let metadata = metadata(&ctx)?;
 
     let idl = Idl {
         version: config.program_version.to_string(),
@@ -57,7 +59,7 @@ pub fn parse_file(
         types,
         events,
         errors,
-        metadata: None,
+        metadata,
     };
 
     Ok(Some(idl))
@@ -126,6 +128,13 @@ fn types(
         .collect::<Result<Vec<IdlTypeDefinition>>>()?;
 
     Ok(types)
+}
+
+fn metadata(_ctx: &CrateContext) -> Result<IdlMetadata> {
+    Ok(IdlMetadata {
+        origin: "shank".to_string(),
+        address: None,
+    })
 }
 
 fn events(_ctx: &CrateContext) -> Result<Option<Vec<IdlEvent>>> {

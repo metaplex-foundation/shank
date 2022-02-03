@@ -31,5 +31,8 @@
       "args": [],
       "discriminant": { "type": "u32", "value": 1 }
     }
-  ]
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
 }
