@@ -10,7 +10,7 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn type_valid_single_struct() {
     let file = fixtures_dir().join("valid_single_struct.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -25,7 +25,7 @@ fn type_valid_single_struct() {
 #[test]
 fn type_valid_single_emum() {
     let file = fixtures_dir().join("valid_single_enum.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -40,7 +40,7 @@ fn type_valid_single_emum() {
 #[test]
 fn type_valid_multiple() {
     let file = fixtures_dir().join("valid_multiple.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
@@ -56,5 +56,7 @@ fn type_valid_multiple() {
 #[test]
 fn type_invalid_single() {
     let file = fixtures_dir().join("invalid_single.rs");
-    assert!(parse_file(&file, &ParseIdlConfig::default()).is_err())
+    assert!(
+        parse_file(&file, &ParseIdlConfig::optional_program_address()).is_err()
+    )
 }

@@ -4,7 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use shank_idl::{extract_idl, idl::Idl, parse_file, ParseIdlConfig};
+use shank_idl::{
+    extract_idl, idl::Idl, parse_file, ParseIdlConfig, ParseIdlOpts,
+};
 
 fn fixtures_dir() -> PathBuf {
     let root_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -36,7 +38,7 @@ pub fn check_or_update_idl(idl: &Idl, json_path: &str) {
 #[test]
 fn account_from_single_file() {
     let file = fixtures_dir().join("single_file").join("account.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -46,7 +48,7 @@ fn account_from_single_file() {
 #[test]
 fn account_from_single_file_complex_types() {
     let file = fixtures_dir().join("single_file").join("complex_types.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -60,9 +62,15 @@ fn account_from_crate() {
         .join("sample_crate")
         .join("src")
         .join("lib.rs");
-    let idl = extract_idl(file.to_str().unwrap())
-        .expect("Parsing should not fail")
-        .expect("File contains IDL");
+    let idl = extract_idl(
+        file.to_str().unwrap(),
+        ParseIdlOpts {
+            require_program_address: false,
+            ..Default::default()
+        },
+    )
+    .expect("Parsing should not fail")
+    .expect("File contains IDL");
 
     check_or_update_idl(&idl, "sample_crate/idl.json");
 }

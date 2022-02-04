@@ -17,16 +17,38 @@ use shank_macro_impl::{
     custom_type::{CustomEnum, CustomStruct, DetectCustomTypeConfig},
     instruction::extract_instruction_enums,
     krate::CrateContext,
+    macros::ProgramId,
 };
 
 // -----------------
 // ParseIdlConfig
 // -----------------
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct ParseIdlConfig {
     pub program_version: String,
     pub program_name: String,
     pub detect_custom_struct: DetectCustomTypeConfig,
+    pub require_program_address: bool,
+}
+
+impl Default for ParseIdlConfig {
+    fn default() -> Self {
+        Self {
+            program_version: Default::default(),
+            program_name: Default::default(),
+            detect_custom_struct: Default::default(),
+            require_program_address: true,
+        }
+    }
+}
+
+impl ParseIdlConfig {
+    pub fn optional_program_address() -> Self {
+        Self {
+            require_program_address: false,
+            ..Self::default()
+        }
+    }
 }
 
 // -----------------
@@ -47,7 +69,7 @@ pub fn parse_file(
     let types = types(&ctx, &config.detect_custom_struct)?;
     let events = events(&ctx)?;
     let errors = errors(&ctx)?;
-    let metadata = metadata(&ctx)?;
+    let metadata = metadata(&ctx, config.require_program_address)?;
 
     let idl = Idl {
         version: config.program_version.to_string(),
@@ -130,10 +152,19 @@ fn types(
     Ok(types)
 }
 
-fn metadata(_ctx: &CrateContext) -> Result<IdlMetadata> {
+fn metadata(
+    ctx: &CrateContext,
+    require_program_address: bool,
+) -> Result<IdlMetadata> {
+    let macros: Vec<_> = ctx.macros().cloned().collect();
+    let address = match ProgramId::try_from(&macros[..]) {
+        Ok(ProgramId { id }) => Ok(Some(id)),
+        Err(err) if require_program_address => Err(err),
+        Err(_) => Ok(None),
+    }?;
     Ok(IdlMetadata {
         origin: "shank".to_string(),
-        address: None,
+        address,
     })
 }
 
