@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
 use anyhow::{anyhow, ensure, Error, Result};
+use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
     Instruction, InstructionAccount, InstructionVariant,
@@ -55,7 +56,11 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
 
         let name = ident.to_string();
         let args: Vec<IdlField> = if let Some(field_ty) = field_ty {
-            let name = (&field_ty).ident.to_string();
+            let name = if field_ty.kind.is_custom() {
+                field_ty.ident.to_string().to_mixed_case()
+            } else {
+                "instructionArgs".to_string()
+            };
             let ty = IdlType::try_from(field_ty)?;
             vec![IdlField { name, ty }]
         } else {
