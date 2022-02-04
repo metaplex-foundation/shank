@@ -150,7 +150,7 @@ impl From<InstructionAccount> for IdlAccount {
             ..
         } = acc;
         Self {
-            name,
+            name: name.to_mixed_case(),
             is_mut: writable,
             is_signer: signer,
             desc,
