@@ -23,7 +23,7 @@
       "name": "CloseThing",
       "accounts": [
         {
-          "name": "creator",
+          "name": "originalCreator",
           "isMut": false,
           "isSigner": true
         }
