@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "name": "TODO: program name",
+  "version": "",
+  "name": "",
   "instructions": [],
   "types": [
     {
@@ -26,5 +26,8 @@
         ]
       }
     }
-  ]
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
 }

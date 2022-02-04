@@ -174,11 +174,22 @@ impl ParsedModule {
         })
     }
 
+    pub fn macros(&self) -> impl Iterator<Item = &syn::ItemMacro> {
+        self.items.iter().filter_map(|i| match i {
+            syn::Item::Macro(item) => Some(item),
+            _ => None,
+        })
+    }
+
     pub fn consts(&self) -> impl Iterator<Item = &syn::ItemConst> {
         self.items.iter().filter_map(|i| match i {
             syn::Item::Const(item) => Some(item),
             _ => None,
         })
+    }
+
+    pub fn all_items(&self) -> impl Iterator<Item = &syn::Item> {
+        self.items.iter()
     }
 }
 

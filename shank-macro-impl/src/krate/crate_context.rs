@@ -24,6 +24,10 @@ impl CrateContext {
         self.modules.iter().flat_map(|(_, ctx)| ctx.enums())
     }
 
+    pub fn macros(&self) -> impl Iterator<Item = &syn::ItemMacro> {
+        self.modules.iter().flat_map(|(_, ctx)| ctx.macros())
+    }
+
     pub fn modules(&self) -> impl Iterator<Item = ModuleContext> {
         self.modules
             .iter()
@@ -34,6 +38,18 @@ impl CrateContext {
         ModuleContext {
             detail: self.modules.get("crate").unwrap(),
         }
+    }
+
+    pub fn all_items(&self) -> impl Iterator<Item = &syn::Item> {
+        self.modules.iter().flat_map(|(_, ctx)| ctx.all_items())
+    }
+
+    pub fn all_items_vec(&self) -> Vec<syn::Item> {
+        self.modules
+            .iter()
+            .flat_map(|(_, ctx)| ctx.all_items())
+            .cloned()
+            .collect()
     }
 
     pub fn parse(root: impl AsRef<Path>) -> Result<Self, anyhow::Error> {

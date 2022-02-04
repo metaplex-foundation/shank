@@ -102,6 +102,14 @@ impl TypeKind {
         }
     }
 
+    pub fn is_custom(&self) -> bool {
+        if let TypeKind::Value(Value::Custom(_)) = self {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn is_vec(&self) -> bool {
         if let TypeKind::Composite(Composite::Vec, _, _) = self {
             true

@@ -3,7 +3,7 @@
 /// anchor crate instead.
 use serde::{Deserialize, Serialize};
 
-use crate::idl_instruction::IdlInstruction;
+use crate::{idl_instruction::IdlInstruction, idl_metadata::IdlMetadata};
 
 use super::{idl_type::IdlType, idl_type_definition::IdlTypeDefinition};
 use anyhow::{anyhow, Result};
@@ -25,8 +25,7 @@ pub struct Idl {
     pub events: Option<Vec<IdlEvent>>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub errors: Option<Vec<IdlErrorCode>>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub metadata: Option<serde_json::Value>,
+    pub metadata: IdlMetadata,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

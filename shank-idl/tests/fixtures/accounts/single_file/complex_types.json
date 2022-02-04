@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "name": "TODO: program name",
+  "version": "",
+  "name": "",
   "instructions": [],
   "accounts": [
     {
@@ -9,7 +9,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "opt_vec_opt",
+            "name": "optVecOpt",
             "type": {
               "option": {
                 "vec": {
@@ -19,7 +19,7 @@
             }
           },
           {
-            "name": "vec_opt_pubkey",
+            "name": "vecOptPubkey",
             "type": {
               "vec": {
                 "option": "publicKey"
@@ -27,7 +27,7 @@
             }
           },
           {
-            "name": "opt_vec_custom_ty",
+            "name": "optVecCustomTy",
             "type": {
               "option": {
                 "vec": {
@@ -39,5 +39,9 @@
         ]
       }
     }
-  ]
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
 }
+

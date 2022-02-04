@@ -1,3 +1,4 @@
+use heck::MixedCase;
 use std::convert::{TryFrom, TryInto};
 
 use serde::{Deserialize, Serialize};
@@ -18,7 +19,7 @@ impl TryFrom<StructField> for IdlField {
     fn try_from(field: StructField) -> Result<Self> {
         let ty: IdlType = field.rust_type.try_into()?;
         Ok(Self {
-            name: field.ident.to_string(),
+            name: field.ident.to_string().to_mixed_case(),
             ty,
         })
     }

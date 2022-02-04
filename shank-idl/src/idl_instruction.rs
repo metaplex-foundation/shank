@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 
-use anyhow::{Error, Result};
+use anyhow::{anyhow, ensure, Error, Result};
+use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
     Instruction, InstructionAccount, InstructionVariant,
@@ -39,7 +40,7 @@ pub struct IdlInstruction {
     pub name: String,
     pub accounts: Vec<IdlAccountItem>,
     pub args: Vec<IdlField>,
-    pub discriminant: usize,
+    pub discriminant: IdlInstructionDiscriminant,
 }
 
 impl TryFrom<InstructionVariant> for IdlInstruction {
@@ -55,7 +56,11 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
 
         let name = ident.to_string();
         let args: Vec<IdlField> = if let Some(field_ty) = field_ty {
-            let name = (&field_ty).ident.to_string();
+            let name = if field_ty.kind.is_custom() {
+                field_ty.ident.to_string().to_mixed_case()
+            } else {
+                "instructionArgs".to_string()
+            };
             let ty = IdlType::try_from(field_ty)?;
             vec![IdlField { name, ty }]
         } else {
@@ -63,13 +68,39 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
         };
 
         let accounts = accounts.into_iter().map(IdlAccountItem::from).collect();
+        ensure!(
+            discriminant < u32::MAX as usize,
+            anyhow!(
+                "Instruction variant discriminants have to be <= u32::MAX ({}), \
+                    but the discriminant of variant '{}' is {}",
+                u32::MAX,
+                ident,
+                discriminant
+            )
+        );
 
         Ok(Self {
             name,
             accounts,
             args,
-            discriminant,
+            discriminant: (discriminant as u32).into(),
         })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct IdlInstructionDiscriminant {
+    #[serde(rename = "type")]
+    pub ty: IdlType,
+    pub value: u32,
+}
+
+impl From<u32> for IdlInstructionDiscriminant {
+    fn from(value: u32) -> Self {
+        Self {
+            ty: IdlType::U32,
+            value,
+        }
     }
 }
 

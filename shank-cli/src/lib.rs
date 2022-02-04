@@ -7,7 +7,7 @@ use std::{
 use anyhow::{anyhow, format_err, Result};
 use clap::Parser;
 use log::{debug, info};
-use shank_idl::{extract_idl, manifest::Manifest};
+use shank_idl::{extract_idl, manifest::Manifest, ParseIdlOpts};
 
 #[derive(Debug, Parser)]
 pub struct Opts {
@@ -80,7 +80,8 @@ pub fn idl(out_dir: String, crate_root: Option<String>) -> Result<()> {
     let lib_full_path = lib_full_path_str.to_str().ok_or(anyhow!("Invalid Path"))?;
 
     // Extract IDL and convert to JSON
-    let idl = extract_idl(lib_full_path)?.ok_or(anyhow!("No IDL could be extracted"))?;
+    let idl = extract_idl(lib_full_path, ParseIdlOpts::default())?
+        .ok_or(anyhow!("No IDL could be extracted"))?;
     let idl_json = idl.try_into_json()?;
 
     // Write to JSON file

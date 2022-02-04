@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "name": "TODO: program name",
+  "version": "",
+  "name": "",
   "instructions": [
     {
       "name": "CreateThing",
@@ -17,7 +17,7 @@
         }
       ],
       "args": [],
-      "discriminant": 0
+      "discriminant": { "type": "u32", "value": 0 }
     },
     {
       "name": "CloseThing",
@@ -29,7 +29,10 @@
         }
       ],
       "args": [],
-      "discriminant": 1
+      "discriminant": { "type": "u32", "value": 1 }
     }
-  ]
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
 }
