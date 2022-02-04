@@ -136,22 +136,18 @@ fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
             let size = match val.base10_parse::<usize>() {
                 Ok(size) => size,
                 Err(err) => {
-                    eprintln!("'{:?}' -> {}", val, err);
                     return Err(ParseError::new(
                         val.span(),
-                        "Failed to parse into usize",
+                        format!("Failed to parse into usize: {}", err),
                     ));
                 }
             };
             Ok(size)
         }
-        _ => {
-            eprintln!("{:#?}", expr);
-            Err(ParseError::new(
-                expr.span(),
-                "Expected a Lit(ExprLit(Int)) expression when extracting length",
-            ))
-        }
+        _ => Err(ParseError::new(
+            expr.span(),
+            "Expected a Lit(ExprLit(Int)) expression when extracting length",
+        )),
     }
 }
 
@@ -166,7 +162,6 @@ pub fn resolve_rust_ty(
         }
         Type::Array(_) | Type::Path(_) => (ty, ParsedReference::Owned),
         ty => {
-            eprintln!("{:#?}", ty);
             return Err(ParseError::new(
                 ty.span(),
                 "Only owned or reference Path/Array types supported",
@@ -185,7 +180,6 @@ pub fn resolve_rust_ty(
                     ident_and_kind_from_path(path)
                 }
                 _ => {
-                    eprintln!("{:#?}", ty);
                     return Err(ParseError::new(
                         ty.span(),
                         "Only owned or reference Path/Array types supported",
