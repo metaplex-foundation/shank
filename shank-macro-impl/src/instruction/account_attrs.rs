@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use proc_macro2::Span;
 use syn::{
     punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
     MetaList, MetaNameValue, NestedMeta, Result as ParseResult, Token,
@@ -9,6 +10,7 @@ const IX_ACCOUNT: &str = "account";
 
 #[derive(Debug, PartialEq)]
 pub struct InstructionAccount {
+    pub ident: Ident,
     pub index: Option<u32>,
     pub name: String,
     pub writable: bool,
@@ -38,7 +40,11 @@ impl InstructionAccount {
 
         match meta {
             Meta::List(MetaList { nested, .. }) => {
-                Self::parse_account_attr_args(&nested)
+                let ident = attr.path.get_ident().map_or_else(
+                    || Ident::new("attr_ident", Span::call_site()),
+                    |x| x.clone(),
+                );
+                Self::parse_account_attr_args(ident, &nested)
             }
             Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
                 attr,
@@ -48,6 +54,7 @@ impl InstructionAccount {
     }
 
     fn parse_account_attr_args(
+        ident: Ident,
         nested: &Punctuated<NestedMeta, Token![,]>,
     ) -> ParseResult<InstructionAccount> {
         if nested.is_empty() {
@@ -115,6 +122,7 @@ impl InstructionAccount {
         }
         match account_name {
             Some(name) => Ok(Self {
+                ident,
                 index,
                 name,
                 writable,
@@ -142,7 +150,7 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
             match acc.index {
                 Some(acc_idx) if acc_idx != idx as u32 => {
                     return Err(ParseError::new_spanned(
-                        attrs.get(idx).map(|x| x.path.get_ident()),
+                        &acc.ident,
                         format!(
                             "Account index {} does not match its position {}",
                             acc_idx, idx,
