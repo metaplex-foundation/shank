@@ -64,6 +64,6 @@ fn instruction_from_single_file_invalid_discriminant() {
     let res = parse_file(&file, &ParseIdlConfig::optional_program_address());
 
     let err = res.unwrap_err().to_string();
-    assert!(err.contains("discriminants have to be <= u32::MAX"));
-    assert!(err.contains("discriminant of variant 'CreateThing' is 4294967296"));
+    assert!(err.contains("discriminants have to be <= u8::MAX"));
+    assert!(err.contains("discriminant of variant 'CreateThing' is 256"));
 }

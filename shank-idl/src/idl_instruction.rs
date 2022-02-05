@@ -69,11 +69,11 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
 
         let accounts = accounts.into_iter().map(IdlAccountItem::from).collect();
         ensure!(
-            discriminant < u32::MAX as usize,
+            discriminant < u8::MAX as usize,
             anyhow!(
-                "Instruction variant discriminants have to be <= u32::MAX ({}), \
+                "Instruction variant discriminants have to be <= u8::MAX ({}), \
                     but the discriminant of variant '{}' is {}",
-                u32::MAX,
+                u8::MAX,
                 ident,
                 discriminant
             )
@@ -83,7 +83,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             name,
             accounts,
             args,
-            discriminant: (discriminant as u32).into(),
+            discriminant: (discriminant as u8).into(),
         })
     }
 }
@@ -92,13 +92,13 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
 pub struct IdlInstructionDiscriminant {
     #[serde(rename = "type")]
     pub ty: IdlType,
-    pub value: u32,
+    pub value: u8,
 }
 
-impl From<u32> for IdlInstructionDiscriminant {
-    fn from(value: u32) -> Self {
+impl From<u8> for IdlInstructionDiscriminant {
+    fn from(value: u8) -> Self {
         Self {
-            ty: IdlType::U32,
+            ty: IdlType::U8,
             value,
         }
     }
