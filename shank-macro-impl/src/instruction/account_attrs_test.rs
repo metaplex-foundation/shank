@@ -247,6 +247,19 @@ fn account_multiple_attrs() {
 }
 
 #[test]
+fn account_invalid_empty_name() {
+    assert_matches!(
+    parse_first_enum_variant_attrs(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instructions {
+            #[account(name ="", sig, desc = "Signer account")]
+            NotIndexed
+        }
+    }),
+        Err(err) if err.to_string().contains("account name cannot be empty"));
+}
+
+#[test]
 fn account_invalid_indexes() {
     assert_matches!(parse_first_enum_variant_attrs(quote! {
         #[derive(ShankInstruction)]

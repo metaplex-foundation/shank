@@ -67,9 +67,15 @@ impl InstructionAccount {
             if let Some((ident, name, value)) =
                 string_assign_from_nested_meta(meta)?
             {
-                // desc = "account description"
+                // name/desc
                 match name.as_str() {
                     "desc" | "description" => desc = Some(value),
+                    "name" if value.trim().is_empty() => {
+                        return Err(ParseError::new_spanned(
+                            ident,
+                            "account name cannot be empty",
+                        ))
+                    }
                     "name" => account_name = Some(value),
                     _ => return Err(ParseError::new_spanned(
                         ident,
