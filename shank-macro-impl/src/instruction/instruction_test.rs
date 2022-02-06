@@ -70,8 +70,6 @@ fn parse_custom_field_variant_instruction() {
     assert_eq!(parsed.ident.to_string(), "Instruction", "enum ident");
     assert_eq!(parsed.variants.len(), 2, "variants");
 
-    dbg!(&parsed);
-
     assert_instruction_variant(&parsed.variants[0], "CreateThing", 0, None, 0);
     assert_instruction_variant(
         &parsed.variants[1],

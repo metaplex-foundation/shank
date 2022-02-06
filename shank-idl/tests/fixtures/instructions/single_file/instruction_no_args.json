@@ -17,7 +17,7 @@
         }
       ],
       "args": [],
-      "discriminant": { "type": "u32", "value": 0 }
+      "discriminant": { "type": "u8", "value": 0 }
     },
     {
       "name": "CloseThing",
@@ -29,7 +29,7 @@
         }
       ],
       "args": [],
-      "discriminant": { "type": "u32", "value": 1 }
+      "discriminant": { "type": "u8", "value": 1 }
     }
   ],
   "metadata": {

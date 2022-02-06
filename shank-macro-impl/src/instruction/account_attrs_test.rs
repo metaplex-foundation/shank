@@ -20,6 +20,51 @@ fn parse_first_enum_variant_attrs(
     attrs.try_into()
 }
 
+#[derive(Debug, PartialEq)]
+pub struct InstructionAccountWithoutIdent {
+    pub index: Option<u32>,
+    pub name: String,
+    pub writable: bool,
+    pub signer: bool,
+    pub desc: Option<String>,
+}
+
+impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
+    fn from(acc: &InstructionAccount) -> Self {
+        let InstructionAccount {
+            index,
+            name,
+            writable,
+            signer,
+            desc,
+            ..
+        } = acc;
+        Self {
+            index: *index,
+            name: name.clone(),
+            writable: *writable,
+            signer: *signer,
+            desc: desc.clone(),
+        }
+    }
+}
+impl From<&InstructionAccounts> for Vec<InstructionAccountWithoutIdent> {
+    fn from(accs: &InstructionAccounts) -> Self {
+        accs.0
+            .iter()
+            .map(InstructionAccountWithoutIdent::from)
+            .collect()
+    }
+}
+
+fn assert_instruction_account_matches(
+    acc_actual: &InstructionAccount,
+    acc_expected: InstructionAccountWithoutIdent,
+) {
+    let acc_actual = InstructionAccountWithoutIdent::from(acc_actual);
+    assert_eq!(acc_actual, acc_expected, "account matches");
+}
+
 #[test]
 fn account_readonly() {
     let accounts_indexed = parse_first_enum_variant_attrs(quote! {
@@ -30,15 +75,15 @@ fn account_readonly() {
         }
     })
     .expect("Should parse fine");
-    assert_eq!(
-        accounts_indexed.0[0],
-        InstructionAccount {
-            index: Some(0,),
+    assert_instruction_account_matches(
+        &accounts_indexed.0[0],
+        InstructionAccountWithoutIdent {
+            index: Some(0),
             name: "authority".to_string(),
             writable: false,
             signer: false,
             desc: None,
-        }
+        },
     );
 
     let accounts = parse_first_enum_variant_attrs(quote! {
@@ -50,15 +95,15 @@ fn account_readonly() {
     })
     .expect("Should parse fine");
 
-    assert_eq!(
-        accounts.0[0],
-        InstructionAccount {
+    assert_instruction_account_matches(
+        &accounts.0[0],
+        InstructionAccountWithoutIdent {
             index: None,
             name: "authority".to_string(),
             writable: false,
             signer: false,
             desc: None,
-        }
+        },
     );
 }
 
@@ -72,15 +117,15 @@ fn account_signer() {
             }
     })
     .expect("Should parse fine");
-    assert_eq!(
-        accounts_indexed.0[0],
-        InstructionAccount {
-            index: Some(0,),
+    assert_instruction_account_matches(
+        &accounts_indexed.0[0],
+        InstructionAccountWithoutIdent {
+            index: Some(0),
             name: "authority".to_string(),
             writable: false,
             signer: true,
             desc: None,
-        }
+        },
     );
 
     let accounts = parse_first_enum_variant_attrs(quote! {
@@ -92,15 +137,15 @@ fn account_signer() {
     })
     .expect("Should parse fine");
 
-    assert_eq!(
-        accounts.0[0],
-        InstructionAccount {
+    assert_instruction_account_matches(
+        &accounts.0[0],
+        InstructionAccountWithoutIdent {
             index: None,
             name: "authority".to_string(),
             writable: false,
             signer: true,
             desc: None,
-        }
+        },
     );
 }
 
@@ -114,15 +159,15 @@ fn account_writable() {
         }
     })
     .expect("Should parse fine");
-    assert_eq!(
-        accounts_indexed.0[0],
-        InstructionAccount {
-            index: Some(0,),
+    assert_instruction_account_matches(
+        &accounts_indexed.0[0],
+        InstructionAccountWithoutIdent {
+            index: Some(0),
             name: "authority".to_string(),
             writable: true,
             signer: false,
             desc: None,
-        }
+        },
     );
 
     let accounts = parse_first_enum_variant_attrs(quote! {
@@ -134,15 +179,15 @@ fn account_writable() {
     })
     .expect("Should parse fine");
 
-    assert_eq!(
-        accounts.0[0],
-        InstructionAccount {
+    assert_instruction_account_matches(
+        &accounts.0[0],
+        InstructionAccountWithoutIdent {
             index: None,
             name: "authority".to_string(),
             writable: true,
             signer: false,
             desc: None,
-        }
+        },
     );
 }
 
@@ -157,57 +202,56 @@ fn account_desc() {
         })
         .expect("Should parse fine");
 
-    assert_eq!(
-        accounts_indexed.0[0],
-        InstructionAccount {
-            index: Some(0,),
+    assert_instruction_account_matches(
+        &accounts_indexed.0[0],
+        InstructionAccountWithoutIdent {
+            index: Some(0),
             name: "funnel".to_string(),
             writable: false,
             signer: false,
             desc: Some("Readonly indexed account description".to_string()),
-        }
+        },
     );
 }
 
 #[test]
 fn account_multiple_attrs() {
-    let expected_indexed = InstructionAccounts(vec![
-        InstructionAccount {
+    let expected_indexed = vec![
+        InstructionAccountWithoutIdent {
             index: Some(0),
             name: "authority".to_string(),
             writable: false,
             signer: true,
             desc: Some("Signer account".to_string()),
         },
-        InstructionAccount {
+        InstructionAccountWithoutIdent {
             index: Some(1),
             name: "storage".to_string(),
             writable: true,
             signer: false,
             desc: Some("Writable account".to_string()),
         },
-        InstructionAccount {
+        InstructionAccountWithoutIdent {
             index: Some(2),
             name: "funnel".to_string(),
             writable: false,
             signer: false,
             desc: Some("Readonly account".to_string()),
         },
-    ]);
+    ];
 
-    let expected_non_indexed = InstructionAccounts(
+    let expected_non_indexed: Vec<InstructionAccountWithoutIdent> =
         expected_indexed
-            .0
             .iter()
             .map(
-                |InstructionAccount {
+                |InstructionAccountWithoutIdent {
                      name,
                      writable,
                      signer,
                      desc,
                      ..
                  }| {
-                    InstructionAccount {
+                    InstructionAccountWithoutIdent {
                         index: None,
                         name: name.clone(),
                         writable: writable.clone(),
@@ -216,8 +260,7 @@ fn account_multiple_attrs() {
                     }
                 },
             )
-            .collect(),
-    );
+            .collect();
 
     let accounts = parse_first_enum_variant_attrs(quote! {
         #[derive(ShankInstruction)]
@@ -230,7 +273,10 @@ fn account_multiple_attrs() {
     })
     .expect("Should parse fine");
 
-    assert_eq!(&accounts, &expected_non_indexed);
+    assert_eq!(
+        <Vec<InstructionAccountWithoutIdent>>::from(&accounts),
+        expected_non_indexed
+    );
 
     let indexed_accounts = parse_first_enum_variant_attrs(quote! {
         #[derive(ShankInstruction)]
@@ -243,7 +289,23 @@ fn account_multiple_attrs() {
     })
     .expect("Should parse fine");
 
-    assert_eq!(&indexed_accounts, &expected_indexed);
+    assert_eq!(
+        <Vec<InstructionAccountWithoutIdent>>::from(&indexed_accounts),
+        expected_indexed
+    );
+}
+
+#[test]
+fn account_invalid_empty_name() {
+    assert_matches!(
+    parse_first_enum_variant_attrs(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instructions {
+            #[account(name ="", sig, desc = "Signer account")]
+            NotIndexed
+        }
+    }),
+        Err(err) if err.to_string().contains("account name cannot be empty"));
 }
 
 #[test]
