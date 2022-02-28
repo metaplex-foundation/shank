@@ -13,6 +13,7 @@ use crate::parsed_enum::{ParsedEnum, ParsedEnumVariant};
 pub struct ProgramError {
     variant_ident: Ident,
     attr_ident: Ident,
+    code: u32,
     name: String,
     desc: String,
 }
@@ -32,6 +33,7 @@ impl ProgramError {
     pub fn from_error_attr(
         attr: &Attribute,
         variant_ident: &Ident,
+        variant_discriminant: u32,
     ) -> ParseResult<ProgramError> {
         let meta = &attr.parse_meta()?;
         match meta {
@@ -40,7 +42,12 @@ impl ProgramError {
                     || Ident::new("attr_ident", Span::call_site()),
                     |x| x.clone(),
                 );
-                Self::parse_account_error_args(&nested, &ident, variant_ident)
+                Self::parse_account_error_args(
+                    &nested,
+                    &ident,
+                    variant_ident,
+                    variant_discriminant,
+                )
             }
             Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
                 attr,
@@ -53,6 +60,7 @@ impl ProgramError {
         nested: &Punctuated<NestedMeta, Token![,]>,
         attr_ident: &Ident,
         variant_ident: &Ident,
+        variant_discriminant: u32,
     ) -> ParseResult<ProgramError> {
         if nested.len() != 1 {
             return Err(ParseError::new_spanned(
@@ -68,6 +76,7 @@ impl ProgramError {
                 Ok(ProgramError {
                     attr_ident: attr_ident.clone(),
                     variant_ident: variant_ident.clone(),
+                    code: variant_discriminant,
                     name: variant_ident.to_string(),
                     desc,
                 })
@@ -108,7 +117,13 @@ impl ProgramError {
             .attrs
             .iter()
             .filter_map(ProgramError::is_error_attr)
-            .map(|attr| ProgramError::from_error_attr(attr, &variant.ident))
+            .map(|attr| {
+                ProgramError::from_error_attr(
+                    attr,
+                    &variant.ident,
+                    variant.discriminant as u32,
+                )
+            })
             .collect::<ParseResult<Vec<ProgramError>>>()?;
         if program_errors.len() > 1 {
             Err(ParseError::new_spanned(
@@ -150,6 +165,7 @@ mod tests {
         .0;
 
         assert_eq!(program_errors.len(), 1, "extracts one program error");
+        assert_eq!(program_errors[0].code, 0);
         assert_eq!(program_errors[0].name, "InstructionUnpackError");
         assert_eq!(program_errors[0].desc, "Failed to unpack instruction data");
     }
@@ -171,7 +187,9 @@ mod tests {
         .0;
 
         assert_eq!(program_errors.len(), 2, "extracts two program errors");
+        assert_eq!(program_errors[0].code, 0);
         assert_eq!(program_errors[0].name, "NotRentExempt");
+        assert_eq!(program_errors[1].code, 1);
         assert_eq!(
             program_errors[0].desc,
             "Lamport balance below rent-exempt threshold"
@@ -225,5 +243,56 @@ mod tests {
         .0;
 
         assert_eq!(program_errors.len(), 0, "extracts no program error");
+    }
+
+    #[test]
+    fn enum_with_two_error_attrs_discriminant_starting_at_3000() {
+        let program_errors = parse_enum_errors(quote! {
+            pub enum VaultError {
+                /// Lamport balance below rent-exempt threshold.
+                #[error("Lamport balance below rent-exempt threshold")]
+                NotRentExempt = 3000,
+
+                /// Already initialized
+                #[error("Already initialized")]
+                AlreadyInitialized,
+            }
+        })
+        .expect("Should parse fine")
+        .0;
+
+        assert_eq!(program_errors.len(), 2, "extracts two program errors");
+        assert_eq!(program_errors[0].code, 3000);
+        assert_eq!(program_errors[0].name, "NotRentExempt");
+        assert_eq!(program_errors[1].code, 3001);
+        assert_eq!(
+            program_errors[0].desc,
+            "Lamport balance below rent-exempt threshold"
+        );
+        assert_eq!(program_errors[1].name, "AlreadyInitialized");
+        assert_eq!(program_errors[1].desc, "Already initialized");
+    }
+
+    #[test]
+    fn enum_with_two_error_attrs_two_exlicit_and_one_implicit_discriminants() {
+        let program_errors = parse_enum_errors(quote! {
+            pub enum VaultError {
+                #[error("Lamport balance below rent-exempt threshold")]
+                NotRentExempt = 333,
+
+                #[error("Not allowed")]
+                NotAllowed,
+
+                #[error("Already initialized")]
+                AlreadyInitialized = 222,
+            }
+        })
+        .expect("Should parse fine")
+        .0;
+
+        assert_eq!(program_errors.len(), 3, "extracts three program errors");
+        assert_eq!(program_errors[0].code, 333);
+        assert_eq!(program_errors[1].code, 334);
+        assert_eq!(program_errors[2].code, 222);
     }
 }

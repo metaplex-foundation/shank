@@ -27,10 +27,22 @@ impl TryFrom<&ItemEnum> for ParsedEnum {
             ..
         } = item_enum;
 
+        let mut implicit_discriminant = 0;
         let variants = variants
             .into_iter()
             .enumerate()
-            .map(ParsedEnumVariant::try_from)
+            .map(|(slot, x)| {
+                let parsed = ParsedEnumVariant::try_from((
+                    slot,
+                    implicit_discriminant,
+                    x,
+                ));
+                implicit_discriminant = parsed
+                    .as_ref()
+                    .map(|x| x.discriminant + 1)
+                    .unwrap_or(implicit_discriminant + 1);
+                parsed
+            })
             .collect::<ParseResult<Vec<ParsedEnumVariant>>>()?;
 
         Ok(ParsedEnum {

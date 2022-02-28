@@ -29,10 +29,12 @@ pub struct ParsedEnumVariant {
     pub attrs: Vec<Attribute>,
 }
 
-impl TryFrom<(usize, &Variant)> for ParsedEnumVariant {
+impl TryFrom<(usize, usize, &Variant)> for ParsedEnumVariant {
     type Error = ParseError;
 
-    fn try_from((slot, variant): (usize, &Variant)) -> ParseResult<Self> {
+    fn try_from(
+        (slot, implicit_discriminant, variant): (usize, usize, &Variant),
+    ) -> ParseResult<Self> {
         let fields = variant
             .fields
             .iter()
@@ -63,7 +65,7 @@ impl TryFrom<(usize, &Variant)> for ParsedEnumVariant {
                     "Only literal enum variant discriminators supported",
                 )),
             },
-            None => Ok(slot),
+            None => Ok(implicit_discriminant),
         }?;
 
         Ok(Self {
