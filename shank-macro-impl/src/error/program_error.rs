@@ -11,11 +11,11 @@ use crate::parsed_enum::{ParsedEnum, ParsedEnumVariant};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ProgramError {
-    variant_ident: Ident,
-    attr_ident: Ident,
-    code: u32,
-    name: String,
-    desc: String,
+    pub variant_ident: Ident,
+    pub attr_ident: Ident,
+    pub code: u32,
+    pub name: String,
+    pub desc: String,
 }
 
 const THIS_ERROR: &str = "error";
@@ -69,7 +69,6 @@ impl ProgramError {
             ));
         }
         let meta = &nested[0];
-        eprintln!("meta: {:#?}", meta);
         match meta {
             NestedMeta::Lit(Lit::Str(lit_str)) => {
                 let desc = lit_str.value();
