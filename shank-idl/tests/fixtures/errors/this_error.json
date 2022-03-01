@@ -1,0 +1,40 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "errors": [
+    {
+      "code": 0,
+      "name": "InstructionUnpackError",
+      "msg": "Failed to unpack instruction data"
+    },
+    {
+      "code": 1,
+      "name": "NotRentExempt",
+      "msg": "Lamport balance below rent-exempt threshold"
+    },
+    {
+      "code": 2,
+      "name": "AlreadyInitialized",
+      "msg": "Already initialized"
+    },
+    {
+      "code": 3,
+      "name": "Uninitialized",
+      "msg": "Uninitialized"
+    },
+    {
+      "code": 4,
+      "name": "IncorrectOwner",
+      "msg": "Account does not have correct owner"
+    },
+    {
+      "code": 5,
+      "name": "NumericalOverflowError",
+      "msg": "NumericalOverflowError"
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

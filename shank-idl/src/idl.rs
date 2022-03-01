@@ -3,7 +3,10 @@
 /// anchor crate instead.
 use serde::{Deserialize, Serialize};
 
-use crate::{idl_instruction::IdlInstruction, idl_metadata::IdlMetadata};
+use crate::{
+    idl_error_code::IdlErrorCode, idl_instruction::IdlInstruction,
+    idl_metadata::IdlMetadata,
+};
 
 use super::{idl_type::IdlType, idl_type_definition::IdlTypeDefinition};
 use anyhow::{anyhow, Result};
@@ -55,14 +58,6 @@ pub struct IdlEventField {
     #[serde(rename = "type")]
     pub ty: IdlType,
     pub index: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct IdlErrorCode {
-    pub code: u32,
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub msg: Option<String>,
 }
 
 impl Idl {

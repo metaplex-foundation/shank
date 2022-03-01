@@ -6,7 +6,8 @@ use std::{
 };
 
 use crate::{
-    idl::{Idl, IdlConst, IdlErrorCode, IdlEvent, IdlState},
+    idl::{Idl, IdlConst, IdlEvent, IdlState},
+    idl_error_code::IdlErrorCode,
     idl_instruction::{IdlInstruction, IdlInstructions},
     idl_metadata::IdlMetadata,
     idl_type_definition::IdlTypeDefinition,
@@ -15,6 +16,7 @@ use shank_macro_impl::{
     account::extract_account_structs,
     converters::parse_error_into,
     custom_type::{CustomEnum, CustomStruct, DetectCustomTypeConfig},
+    error::extract_this_errors,
     instruction::extract_instruction_enums,
     krate::CrateContext,
     macros::ProgramId,
@@ -173,7 +175,15 @@ fn events(_ctx: &CrateContext) -> Result<Option<Vec<IdlEvent>>> {
     Ok(None)
 }
 
-fn errors(_ctx: &CrateContext) -> Result<Option<Vec<IdlErrorCode>>> {
-    // TODO(thlorenz): Implement
-    Ok(None)
+fn errors(ctx: &CrateContext) -> Result<Option<Vec<IdlErrorCode>>> {
+    let program_errors = extract_this_errors(ctx.enums())?;
+    if program_errors.is_empty() {
+        Ok(None)
+    } else {
+        let error_codes = program_errors
+            .into_iter()
+            .map(IdlErrorCode::from)
+            .collect::<Vec<IdlErrorCode>>();
+        Ok(Some(error_codes))
+    }
 }
