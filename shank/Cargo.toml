@@ -1,6 +1,6 @@
 [package]
 name = "shank"
-description = "Shank"
+description = "Exposes macros to annotate Rust programs to extract solita compatible IDL in order to generate program SDKs"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/shank"
 license = "Apache-2.0"
