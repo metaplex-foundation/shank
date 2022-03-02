@@ -1,6 +1,6 @@
 # shank
 
-Shank CLI that extracts IDL from your Rust solana program code annotated with [shank macro
+[Shank](https://github.com/metaplex-foundation/shank) CLI that extracts IDL from your Rust Solana program code annotated with [shank macro
 attributes](../shank-macro/README.md). This IDL can then be fed to
 [solita](https://github.com/metaplex-foundation/solita) in order to generate low level
 TypeScript SDK for that particular Rust program.
@@ -10,7 +10,7 @@ TypeScript SDK for that particular Rust program.
 ### Via Cargo
 
 ```sh
-cargo install shank
+cargo install shank-cli
 ```
 
 ### Via Yarn/Npm
