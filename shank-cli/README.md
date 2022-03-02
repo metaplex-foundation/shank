@@ -10,7 +10,7 @@ TypeScript SDK for that particular Rust program.
 ### Via Cargo
 
 ```sh
-cargo install shank
+cargo install shank-cli
 ```
 
 ### Via Yarn/Npm
