@@ -1,6 +1,7 @@
 pub mod account;
 pub mod converters;
 pub mod custom_type;
+pub mod error;
 pub mod instruction;
 pub mod krate;
 pub mod macros;
