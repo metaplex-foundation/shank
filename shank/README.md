@@ -6,7 +6,7 @@ SDKs.
 
 ## Shank Macro
 
-[Readme](../shank-macro/README.md) | [docs](TODO)
+[Readme](../shank-macro/README.md) | [Docs](https://docs.rs/shank_macro)
 
 Provides macros used to annotate Solana Rust programs in order to extract an IDL with the shank
 CLI.
