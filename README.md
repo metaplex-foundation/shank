@@ -3,6 +3,10 @@
 Collection of shank crates used to annotate Rust programs in order to extract IDL via the
 included CLI tool. This IDL is used by [solita](https://github.com/metaplex-foundation/solita) in order to generate program SDKs.
 
+## Installation
+
+For _usage_ and _installation_ see the [shank-cli Readme](./shank-cli/README.md).
+
 ## Crates
 
 - [shank](./shank) top level crate to be installed and included in your library to add macro
