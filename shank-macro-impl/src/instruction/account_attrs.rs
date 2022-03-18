@@ -16,6 +16,7 @@ pub struct InstructionAccount {
     pub writable: bool,
     pub signer: bool,
     pub desc: Option<String>,
+    pub optional: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -69,6 +70,7 @@ impl InstructionAccount {
         let mut signer = false;
         let mut desc = None;
         let mut account_name = None;
+        let mut optional = false;
 
         for meta in nested {
             if let Some((ident, name, value)) =
@@ -92,12 +94,13 @@ impl InstructionAccount {
             } else if let Some((ident, name)) =
                 identifier_from_nested_meta(meta)
             {
-                // signer, writable ...
+                // signer, writable, optional ...
                 match name.as_str() {
                     "signer" | "sign" | "sig" | "s" => signer = true,
                     "writable" | "write" | "writ" | "mut" | "w" => {
                         writable = true;
                     }
+                    "optional" | "option" | "opt" => optional = true,
                     _ => {
                         return Err(ParseError::new_spanned(
                             ident,
@@ -128,6 +131,7 @@ impl InstructionAccount {
                 writable,
                 signer,
                 desc,
+                optional,
             }),
             None => {
                 Err(ParseError::new_spanned(nested, "Missing account name"))
