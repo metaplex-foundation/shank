@@ -55,7 +55,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// They take the following general form:
 ///
 /// ```
-/// #[account(index?, (writable|signer)?, name="<account_name>", desc?="optional description")]
+/// #[account(index?, (writable|signer)?, optional?, name="<account_name>", desc?="optional description")]
 /// ```
 ///
 /// - `index`: optionally provides the account index in the provided accounts array which needs to
@@ -63,6 +63,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// - `signer` | `sign` | `sig`: indicates that the account is _signer_
 /// - `writable` | `write` | `writ` | `mut`: indicates that the account is _writable_ which means it may be
 ///   mutated as part of processing the particular instruction
+/// - `optional | option | opt`: indicates that this account is optional
 /// - `name`: (required) provides the name for the account
 /// - `desc` | `description`: allows to provide a description of the account
 ///
