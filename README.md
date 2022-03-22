@@ -17,6 +17,26 @@ For _usage_ and _installation_ see the [shank-cli Readme](./shank-cli/README.md)
 - [shank-idl](./shank-idl) processes files of a crate in order to discover _shank_ macros
   annotations and convert annotated types into an [solita](https://github.com/metaplex-foundation/solita) compatible IDL
 
+## Development
+
+Fork the repo makes some changes and make sure that all is dandy by running `cargo test`. Then
+provide a pull request.
+
+If you are a contributor with access to publish to crates.io do the below in order to publish a
+new version. NOTE that this only works from the _master_ branch and should be performed _after_
+merging a PR into master.
+
+```sh
+cargo test && cargo release <major|minor|patch>
+```
+
+The above runs all tests and dry-runs the release process. You should verify closely what it is
+about to do and then re-run the release command as shown below.
+
+```sh
+cargo release <major|minor|patch> --execute
+```
+
 ## LICENSE
 
 Apache-2.0
