@@ -27,6 +27,7 @@ pub struct InstructionAccountWithoutIdent {
     pub writable: bool,
     pub signer: bool,
     pub desc: Option<String>,
+    pub optional: bool,
 }
 
 impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
@@ -37,6 +38,7 @@ impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
             writable,
             signer,
             desc,
+            optional,
             ..
         } = acc;
         Self {
@@ -45,6 +47,7 @@ impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
             writable: *writable,
             signer: *signer,
             desc: desc.clone(),
+            optional: optional.clone(),
         }
     }
 }
@@ -83,6 +86,7 @@ fn account_readonly() {
             writable: false,
             signer: false,
             desc: None,
+            optional: false,
         },
     );
 
@@ -103,6 +107,7 @@ fn account_readonly() {
             writable: false,
             signer: false,
             desc: None,
+            optional: false,
         },
     );
 }
@@ -125,6 +130,7 @@ fn account_signer() {
             writable: false,
             signer: true,
             desc: None,
+            optional: false,
         },
     );
 
@@ -145,6 +151,7 @@ fn account_signer() {
             writable: false,
             signer: true,
             desc: None,
+            optional: false,
         },
     );
 }
@@ -167,6 +174,7 @@ fn account_writable() {
             writable: true,
             signer: false,
             desc: None,
+            optional: false,
         },
     );
 
@@ -187,6 +195,51 @@ fn account_writable() {
             writable: true,
             signer: false,
             desc: None,
+            optional: false,
+        },
+    );
+}
+
+#[test]
+fn account_optional() {
+    let accounts_indexed = parse_first_enum_variant_attrs(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instructions {
+            #[account(0, name="authority", writable, optional)]
+            Indexed
+        }
+    })
+    .expect("Should parse fine");
+    assert_instruction_account_matches(
+        &accounts_indexed.0[0],
+        InstructionAccountWithoutIdent {
+            index: Some(0),
+            name: "authority".to_string(),
+            writable: true,
+            signer: false,
+            desc: None,
+            optional: true,
+        },
+    );
+
+    let accounts = parse_first_enum_variant_attrs(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instructions {
+            #[account(w, name="authority", optional)]
+            NotIndexed
+        }
+    })
+    .expect("Should parse fine");
+
+    assert_instruction_account_matches(
+        &accounts.0[0],
+        InstructionAccountWithoutIdent {
+            index: None,
+            name: "authority".to_string(),
+            writable: true,
+            signer: false,
+            desc: None,
+            optional: true,
         },
     );
 }
@@ -210,6 +263,7 @@ fn account_desc() {
             writable: false,
             signer: false,
             desc: Some("Readonly indexed account description".to_string()),
+            optional: false,
         },
     );
 }
@@ -223,6 +277,7 @@ fn account_multiple_attrs() {
             writable: false,
             signer: true,
             desc: Some("Signer account".to_string()),
+            optional: false,
         },
         InstructionAccountWithoutIdent {
             index: Some(1),
@@ -230,6 +285,7 @@ fn account_multiple_attrs() {
             writable: true,
             signer: false,
             desc: Some("Writable account".to_string()),
+            optional: false,
         },
         InstructionAccountWithoutIdent {
             index: Some(2),
@@ -237,6 +293,15 @@ fn account_multiple_attrs() {
             writable: false,
             signer: false,
             desc: Some("Readonly account".to_string()),
+            optional: false,
+        },
+        InstructionAccountWithoutIdent {
+            index: Some(3),
+            name: "optional_account".to_string(),
+            writable: false,
+            signer: false,
+            desc: Some("Readonly optional account".to_string()),
+            optional: true,
         },
     ];
 
@@ -249,6 +314,7 @@ fn account_multiple_attrs() {
                      writable,
                      signer,
                      desc,
+                     optional,
                      ..
                  }| {
                     InstructionAccountWithoutIdent {
@@ -257,6 +323,7 @@ fn account_multiple_attrs() {
                         writable: writable.clone(),
                         signer: signer.clone(),
                         desc: desc.clone(),
+                        optional: optional.clone(),
                     }
                 },
             )
@@ -268,6 +335,7 @@ fn account_multiple_attrs() {
             #[account(name ="authority", sig, desc = "Signer account")]
             #[account(name ="storage", mut, desc = "Writable account")]
             #[account(name ="funnel", desc = "Readonly account")]
+            #[account(name ="optional_account", desc = "Readonly optional account", optional)]
             NotIndexed
         }
     })
@@ -284,6 +352,7 @@ fn account_multiple_attrs() {
             #[account(0, name ="authority", sig, desc = "Signer account")]
             #[account(1, name ="storage", mut, desc = "Writable account")]
             #[account(2, name ="funnel", desc = "Readonly account")]
+            #[account(3, name ="optional_account", desc = "Readonly optional account", optional)]
             Indexed
         }
     })

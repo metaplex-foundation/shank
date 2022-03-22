@@ -38,7 +38,7 @@ fn parse_c_style_instruction() {
         #[derive(ShankInstruction)]
         pub enum Instruction {
             #[account(0, name = "creator", sig)]
-            #[account(1, name = "thing", mut)]
+            #[account(1, name = "thing", mut, optional)]
             CreateThing,
             #[account(name = "creator", sig)]
             CloseThing
@@ -49,6 +49,18 @@ fn parse_c_style_instruction() {
 
     assert_eq!(parsed.ident.to_string(), "Instruction", "enum ident");
     assert_eq!(parsed.variants.len(), 2, "variants");
+    assert_eq!(
+        parsed.variants[0].accounts[0].optional, false,
+        "non-optional account of first variant"
+    );
+    assert_eq!(
+        parsed.variants[0].accounts[1].optional, true,
+        "optional account of first variant"
+    );
+    assert_eq!(
+        parsed.variants[1].accounts[0].optional, false,
+        "non-optional account of second variant"
+    );
 
     assert_instruction_variant(&parsed.variants[0], "CreateThing", 0, None, 2);
     assert_instruction_variant(&parsed.variants[1], "CloseThing", 1, None, 1);

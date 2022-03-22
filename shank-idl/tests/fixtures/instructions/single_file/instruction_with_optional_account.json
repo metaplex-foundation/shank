@@ -1,0 +1,52 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "CreateThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "thing",
+          "isMut": true,
+          "isSigner": false,
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "someArgs",
+          "type": {
+            "defined": "SomeArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "CloseThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

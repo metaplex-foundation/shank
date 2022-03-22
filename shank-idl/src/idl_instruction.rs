@@ -127,6 +127,9 @@ impl From<InstructionAccount> for IdlAccountItem {
     }
 }
 
+fn is_false(x: &bool) -> bool {
+    return !x;
+}
 // -----------------
 // IdlAccount
 // -----------------
@@ -138,6 +141,8 @@ pub struct IdlAccount {
     pub is_signer: bool,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub desc: Option<String>,
+    #[serde(skip_serializing_if = "is_false", default)]
+    pub optional: bool,
 }
 
 impl From<InstructionAccount> for IdlAccount {
@@ -147,6 +152,7 @@ impl From<InstructionAccount> for IdlAccount {
             writable,
             signer,
             desc,
+            optional,
             ..
         } = acc;
         Self {
@@ -154,6 +160,7 @@ impl From<InstructionAccount> for IdlAccount {
             is_mut: writable,
             is_signer: signer,
             desc,
+            optional,
         }
     }
 }
