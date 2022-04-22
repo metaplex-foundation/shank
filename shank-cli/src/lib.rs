@@ -9,7 +9,10 @@ use clap::Parser;
 use log::{debug, info};
 use shank_idl::{extract_idl, manifest::Manifest, ParseIdlOpts};
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Debug, Parser)]
+#[clap(version = VERSION)]
 pub struct Opts {
     #[clap(subcommand)]
     pub command: Command,
