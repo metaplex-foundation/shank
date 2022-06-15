@@ -57,6 +57,16 @@ fn account_from_single_file_complex_types() {
 }
 
 #[test]
+fn account_from_single_file_padding() {
+    let file = fixtures_dir().join("single_file").join("padding.rs");
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    check_or_update_idl(&idl, "single_file/padding.json");
+}
+
+#[test]
 fn account_from_crate() {
     let file = fixtures_dir()
         .join("sample_crate")

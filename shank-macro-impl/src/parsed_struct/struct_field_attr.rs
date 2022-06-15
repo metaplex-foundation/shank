@@ -7,6 +7,14 @@ pub enum StructFieldAttr {
     Padding,
 }
 
+impl From<&StructFieldAttr> for String {
+    fn from(attr: &StructFieldAttr) -> Self {
+        match attr {
+            StructFieldAttr::Padding => "padding".to_string(),
+        }
+    }
+}
+
 pub struct StructFieldAttrs(pub HashSet<StructFieldAttr>);
 
 impl From<&[Attribute]> for StructFieldAttrs {

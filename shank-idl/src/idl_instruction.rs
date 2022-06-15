@@ -62,7 +62,11 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
                 "instructionArgs".to_string()
             };
             let ty = IdlType::try_from(field_ty)?;
-            vec![IdlField { name, ty }]
+            vec![IdlField {
+                name,
+                ty,
+                attrs: None,
+            }]
         } else {
             vec![]
         };
