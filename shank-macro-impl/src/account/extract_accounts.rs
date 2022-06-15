@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::{collections::HashSet, convert::TryFrom};
 
 use crate::{
     parsed_struct::{ParsedStruct, StructFieldAttr},
@@ -46,6 +46,7 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
         ));
     }
     // TODO(thlorenz): Don't allow more than one padding field
+    let mut padded_fields = HashSet::new();
     for f in &strct.fields {
         if f.attrs.get(&StructFieldAttr::Padding).is_some() {
             if f.rust_type.ident != "Array" {
@@ -54,8 +55,18 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
                     strct.ident,
                     f.ident
                 ));
+            } else {
+                padded_fields.insert(f.ident.to_string());
             }
         }
+    }
+
+    if padded_fields.len() > 1 {
+        return Err(format_err!(
+            "Account struct {} has more than one padded field: [ {} ]",
+            strct.ident,
+            padded_fields.iter().cloned().collect::<Vec<_>>().join(", ")
+        ));
     }
 
     Ok(())
@@ -80,17 +91,19 @@ mod tests {
         parse_struct(quote! { struct OtherStruct {} })
     }
 
-    fn account_struct() -> ItemStruct {
+    fn account_struct_with_one_field() -> ItemStruct {
         parse_struct(quote! {
             #[derive(ShankAccount)]
-            struct AccountStruct {}
+            struct AccountStruct {
+                id: Pubkey,
+            }
         })
     }
 
-    fn account_struct_with_fields() -> ItemStruct {
+    fn account_struct_with_two_fields() -> ItemStruct {
         parse_struct(quote! {
             #[derive(ShankAccount)]
-            struct AccountStructWithFields {
+            struct AccountStructWithTwoFields {
                 id: Pubkey,
                 count: u8,
             }
@@ -109,7 +122,7 @@ mod tests {
     #[test]
     fn filter_account_structs_with_accounts() {
         let other_struct = other_struct();
-        let account_struct = account_struct();
+        let account_struct = account_struct_with_one_field();
         let all_structs = vec![&other_struct, &account_struct].into_iter();
 
         let account_structs = filter_account_structs(all_structs);
@@ -120,8 +133,8 @@ mod tests {
     #[test]
     fn extract_accounts_from_structs_with_accounts() {
         let other_struct = other_struct();
-        let account_struct = account_struct();
-        let account_struct_with_fields = account_struct_with_fields();
+        let account_struct = account_struct_with_one_field();
+        let account_struct_with_fields = account_struct_with_two_fields();
         let all_structs =
             vec![&other_struct, &account_struct, &account_struct_with_fields]
                 .into_iter();
@@ -131,10 +144,10 @@ mod tests {
         assert_eq!(accounts.len(), 2, "two accounts");
         assert_matches!(&accounts[0], ParsedStruct { ident, fields, .. } => {
             assert_eq!(ident, "AccountStruct");
-            assert_eq!(fields.len(), 0);
+            assert_eq!(fields.len(), 1);
         });
         assert_matches!(&accounts[1], ParsedStruct { ident, fields, .. } => {
-            assert_eq!(ident, "AccountStructWithFields");
+            assert_eq!(ident, "AccountStructWithTwoFields");
             assert_eq!(fields.len(), 2);
         });
     }
@@ -165,6 +178,19 @@ mod tests {
         })
     }
 
+    fn account_struct_with_two_padded_fields() -> ItemStruct {
+        parse_struct(quote! {
+            #[derive(ShankAccount)]
+            struct AccountStructWithTwoPaddedFields {
+                count: u8,
+                #[padding]
+                _padding: [u8; 3],
+                #[padding]
+                _other_padding: [u8; 3],
+            }
+        })
+    }
+
     #[test]
     fn extract_account_from_account_struct_with_valid_padding() {
         let account_struct = account_struct_with_valid_padding();
@@ -191,6 +217,17 @@ mod tests {
         let res = extract_account_structs(all_structs);
         assert_matches!(res, Err(err) => {
             assert!(err.to_string().contains("Account struct AccountStruct field _padding has padding attribute, but is not an Array"));
+        });
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_two_padded_fields() {
+        let account_struct = account_struct_with_two_padded_fields();
+        let all_structs = vec![&account_struct].into_iter();
+
+        let res = extract_account_structs(all_structs);
+        assert_matches!(res, Err(err) => {
+            assert!(err.to_string().contains("AccountStructWithTwoPaddedFields has more than one padded field"));
         });
     }
 }
