@@ -1,0 +1,34 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "StructAccountWithPadding",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "count",
+            "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                3
+              ]
+            },
+            "attrs": [
+              "padding"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     convert::{TryFrom, TryInto},
     fmt::Display,
 };
@@ -11,10 +12,13 @@ use syn::{
 
 use crate::types::RustType;
 
+use super::struct_field_attr::{StructFieldAttr, StructFieldAttrs};
+
 #[derive(Debug, Clone)]
 pub struct StructField {
     pub ident: syn::Ident,
     pub rust_type: RustType,
+    pub attrs: HashSet<StructFieldAttr>,
 }
 
 impl Display for StructField {
@@ -34,13 +38,19 @@ impl TryFrom<&Field> for StructField {
 
     fn try_from(f: &Field) -> ParseResult<Self> {
         let ident = f.ident.as_ref().unwrap().clone();
+        let attrs = StructFieldAttrs::from(f.attrs.as_ref()).0;
         let rust_type: RustType = match (&f.ty).try_into() {
             Ok(ty) => ty,
             Err(err) => {
                 return Err(ParseError::new_spanned(ident, err.to_string()))
             }
         };
-        Ok(Self { ident, rust_type })
+
+        Ok(Self {
+            ident,
+            rust_type,
+            attrs,
+        })
     }
 }
 

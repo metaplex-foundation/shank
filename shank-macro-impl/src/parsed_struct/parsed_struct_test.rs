@@ -1,11 +1,13 @@
-use std::ops::Deref;
+use std::{collections::HashSet, ops::Deref};
 
 use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::types::{Composite, TypeKind};
 
-use super::{parse_struct, ParsedStruct, StructField};
+use super::{
+    parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField,
+};
 use assert_matches::assert_matches;
 
 fn parse(input: TokenStream) -> ParsedStruct {
@@ -13,14 +15,15 @@ fn parse(input: TokenStream) -> ParsedStruct {
 }
 
 fn match_field(field: &StructField, field_ident: &str, type_ident: &str) {
-    assert_matches!(field, StructField { ident, rust_type } => {
+    assert_matches!(field, StructField { ident, rust_type, attrs } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, type_ident);
+        assert_eq!(attrs, &HashSet::new());
     });
 }
 
 fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
-    assert_matches!(field, StructField { ident, rust_type } => {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Vec");
         let vec_inner = rust_type.kind.inner_composite_rust_type().expect("should have inner vec type");
@@ -34,7 +37,7 @@ fn match_array_field(
     inner_ty: &str,
     size: usize,
 ) {
-    assert_matches!(field, StructField { ident, rust_type } => {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
         assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
@@ -42,6 +45,25 @@ fn match_array_field(
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
+    });
+}
+
+fn match_array_field_with_attrs(
+    field: &StructField,
+    field_ident: &str,
+    inner_ty: &str,
+    size: usize,
+    field_attrs: &HashSet<StructFieldAttr>,
+) {
+    assert_matches!(field, StructField { ident, rust_type, attrs } => {
+        assert_eq!(ident, field_ident);
+        assert_eq!(rust_type.ident, "Array");
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
+            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+            assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
+            assert_eq!(*array_size, size, "array size");
+        });
+        assert_eq!(attrs, field_attrs);
     });
 }
 
@@ -147,5 +169,78 @@ mod account_collection_examples {
         match_array_field(&res.fields[1], "u64s", "u64", 16);
         match_array_field(&res.fields[2], "strings", "String", 2);
         match_array_field(&res.fields[3], "pubkeys", "Pubkey", 22);
+    }
+}
+
+mod account_with_padding_examples {
+    use super::*;
+    fn padding_attrs() -> HashSet<StructFieldAttr> {
+        let mut set = HashSet::new();
+        set.insert(StructFieldAttr::Padding);
+        set
+    }
+
+    #[test]
+    fn account_with_padding() {
+        let res = parse(quote! {
+            pub struct AccountWithPaddedFieldAtEnd {
+                pub has_participation: bool,
+                #[padding]
+                _account_padding: [u8;36]
+            }
+        });
+        match_field(&res.fields[0], "has_participation", "bool");
+        match_array_field_with_attrs(
+            &res.fields[1],
+            "_account_padding",
+            "u8",
+            36,
+            &padding_attrs(),
+        );
+    }
+
+    #[test]
+    fn account_with_only_padding() {
+        let res = parse(quote! {
+            pub struct AccountWithPaddedFieldAtEnd {
+                #[padding]
+                _account_padding: [u8;10]
+            }
+        });
+        match_array_field_with_attrs(
+            &res.fields[0],
+            "_account_padding",
+            "u8",
+            10,
+            &padding_attrs(),
+        );
+    }
+
+    #[test]
+    fn account_with_two_paddings() {
+        let res = parse(quote! {
+            pub struct AccountWithPaddedFieldAtEnd {
+                pub has_participation: bool,
+                #[padding]
+                _account_padding: [u8;2],
+                #[padding]
+                _more_account_padding: [u8;3]
+            }
+        });
+        match_field(&res.fields[0], "has_participation", "bool");
+        match_array_field_with_attrs(
+            &res.fields[1],
+            "_account_padding",
+            "u8",
+            2,
+            &padding_attrs(),
+        );
+        match_array_field_with_attrs(
+            &res.fields[2],
+            "_more_account_padding",
+            "u8",
+            3,
+            &padding_attrs(),
+        );
     }
 }
