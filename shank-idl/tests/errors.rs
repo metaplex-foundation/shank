@@ -14,7 +14,7 @@ fn errors_this_error() {
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
-    eprintln!("{}", idl.try_into_json().unwrap());
+    // eprintln!("{}", idl.try_into_json().unwrap());
 
     let expected_idl: Idl =
         serde_json::from_str(include_str!("./fixtures/errors/this_error.json"))

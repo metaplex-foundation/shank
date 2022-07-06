@@ -86,6 +86,9 @@ pub struct ParsedEnumVariantField {
     /// The Rust type of the field
     pub rust_type: RustType,
 
+    /// Name of the field, not present for tuple fields
+    pub ident: Option<Ident>,
+
     /// The slot (starting with 0) of the field
     pub slot: usize,
 }
@@ -95,6 +98,10 @@ impl TryFrom<(usize, &Field)> for ParsedEnumVariantField {
 
     fn try_from((slot, field): (usize, &Field)) -> ParseResult<Self> {
         let rust_type = RustType::try_from(&field.ty)?;
-        Ok(ParsedEnumVariantField { rust_type, slot })
+        Ok(ParsedEnumVariantField {
+            rust_type,
+            ident: field.ident.clone(),
+            slot,
+        })
     }
 }

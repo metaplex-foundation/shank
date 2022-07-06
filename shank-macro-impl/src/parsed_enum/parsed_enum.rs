@@ -92,6 +92,23 @@ mod tests {
         assert_eq!(attrs.len(), attrs_len, "attrs");
     }
 
+    fn assert_enum_variant_field_names(
+        variant: &ParsedEnumVariant,
+        names: &[&str],
+    ) {
+        assert_eq!(
+            variant.fields.len(),
+            names.len(),
+            "amount of fields does not match amount of names"
+        );
+        for (idx, f) in variant.fields.iter().enumerate() {
+            assert_eq!(
+                f.ident.as_ref().unwrap().to_string().as_str(),
+                names[idx]
+            );
+        }
+    }
+
     #[test]
     fn parse_c_style_enum_without_attrs() {
         let parsed = parse_enum(quote! {
@@ -181,5 +198,86 @@ mod tests {
 
         assert_enum_variant(&parsed.variants[0], "CreateThing", 0, 100, 0, 2);
         assert_enum_variant(&parsed.variants[1], "CloseThing", 1, 101, 1, 1);
+    }
+
+    #[test]
+    fn parse_data_enum_with_named_field() {
+        let parsed = parse_enum(quote! {
+            pub enum CollectionDetails {
+                V1 { size: u64 },
+            }
+        })
+        .expect("Should parse fine");
+
+        assert_eq!(parsed.ident.to_string(), "CollectionDetails", "enum ident");
+        assert_eq!(parsed.variants.len(), 1, "variants");
+        assert_eq!(parsed.attrs.len(), 0, "enum attrs");
+
+        assert_enum_variant(&parsed.variants[0], "V1", 0, 0, 1, 0);
+        assert_enum_variant_field_names(&parsed.variants[0], &["size"]);
+    }
+
+    #[test]
+    fn parse_data_enum_with_multiple_named_fields() {
+        let parsed = parse_enum(quote! {
+            pub enum CollectionInfo {
+                V1 {
+                    symbol: String,
+                    verified_creators: Vec<Pubkey>,
+                    whitelist_root: [u8; 32],
+                },
+                V2 {
+                    collection_mint: Pubkey,
+                },
+            }
+        })
+        .expect("Should parse fine");
+
+        assert_eq!(parsed.ident.to_string(), "CollectionInfo", "enum ident");
+        assert_eq!(parsed.variants.len(), 2, "variants");
+        assert_eq!(parsed.attrs.len(), 0, "enum attrs");
+
+        assert_enum_variant(&parsed.variants[0], "V1", 0, 0, 3, 0);
+        assert_enum_variant(&parsed.variants[1], "V2", 1, 1, 1, 0);
+
+        assert_enum_variant_field_names(
+            &parsed.variants[0],
+            &["symbol", "verified_creators", "whitelist_root"],
+        );
+        assert_enum_variant_field_names(
+            &parsed.variants[1],
+            &["collection_mint"],
+        );
+    }
+
+    #[test]
+    fn parse_data_enum_with_named_and_unnamed_fields() {
+        let parsed = parse_enum(quote! {
+            pub enum CollectionInfo {
+                V1 {
+                    symbol: String,
+                    verified_creators: Vec<Pubkey>,
+                    whitelist_root: [u8; 32],
+                },
+                V2(Pubkey),
+            }
+        })
+        .expect("Should parse fine");
+
+        assert_eq!(parsed.ident.to_string(), "CollectionInfo", "enum ident");
+        assert_eq!(parsed.variants.len(), 2, "variants");
+        assert_eq!(parsed.attrs.len(), 0, "enum attrs");
+
+        assert_enum_variant(&parsed.variants[0], "V1", 0, 0, 3, 0);
+        assert_enum_variant(&parsed.variants[1], "V2", 1, 1, 1, 0);
+
+        assert_enum_variant_field_names(
+            &parsed.variants[0],
+            &["symbol", "verified_creators", "whitelist_root"],
+        );
+        assert_eq!(
+            &parsed.variants[1].fields[0].ident, &None,
+            "unnamed field has no ident"
+        );
     }
 }

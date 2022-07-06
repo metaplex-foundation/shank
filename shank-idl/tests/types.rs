@@ -38,6 +38,21 @@ fn type_valid_single_emum() {
 }
 
 #[test]
+fn type_valid_single_data_emum() {
+    let file = fixtures_dir().join("valid_single_data_enum.rs");
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_data_enum.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
 fn type_valid_multiple() {
     let file = fixtures_dir().join("valid_multiple.rs");
     let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
