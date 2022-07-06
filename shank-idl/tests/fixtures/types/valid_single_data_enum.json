@@ -1,0 +1,48 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "CollectionInfo",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "V1",
+            "fields": [
+              {
+                "name": "symbol",
+                "type": "string"
+              },
+              {
+                "name": "verified_creators",
+                "type": {
+                  "vec": "publicKey"
+                }
+              },
+              {
+                "name": "whitelist_root",
+                "type": {
+                  "array": ["u8", 32]
+                }
+              }
+            ]
+          },
+          {
+            "name": "V2",
+            "fields": [
+              {
+                "name": "collection_mint",
+                "type": "publicKey"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
