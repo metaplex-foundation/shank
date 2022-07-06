@@ -33,16 +33,28 @@ impl TryFrom<ParsedEnumVariant> for IdlEnumVariant {
     type Error = Error;
 
     fn try_from(variant: ParsedEnumVariant) -> Result<Self> {
-        let types = variant
-            .fields
-            .into_iter()
-            .map(IdlType::try_from)
-            .collect::<Result<Vec<IdlType>>>()?;
+        let mut named_fields = Vec::new();
+        let mut tuple_fields = Vec::new();
 
-        let fields = if types.is_empty() {
-            None
+        for field in &variant.fields {
+            let ty = IdlType::try_from(field.rust_type.clone())?;
+            match &field.ident {
+                Some(name) => named_fields.push(IdlField {
+                    name: name.to_string(),
+                    ty,
+                    attrs: None,
+                }),
+                None => tuple_fields.push(ty),
+            }
+        }
+
+        assert!(named_fields.is_empty() || tuple_fields.is_empty(), "should either have named or tuple fields on a variant, but never both");
+        let fields = if !named_fields.is_empty() {
+            Some(EnumFields::Named(named_fields))
+        } else if !tuple_fields.is_empty() {
+            Some(EnumFields::Tuple(tuple_fields))
         } else {
-            Some(EnumFields::Tuple(types))
+            None
         };
 
         Ok(Self {

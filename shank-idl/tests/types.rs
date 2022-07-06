@@ -44,14 +44,12 @@ fn type_valid_single_data_emum() {
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
-    eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
-
-    let _expected_idl: Idl = serde_json::from_str(include_str!(
+    let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/types/valid_single_data_enum.json"
     ))
     .unwrap();
 
-    // assert_eq!(idl, expected_idl);
+    assert_eq!(idl, expected_idl);
 }
 
 #[test]
