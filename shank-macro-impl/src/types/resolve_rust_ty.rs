@@ -7,7 +7,10 @@ use syn::{
     TypeArray, TypePath,
 };
 
-use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
+use super::{
+    traits::{ByteSize, OptionByteSize},
+    Composite, ParsedReference, Primitive, TypeKind, Value,
+};
 use syn::{Error as ParseError, Result as ParseResult};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -20,6 +23,8 @@ pub struct RustType {
     /// The context of the type, i.e. is it an inner type of `Vec<ty>` and thus a
     /// CollectionInnerType
     pub context: RustTypeContext,
+
+    pub byte_size: OptionByteSize,
 }
 
 impl TryFrom<&Type> for RustType {
@@ -42,23 +47,32 @@ impl From<&str> for IdentWrap {
 // RustType creation helper methods
 // -----------------
 impl RustType {
-    pub fn owned<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
+    pub fn owned<T: Into<IdentWrap>>(
+        ident: T,
+        kind: TypeKind,
+        byte_size: OptionByteSize,
+    ) -> Self {
         let ident_wrap: IdentWrap = ident.into();
         RustType {
             ident: ident_wrap.0,
             kind,
             reference: ParsedReference::Owned,
             context: RustTypeContext::Default,
+            byte_size: None,
         }
     }
     pub fn owned_primitive<T: Into<IdentWrap>>(
         ident: T,
         primitive: Primitive,
     ) -> Self {
-        RustType::owned(ident, TypeKind::Primitive(primitive))
+        RustType::owned(
+            ident,
+            TypeKind::Primitive(primitive),
+            Some(primitive.byte_size()),
+        )
     }
     pub fn owned_string<T: Into<IdentWrap>>(ident: T) -> Self {
-        RustType::owned(ident, TypeKind::Value(Value::String))
+        RustType::owned(ident, TypeKind::Value(Value::String), None)
     }
     pub fn owned_custom_value<T: Into<IdentWrap>>(
         ident: T,
@@ -67,6 +81,7 @@ impl RustType {
         RustType::owned(
             ident,
             TypeKind::Value(Value::Custom(value.to_string())),
+            None,
         )
     }
     pub fn owned_vec_primitive<T: Into<IdentWrap>>(
@@ -80,6 +95,7 @@ impl RustType {
                 Some(Box::new(RustType::owned_primitive("inner", primitive))),
                 None,
             ),
+            None,
         )
     }
 
@@ -95,6 +111,7 @@ impl RustType {
                 Some(Box::new(RustType::owned_primitive("inner", primitive))),
                 None,
             ),
+            Some(size * primitive.byte_size()),
         )
     }
 
@@ -109,6 +126,7 @@ impl RustType {
                 Some(Box::new(RustType::owned_primitive("inner", primitive))),
                 None,
             ),
+            Some(primitive.byte_size()),
         )
     }
 }

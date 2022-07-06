@@ -1,5 +1,14 @@
-use super::RustType;
+mod composite;
+mod primitive;
+mod value;
+
+pub use composite::*;
+pub use primitive::*;
+pub use value::*;
+
 use std::fmt::Debug;
+
+use super::RustType;
 
 // -----------------
 // TypeKind
@@ -167,129 +176,6 @@ impl TypeKind {
             TypeKind::Composite(_, _, _) => None,
             TypeKind::Unit => None,
             TypeKind::Unknown => None,
-        }
-    }
-}
-
-// --------------
-// Primitive
-// --------------
-#[derive(Clone, PartialEq)]
-pub enum Primitive {
-    U8,
-    I8,
-    U16,
-    I16,
-    U32,
-    I32,
-    U64,
-    I64,
-    U128,
-    I128,
-    USize,
-    Bool,
-}
-
-impl Debug for Primitive {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ty = match self {
-            Primitive::U8 => "Primitive::U8",
-            Primitive::I8 => "Primitive::I8",
-            Primitive::U16 => "Primitive::U16",
-            Primitive::I16 => "Primitive::I16",
-            Primitive::U32 => "Primitive::U32",
-            Primitive::I32 => "Primitive::I32",
-            Primitive::U64 => "Primitive::U64",
-            Primitive::I64 => "Primitive::I64",
-            Primitive::U128 => "Primitive::U128",
-            Primitive::I128 => "Primitive::I128",
-            Primitive::USize => "Primitive::Usize",
-            Primitive::Bool => "Primitive::Bool",
-        };
-        write!(f, "{}", ty)
-    }
-}
-
-// --------------
-// Value
-// --------------
-#[derive(Clone, PartialEq)]
-pub enum Value {
-    CString,
-    String,
-    Str,
-    Custom(String),
-}
-
-impl Debug for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Value::CString => write!(f, "Value::CString"),
-            Value::Str => write!(f, "Value::Str"),
-            Value::String => write!(f, "Value::String"),
-            Value::Custom(name) => {
-                write!(f, "Value::Custom(\"{}\")", name)
-            }
-        }
-    }
-}
-
-impl Value {
-    fn is_string_like(&self) -> bool {
-        use Value::*;
-        match self {
-            CString | String | Str => true,
-            _ => false,
-        }
-    }
-
-    fn is_string(&self) -> bool {
-        use Value::*;
-        match self {
-            String => true,
-            _ => false,
-        }
-    }
-
-    fn is_cstring(&self) -> bool {
-        use Value::*;
-        match self {
-            CString => true,
-            _ => false,
-        }
-    }
-
-    fn is_str(&self) -> bool {
-        use Value::*;
-        match self {
-            Str => true,
-            _ => false,
-        }
-    }
-}
-
-// --------------
-// Composite
-// --------------
-#[derive(Clone, PartialEq)]
-pub enum Composite {
-    Vec,
-    Array(usize),
-    Option,
-    HashMap,
-    Custom(String),
-}
-
-impl Debug for Composite {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Composite::Vec => write!(f, "Composite::Vec"),
-            Composite::Array(size) => write!(f, "Composite::Array({})", size),
-            Composite::Option => write!(f, "Composite::Option"),
-            Composite::HashMap => write!(f, "Composite::HashMap"),
-            Composite::Custom(name) => {
-                write!(f, "Composite::Custom(\"{}\")", name)
-            }
         }
     }
 }

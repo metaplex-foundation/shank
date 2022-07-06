@@ -19,6 +19,7 @@ pub struct StructField {
     pub ident: syn::Ident,
     pub rust_type: RustType,
     pub attrs: HashSet<StructFieldAttr>,
+    // pub byte_size: Option<usize>,
 }
 
 impl Display for StructField {
