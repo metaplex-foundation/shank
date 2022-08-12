@@ -152,15 +152,25 @@ impl TypeKind {
         match self {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
-            TypeKind::Composite(Composite::HashMap, key_ty, val_ty) => {
+            TypeKind::Composite(composite, key_ty, val_ty)
+                if composite == &Composite::HashMap
+                    || composite == &Composite::BTreeMap =>
+            {
                 let key = key_ty
                     .as_ref()
                     .map(|x| *x.clone())
-                    .expect("hashmap should have key type");
+                    .ok_or_else(|| {
+                        format!("{:?} should have key type", composite)
+                    })
+                    .unwrap();
+
                 let val = val_ty
                     .as_ref()
                     .map(|x| *x.clone())
-                    .expect("hashmap should have val type");
+                    .ok_or_else(|| {
+                        format!("{:?} should have val type", composite)
+                    })
+                    .unwrap();
 
                 Some((key, val))
             }
@@ -277,6 +287,7 @@ pub enum Composite {
     Array(usize),
     Option,
     HashMap,
+    BTreeMap,
     Custom(String),
 }
 
@@ -287,6 +298,7 @@ impl Debug for Composite {
             Composite::Array(size) => write!(f, "Composite::Array({})", size),
             Composite::Option => write!(f, "Composite::Option"),
             Composite::HashMap => write!(f, "Composite::HashMap"),
+            Composite::BTreeMap => write!(f, "Composite::BTreeMap"),
             Composite::Custom(name) => {
                 write!(f, "Composite::Custom(\"{}\")", name)
             }

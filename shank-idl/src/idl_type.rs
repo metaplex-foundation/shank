@@ -99,6 +99,11 @@ impl TryFrom<RustType> for IdlType {
                         "Rust HashMap Composite IDL type not yet supported"
                     )
                 }
+                Composite::BTreeMap => {
+                    anyhow::bail!(
+                        "Rust BTreeMap Composite IDL type not yet supported"
+                    )
+                }
                 Composite::Custom(_) => {
                     anyhow::bail!(
                         "Rust Custom Composite IDL type not yet supported"

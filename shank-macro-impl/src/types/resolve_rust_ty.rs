@@ -304,7 +304,7 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                         GenericArgument::Type(ty1),
                         GenericArgument::Type(ty2),
                     ) => match ident_str.as_str() {
-                        "HashMap" => {
+                        ident if ident == "HashMap" || ident == "BTreeMap" => {
                             let inner1 = resolve_rust_ty(
                                 ty1,
                                 RustTypeContext::CollectionItem,
@@ -317,11 +317,13 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                             )
                             .ok()
                             .map(|x| Box::new(x));
-                            TypeKind::Composite(
-                                Composite::HashMap,
-                                inner1,
-                                inner2,
-                            )
+
+                            let composite = if ident == "HashMap" {
+                                Composite::HashMap
+                            } else {
+                                Composite::BTreeMap
+                            };
+                            TypeKind::Composite(composite, inner1, inner2)
                         }
                         _ => {
                             eprintln!("ident: {:#?}, args: {:#?}", ident, args);
