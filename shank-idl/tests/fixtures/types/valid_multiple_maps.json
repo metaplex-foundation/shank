@@ -1,0 +1,142 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "OneHashMapStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8U8Map",
+            "type": {
+              "hashMap": ["u8", "u8"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MultipleHashMapsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8StringMap",
+            "type": {
+              "hashMap": ["u8", "string"]
+            }
+          },
+          {
+            "name": "stringOptionI128Map",
+            "type": {
+              "hashMap": [
+                "string",
+                {
+                  "option": "i128"
+                }
+              ]
+            }
+          },
+          {
+            "name": "optionStringVecCustomMap",
+            "type": {
+              "hashMap": [
+                {
+                  "option": "string"
+                },
+                {
+                  "vec": {
+                    "defined": "Custom"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OneBTreeMapStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8U8Map",
+            "type": {
+              "bTreeMap": ["u8", "u8"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MultipleMapsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8StringBtreeMap",
+            "type": {
+              "bTreeMap": ["u8", "string"]
+            }
+          },
+          {
+            "name": "optionStringVecCustomBtreeMap",
+            "type": {
+              "bTreeMap": [
+                {
+                  "option": "string"
+                },
+                {
+                  "vec": {
+                    "defined": "Custom"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "i16OptionBoolHashMap",
+            "type": {
+              "hashMap": [
+                "i16",
+                {
+                  "option": "bool"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NestedMapsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vecHashMapU8U8",
+            "type": {
+              "vec": {
+                "hashMap": ["u8", "u8"]
+              }
+            }
+          },
+          {
+            "name": "optionBtreeMapU8U8",
+            "type": {
+              "option": {
+                "bTreeMap": ["u8", "u8"]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
