@@ -244,3 +244,17 @@ mod account_with_padding_examples {
         );
     }
 }
+
+mod account_tuples_examples {
+    use super::*;
+
+    #[test]
+    fn vec_tuple() {
+        let res = parse(quote! {
+            pub struct AccountWithTuples {
+                pub two_u8s: Vec<(u8, u8)>,
+            }
+        });
+        eprintln!("{:#?}", res);
+    }
+}
