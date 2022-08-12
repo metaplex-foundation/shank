@@ -110,6 +110,30 @@
           }
         ]
       }
+    },
+    {
+      "name": "NestedMapsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vecHashMapU8U8",
+            "type": {
+              "vec": {
+                "hashMap": ["u8", "u8"]
+              }
+            }
+          },
+          {
+            "name": "optionBtreeMapU8U8",
+            "type": {
+              "option": {
+                "bTreeMap": ["u8", "u8"]
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "metadata": {

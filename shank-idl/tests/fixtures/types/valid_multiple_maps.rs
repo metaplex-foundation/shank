@@ -22,3 +22,9 @@ pub struct MultipleMapsStruct {
         BTreeMap<Option<String>, Vec<Custom>>,
     pub i16_option_bool_hash_map: HashMap<i16, Option<bool>>,
 }
+
+#[derive(BorshSerialize)]
+pub struct NestedMapsStruct {
+    pub vec_hash_map_u8_u8: Vec<HashMap<u8, u8>>,
+    pub option_btree_map_u8_u8: Option<BTreeMap<u8, u8>>,
+}
