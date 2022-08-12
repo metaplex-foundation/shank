@@ -262,23 +262,36 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 1 => match &args[0] {
                     GenericArgument::Type(ty) => match ident_str.as_str() {
                         "Vec" => {
-                            let inner = resolve_rust_ty(ty, RustTypeContext::CollectionItem)
-                                .ok()
-                                .map(|x| Box::new(x));
+                            let inner = resolve_rust_ty(
+                                ty,
+                                RustTypeContext::CollectionItem,
+                            )
+                            .ok()
+                            .map(|x| Box::new(x));
                             TypeKind::Composite(Composite::Vec, inner, None)
                         }
                         "Option" => {
-                            let inner = resolve_rust_ty(ty, RustTypeContext::OptionItem)
-                                .ok()
-                                .map(|x| Box::new(x));
+                            let inner = resolve_rust_ty(
+                                ty,
+                                RustTypeContext::OptionItem,
+                            )
+                            .ok()
+                            .map(|x| Box::new(x));
                             TypeKind::Composite(Composite::Option, inner, None)
                         }
                         _ => {
-                            let inner = resolve_rust_ty(ty, RustTypeContext::CustomItem)
-                                .ok()
-                                .map(|x| Box::new(x));
+                            let inner = resolve_rust_ty(
+                                ty,
+                                RustTypeContext::CustomItem,
+                            )
+                            .ok()
+                            .map(|x| Box::new(x));
 
-                            TypeKind::Composite(Composite::Custom(ident_str.clone()), inner, None)
+                            TypeKind::Composite(
+                                Composite::Custom(ident_str.clone()),
+                                inner,
+                                None,
+                            )
                         }
                     },
                     _ => TypeKind::Unknown,
@@ -287,29 +300,46 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 // Two Type Parameters
                 // -----------------
                 2 => match (&args[0], &args[1]) {
-                    (GenericArgument::Type(ty1), GenericArgument::Type(ty2)) => {
-                        match ident_str.as_str() {
-                            "HashMap" => {
-                                let inner1 = resolve_rust_ty(ty1, RustTypeContext::CollectionItem)
-                                    .ok()
-                                    .map(|x| Box::new(x));
-                                let inner2 = resolve_rust_ty(ty2, RustTypeContext::CollectionItem)
-                                    .ok()
-                                    .map(|x| Box::new(x));
-                                TypeKind::Composite(Composite::HashMap, inner1, inner2)
-                            }
-                            _ => todo!(
-                            "Not yet handling custom angle bracketed types with {} type parameters",
-                            args.len()
-                        ),
+                    (
+                        GenericArgument::Type(ty1),
+                        GenericArgument::Type(ty2),
+                    ) => match ident_str.as_str() {
+                        "HashMap" => {
+                            let inner1 = resolve_rust_ty(
+                                ty1,
+                                RustTypeContext::CollectionItem,
+                            )
+                            .ok()
+                            .map(|x| Box::new(x));
+                            let inner2 = resolve_rust_ty(
+                                ty2,
+                                RustTypeContext::CollectionItem,
+                            )
+                            .ok()
+                            .map(|x| Box::new(x));
+                            TypeKind::Composite(
+                                Composite::HashMap,
+                                inner1,
+                                inner2,
+                            )
                         }
-                    }
+                        _ => {
+                            eprintln!("ident: {:#?}, args: {:#?}", ident, args);
+                            todo!(
+                                "Not yet handling custom angle bracketed types with {} type parameters",
+                                args.len()
+                            )
+                        }
+                    },
                     _ => TypeKind::Unknown,
                 },
-                _ => todo!(
-                    "Not yet handling angle bracketed types with more {} type parameters",
-                    args.len()
-                ),
+                _ => {
+                    eprintln!("ident: {:#?}, args: {:#?}", ident, args);
+                    todo!(
+                        "Not yet handling angle bracketed types with more {} type parameters",
+                        args.len()
+                    )
+                }
             }
         }
         PathArguments::Parenthesized(args) => {
