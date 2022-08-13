@@ -285,6 +285,7 @@ impl Value {
 pub enum Composite {
     Vec,
     Array(usize),
+    Tuple,
     Option,
     HashMap,
     BTreeMap,
@@ -296,6 +297,7 @@ impl Debug for Composite {
         match self {
             Composite::Vec => write!(f, "Composite::Vec"),
             Composite::Array(size) => write!(f, "Composite::Array({})", size),
+            Composite::Tuple => write!(f, "Composite::Tuple"),
             Composite::Option => write!(f, "Composite::Option"),
             Composite::HashMap => write!(f, "Composite::HashMap"),
             Composite::BTreeMap => write!(f, "Composite::BTreeMap"),

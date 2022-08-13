@@ -4,7 +4,7 @@ use quote::format_ident;
 use syn::{
     spanned::Spanned, AngleBracketedGenericArguments, Expr, ExprLit,
     GenericArgument, Ident, Lit, Path, PathArguments, PathSegment, Type,
-    TypeArray, TypePath,
+    TypeArray, TypePath, TypeTuple,
 };
 
 use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
@@ -117,6 +117,7 @@ impl RustType {
 pub enum RustTypeContext {
     Default,
     CollectionItem,
+    TupleItem,
     OptionItem,
     CustomItem,
 }
@@ -160,8 +161,11 @@ pub fn resolve_rust_ty(
             let pr = ParsedReference::from(r);
             (r.elem.as_ref(), pr)
         }
-        Type::Array(_) | Type::Path(_) => (ty, ParsedReference::Owned),
+        Type::Array(_) | Type::Path(_) | Type::Tuple(_) => {
+            (ty, ParsedReference::Owned)
+        }
         ty => {
+            eprintln!("{:#?}", ty);
             return Err(ParseError::new(
                 ty.span(),
                 "Only owned or reference Path/Array types supported",
@@ -200,10 +204,52 @@ pub fn resolve_rust_ty(
             );
             (format_ident!("Array"), kind)
         }
+        Type::Tuple(TypeTuple { elems, .. }) => {
+            let mut types: Vec<RustType> = vec![];
+            for elem in elems {
+                match elem {
+                    Type::Path(TypePath { path, .. }) => {
+                        let (ident, kind) = ident_and_kind_from_path(path);
+                        let ty = RustType {
+                            kind: kind.clone(),
+                            ident: ident.clone(),
+                            reference: ParsedReference::Owned,
+                            context: RustTypeContext::TupleItem,
+                        };
+                        types.push(ty);
+                    }
+                    _ => {
+                        return Err(ParseError::new(
+                            ty.span(),
+                            "Only owned or reference Path/Array types supported",
+                        ));
+                    }
+                }
+            }
+            // TODO(thlorenz): Need to modify Composite everywhere to allow more than 2 inner
+            // RustTypes
+            assert!(types.len() <= 2, "Only supporting two item tuple for now");
+
+            let inner1 = types.get(0).ok_or_else(|| ParseError::new(
+                ty.span(),
+                "A tuple should have two inner types but is missing even the first one",
+            ))?;
+            let inner2 = types.get(1).ok_or_else(|| ParseError::new(
+                ty.span(),
+                "A tuple should have two inner types but is missing the second one",
+            ))?;
+
+            let kind = TypeKind::Composite(
+                Composite::Tuple,
+                Some(Box::new(inner1.clone())),
+                Some(Box::new(inner2.clone())),
+            );
+            (format_ident!("Tuple"), kind)
+        }
         _ => {
             return Err(ParseError::new(
                 ty.span(),
-                "Only Path or Array types supported",
+                "Only Path, Tuple or Array types supported",
             ));
         }
     };

@@ -1,0 +1,75 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "TwoElementTuples",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8U8",
+            "type": {
+              "tuple": ["u8", "u8"]
+            }
+          },
+          {
+            "name": "u8U16",
+            "type": {
+              "tuple": ["u8", "u16"]
+            }
+          },
+          {
+            "name": "stringCustom",
+            "type": {
+              "tuple": [
+                "string",
+                {
+                  "defined": "Custom"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NestedTwoElementTuples",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vecU8U8",
+            "type": {
+              "vec": {
+                "tuple": ["u8", "u8"]
+              }
+            }
+          },
+          {
+            "name": "hashMapU8U16StringCustom",
+            "type": {
+              "hashMap": [
+                {
+                  "tuple": ["u8", "u16"]
+                },
+                {
+                  "tuple": [
+                    "string",
+                    {
+                      "defined": "Custom"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

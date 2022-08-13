@@ -247,6 +247,19 @@ mod account_with_padding_examples {
 
 mod account_tuples_examples {
     use super::*;
+    // TODO(thlorenz): these tests don't assert anything yet but would have to change once we
+    // support more than just two element tuples, therefore they serve purely as debugging tool for
+    // now
+
+    #[test]
+    fn tuple() {
+        let res = parse(quote! {
+            pub struct AccountWithTuples {
+                pub two_u8s: (u8, u8),
+            }
+        });
+        eprintln!("{:#?}", res);
+    }
 
     #[test]
     fn vec_tuple() {
