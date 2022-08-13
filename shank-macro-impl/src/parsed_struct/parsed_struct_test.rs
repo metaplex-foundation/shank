@@ -1,13 +1,11 @@
-use std::{collections::HashSet, ops::Deref};
+use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use quote::quote;
 
 use crate::types::{Composite, TypeKind};
 
-use super::{
-    parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField,
-};
+use super::{parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField};
 use assert_matches::assert_matches;
 
 fn parse(input: TokenStream) -> ParsedStruct {
@@ -31,17 +29,12 @@ fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
     });
 }
 
-fn match_array_field(
-    field: &StructField,
-    field_ident: &str,
-    inner_ty: &str,
-    size: usize,
-) {
+fn match_array_field(field: &StructField, field_ident: &str, inner_ty: &str, size: usize) {
     assert_matches!(field, StructField { ident, rust_type, .. } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
-        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
-            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
+            let inner_rust_ty = inner.get(0).expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
@@ -58,8 +51,8 @@ fn match_array_field_with_attrs(
     assert_matches!(field, StructField { ident, rust_type, attrs } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
-        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
-            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
+            let inner_rust_ty = inner.get(0).expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
@@ -94,11 +87,7 @@ mod accounts_mpl_examples_auction_house {
         assert_eq!(res.ident.to_string(), "AuctionHouse");
         match_field(&res.fields[0], "auction_house_fee_account", "Pubkey");
         match_field(&res.fields[1], "auction_house_treasury", "Pubkey");
-        match_field(
-            &res.fields[2],
-            "treasury_withdrawal_destination",
-            "Pubkey",
-        );
+        match_field(&res.fields[2], "treasury_withdrawal_destination", "Pubkey");
         match_field(&res.fields[3], "fee_withdrawal_destination", "Pubkey");
         match_field(&res.fields[4], "treasury_mint", "Pubkey");
         match_field(&res.fields[5], "authority", "Pubkey");
