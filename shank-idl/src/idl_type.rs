@@ -20,6 +20,7 @@ pub enum IdlType {
     I64,
     I8,
     Option(Box<IdlType>),
+    Tuple(Vec<IdlType>),
     PublicKey,
     String,
     U128,
@@ -62,10 +63,10 @@ impl TryFrom<RustType> for IdlType {
                     }
                 }
             },
-            TypeKind::Composite(kind, inner1, inner2) => match kind {
-                Composite::Vec => match inner1 {
+            TypeKind::Composite(kind, inners) => match kind {
+                Composite::Vec => match inners.get(0).cloned() {
                     Some(inner) => {
-                        let inner_idl: IdlType = (*inner).try_into()?;
+                        let inner_idl: IdlType = inner.try_into()?;
                         if inner_idl == IdlType::U8 {
                             // Vec<u8>
                             IdlType::Bytes
@@ -77,9 +78,9 @@ impl TryFrom<RustType> for IdlType {
                         anyhow::bail!("Rust Vec Composite needs inner type")
                     }
                 },
-                Composite::Array(size) => match inner1 {
+                Composite::Array(size) => match inners.get(0).cloned() {
                     Some(inner) => {
-                        let inner_idl: IdlType = (*inner).try_into()?;
+                        let inner_idl: IdlType = inner.try_into()?;
                         IdlType::Array(Box::new(inner_idl), size)
                     }
                     None => {
@@ -87,45 +88,58 @@ impl TryFrom<RustType> for IdlType {
                     }
                 },
 
-                Composite::Option => match inner1 {
+                Composite::Option => match inners.get(0).cloned() {
                     Some(inner) => {
-                        let inner_idl: IdlType = (*inner).try_into()?;
+                        let inner_idl: IdlType = inner.try_into()?;
                         IdlType::Option(Box::new(inner_idl))
                     }
                     None => {
                         anyhow::bail!("Rust Option Composite needs inner type")
                     }
                 },
-                Composite::HashMap => match (inner1, inner2) {
-                    (Some(inner1), Some(inner2)) => {
-                        let inner1_idl: IdlType = (*inner1).try_into()?;
-                        let inner2_idl: IdlType = (*inner2).try_into()?;
-                        IdlType::HashMap(
-                            Box::new(inner1_idl),
-                            Box::new(inner2_idl),
-                        )
+                Composite::Tuple => {
+                    if inners.len() < 2 {
+                        anyhow::bail!("Rust Tuple Composite needs at least two inner types");
+                    } else {
+                        let idl_types: Result<Vec<IdlType>> =
+                            inners.into_iter().map(IdlType::try_from).collect();
+                        IdlType::Tuple(idl_types?)
                     }
-                    _ => {
-                        anyhow::bail!(
-                            "Rust HashMap Composite needs two inner types"
-                        )
+                }
+                Composite::HashMap => {
+                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                        (Some(inner1), Some(inner2)) => {
+                            let inner1_idl: IdlType = inner1.try_into()?;
+                            let inner2_idl: IdlType = inner2.try_into()?;
+                            IdlType::HashMap(
+                                Box::new(inner1_idl),
+                                Box::new(inner2_idl),
+                            )
+                        }
+                        _ => {
+                            anyhow::bail!(
+                                "Rust HashMap Composite needs two inner types"
+                            )
+                        }
                     }
-                },
-                Composite::BTreeMap => match (inner1, inner2) {
-                    (Some(inner1), Some(inner2)) => {
-                        let inner1_idl: IdlType = (*inner1).try_into()?;
-                        let inner2_idl: IdlType = (*inner2).try_into()?;
-                        IdlType::BTreeMap(
-                            Box::new(inner1_idl),
-                            Box::new(inner2_idl),
-                        )
+                }
+                Composite::BTreeMap => {
+                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                        (Some(inner1), Some(inner2)) => {
+                            let inner1_idl: IdlType = inner1.try_into()?;
+                            let inner2_idl: IdlType = inner2.try_into()?;
+                            IdlType::BTreeMap(
+                                Box::new(inner1_idl),
+                                Box::new(inner2_idl),
+                            )
+                        }
+                        _ => {
+                            anyhow::bail!(
+                                "Rust BTreeMap Composite needs two inner types"
+                            )
+                        }
                     }
-                    _ => {
-                        anyhow::bail!(
-                            "Rust BTreeMap Composite needs two inner types"
-                        )
-                    }
-                },
+                }
                 Composite::Custom(_) => {
                     anyhow::bail!(
                         "Rust Custom Composite IDL type not yet supported"

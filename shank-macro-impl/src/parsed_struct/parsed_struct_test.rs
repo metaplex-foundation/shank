@@ -1,9 +1,10 @@
-use std::{collections::HashSet, ops::Deref};
+use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::Ident;
 
-use crate::types::{Composite, TypeKind};
+use crate::types::{Composite, RustType, TypeKind};
 
 use super::{
     parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField,
@@ -40,8 +41,8 @@ fn match_array_field(
     assert_matches!(field, StructField { ident, rust_type, .. } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
-        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
-            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
+            let inner_rust_ty = inner.get(0).expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
@@ -58,12 +59,67 @@ fn match_array_field_with_attrs(
     assert_matches!(field, StructField { ident, rust_type, attrs } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
-        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner, _)  => {
-            let inner_rust_ty = inner.as_ref().expect("array should have inner type").deref();
+        assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
+            let inner_rust_ty = inner.get(0).expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
         assert_eq!(attrs, field_attrs);
+    });
+}
+
+// -----------------
+// Tuple asserts
+// -----------------
+fn assert_tuple(
+    ident: &Ident,
+    field_ident: &str,
+    rust_type: &RustType,
+    inner_tys: &[&str],
+) {
+    assert_eq!(ident, field_ident);
+    assert_eq!(rust_type.ident, "Tuple");
+    match &rust_type.kind {
+        TypeKind::Composite(_, inners) => {
+            for (idx, inner) in inners.iter().enumerate() {
+                assert_eq!(inner.ident.to_string(), inner_tys[idx]);
+            }
+        }
+        _ => assert!(false, "expected composite to represent tuple"),
+    };
+}
+
+fn match_tuple_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        assert_tuple(ident, field_ident, rust_type, inner_tys);
+    });
+}
+
+fn match_inner_tuple_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        let rust_type = rust_type.kind.inner_composite_rust_type().unwrap();
+        assert_tuple(ident, field_ident, &rust_type, inner_tys);
+    });
+}
+
+fn match_inner_tuples_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys1: &[&str],
+    inner_tys2: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        let (rt1, rt2) = rust_type.kind.inner_composite_rust_types();
+        assert_tuple(ident, field_ident, &rt1.unwrap(), inner_tys1);
+        assert_tuple(ident, field_ident, &rt2.unwrap(), inner_tys2);
     });
 }
 
@@ -241,6 +297,49 @@ mod account_with_padding_examples {
             "u8",
             3,
             &padding_attrs(),
+        );
+    }
+}
+
+mod account_tuples_examples {
+    use super::*;
+
+    #[test]
+    fn top_level_tuples() {
+        let res = parse(quote! {
+            pub struct AccountWithTuples {
+                pub u8_u8: (u8, u8),
+                pub u8_u16_u32_u64: (u8, u16, u32, u64),
+                pub u8_string_custom: (u8, String, Custom),
+            }
+        });
+        match_tuple_field(&res.fields[0], "u8_u8", &["u8", "u8"]);
+        match_tuple_field(
+            &res.fields[1],
+            "u8_u16_u32_u64",
+            &["u8", "u16", "u32", "u64"],
+        );
+        match_tuple_field(
+            &res.fields[2],
+            "u8_string_custom",
+            &["u8", "String", "Custom"],
+        );
+    }
+
+    #[test]
+    fn nested_tuples() {
+        let res = parse(quote! {
+            pub struct AccountWithNestedTuples {
+                pub vec_u8_u8: Vec<(u8, u8)>,
+                pub hashmap_string_u8_u16_option_u8_i16: HashMap<(String, u8, u16), (Option<u8>, i16)>,
+            }
+        });
+        match_inner_tuple_field(&res.fields[0], "vec_u8_u8", &["u8", "u8"]);
+        match_inner_tuples_field(
+            &res.fields[1],
+            "hashmap_string_u8_u16_option_u8_i16",
+            &["String", "u8", "u16"],
+            &["Option", "i16"],
         );
     }
 }

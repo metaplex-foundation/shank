@@ -8,7 +8,7 @@ use std::fmt::Debug;
 pub enum TypeKind {
     Primitive(Primitive),
     Value(Value),
-    Composite(Composite, Option<Box<RustType>>, Option<Box<RustType>>),
+    Composite(Composite, Vec<RustType>),
     Unit,
     Unknown,
 }
@@ -21,13 +21,9 @@ impl PartialEq for TypeKind {
             }
             (TypeKind::Value(val1), TypeKind::Value(val2)) => val1 == val2,
             (
-                TypeKind::Composite(com1, first_ty1, second_ty1),
-                TypeKind::Composite(com2, first_ty2, second_ty2),
-            ) => {
-                com1 == com2
-                    && first_ty1 == first_ty2
-                    && second_ty1 == second_ty2
-            }
+                TypeKind::Composite(com1, inners1),
+                TypeKind::Composite(com2, inners2),
+            ) => com1 == com2 && inners1 == inners2,
             (TypeKind::Unit, TypeKind::Unit) => true,
             (TypeKind::Unknown, TypeKind::Unknown) => true,
             _ => false,
@@ -40,11 +36,8 @@ impl Debug for TypeKind {
         let kind = match self {
             TypeKind::Primitive(p) => format!("TypeKind::Primitive({:?})", p),
             TypeKind::Value(val) => format!("TypeKind::Value({:?})", val),
-            TypeKind::Composite(com, fst_inner, snd_inner) => {
-                format!(
-                    "TypeKind::Composite({:?}, {:?}, {:?})",
-                    com, fst_inner, snd_inner
-                )
+            TypeKind::Composite(com, inners) => {
+                format!("TypeKind::Composite({:?}, {:?})", com, inners)
             }
             TypeKind::Unit => "TypeKind::Unit".to_string(),
             TypeKind::Unknown => "TypeKind::Unknown".to_string(),
@@ -95,7 +88,7 @@ impl TypeKind {
     }
 
     pub fn is_composite(&self) -> bool {
-        if let TypeKind::Composite(_, _, _) = self {
+        if let TypeKind::Composite(_, _) = self {
             true
         } else {
             false
@@ -111,7 +104,7 @@ impl TypeKind {
     }
 
     pub fn is_vec(&self) -> bool {
-        if let TypeKind::Composite(Composite::Vec, _, _) = self {
+        if let TypeKind::Composite(Composite::Vec, _) = self {
             true
         } else {
             false
@@ -119,7 +112,7 @@ impl TypeKind {
     }
 
     pub fn is_array(&self) -> bool {
-        if let TypeKind::Composite(Composite::Array(_), _, _) = self {
+        if let TypeKind::Composite(Composite::Array(_), _) = self {
             true
         } else {
             false
@@ -127,7 +120,7 @@ impl TypeKind {
     }
 
     pub fn is_option(&self) -> bool {
-        if let TypeKind::Composite(Composite::Option, _, _) = self {
+        if let TypeKind::Composite(Composite::Option, _) = self {
             true
         } else {
             false
@@ -138,13 +131,29 @@ impl TypeKind {
         match self {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
-            TypeKind::Composite(Composite::Vec, inner, _)
-            | TypeKind::Composite(Composite::Array(_), inner, _) => {
-                inner.as_ref().map(|x| (*x.clone()))
+            TypeKind::Composite(Composite::Vec, inners)
+            | TypeKind::Composite(Composite::Array(_), inners) => {
+                inners.get(0).cloned()
             }
-            TypeKind::Composite(_, _, _) => None,
+            TypeKind::Composite(_, _) => None,
             TypeKind::Unit => None,
             TypeKind::Unknown => None,
+        }
+    }
+
+    pub fn inner_composite_rust_types(
+        &self,
+    ) -> (Option<RustType>, Option<RustType>) {
+        match self {
+            TypeKind::Primitive(_) => (None, None),
+            TypeKind::Value(_) => (None, None),
+            TypeKind::Composite(Composite::HashMap, inners)
+            | TypeKind::Composite(Composite::BTreeMap, inners) => {
+                (inners.get(0).cloned(), inners.get(1).cloned())
+            }
+            TypeKind::Composite(_, _) => (None, None),
+            TypeKind::Unit => (None, None),
+            TypeKind::Unknown => (None, None),
         }
     }
 
@@ -152,29 +161,29 @@ impl TypeKind {
         match self {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
-            TypeKind::Composite(composite, key_ty, val_ty)
+            TypeKind::Composite(composite, inners)
                 if composite == &Composite::HashMap
                     || composite == &Composite::BTreeMap =>
             {
-                let key = key_ty
-                    .as_ref()
-                    .map(|x| *x.clone())
+                let key = inners
+                    .get(0)
                     .ok_or_else(|| {
                         format!("{:?} should have key type", composite)
                     })
+                    .cloned()
                     .unwrap();
 
-                let val = val_ty
-                    .as_ref()
-                    .map(|x| *x.clone())
+                let val = inners
+                    .get(1)
                     .ok_or_else(|| {
                         format!("{:?} should have val type", composite)
                     })
+                    .cloned()
                     .unwrap();
 
                 Some((key, val))
             }
-            TypeKind::Composite(_, _, _) => None,
+            TypeKind::Composite(_, _) => None,
             TypeKind::Unit => None,
             TypeKind::Unknown => None,
         }
@@ -285,6 +294,7 @@ impl Value {
 pub enum Composite {
     Vec,
     Array(usize),
+    Tuple,
     Option,
     HashMap,
     BTreeMap,
@@ -296,6 +306,7 @@ impl Debug for Composite {
         match self {
             Composite::Vec => write!(f, "Composite::Vec"),
             Composite::Array(size) => write!(f, "Composite::Array({})", size),
+            Composite::Tuple => write!(f, "Composite::Tuple"),
             Composite::Option => write!(f, "Composite::Option"),
             Composite::HashMap => write!(f, "Composite::HashMap"),
             Composite::BTreeMap => write!(f, "Composite::BTreeMap"),
