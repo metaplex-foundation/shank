@@ -16,11 +16,14 @@ pub enum TypeKind {
 impl PartialEq for TypeKind {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (TypeKind::Primitive(prim1), TypeKind::Primitive(prim2)) => prim1 == prim2,
-            (TypeKind::Value(val1), TypeKind::Value(val2)) => val1 == val2,
-            (TypeKind::Composite(com1, inners1), TypeKind::Composite(com2, inners2)) => {
-                com1 == com2 && inners1 == inners2
+            (TypeKind::Primitive(prim1), TypeKind::Primitive(prim2)) => {
+                prim1 == prim2
             }
+            (TypeKind::Value(val1), TypeKind::Value(val2)) => val1 == val2,
+            (
+                TypeKind::Composite(com1, inners1),
+                TypeKind::Composite(com2, inners2),
+            ) => com1 == com2 && inners1 == inners2,
             (TypeKind::Unit, TypeKind::Unit) => true,
             (TypeKind::Unknown, TypeKind::Unknown) => true,
             _ => false,
@@ -129,10 +132,28 @@ impl TypeKind {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
             TypeKind::Composite(Composite::Vec, inners)
-            | TypeKind::Composite(Composite::Array(_), inners) => inners.get(0).cloned(),
+            | TypeKind::Composite(Composite::Array(_), inners) => {
+                inners.get(0).cloned()
+            }
             TypeKind::Composite(_, _) => None,
             TypeKind::Unit => None,
             TypeKind::Unknown => None,
+        }
+    }
+
+    pub fn inner_composite_rust_types(
+        &self,
+    ) -> (Option<RustType>, Option<RustType>) {
+        match self {
+            TypeKind::Primitive(_) => (None, None),
+            TypeKind::Value(_) => (None, None),
+            TypeKind::Composite(Composite::HashMap, inners)
+            | TypeKind::Composite(Composite::BTreeMap, inners) => {
+                (inners.get(0).cloned(), inners.get(1).cloned())
+            }
+            TypeKind::Composite(_, _) => (None, None),
+            TypeKind::Unit => (None, None),
+            TypeKind::Unknown => (None, None),
         }
     }
 
@@ -141,17 +162,22 @@ impl TypeKind {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
             TypeKind::Composite(composite, inners)
-                if composite == &Composite::HashMap || composite == &Composite::BTreeMap =>
+                if composite == &Composite::HashMap
+                    || composite == &Composite::BTreeMap =>
             {
                 let key = inners
                     .get(0)
-                    .ok_or_else(|| format!("{:?} should have key type", composite))
+                    .ok_or_else(|| {
+                        format!("{:?} should have key type", composite)
+                    })
                     .cloned()
                     .unwrap();
 
                 let val = inners
                     .get(1)
-                    .ok_or_else(|| format!("{:?} should have val type", composite))
+                    .ok_or_else(|| {
+                        format!("{:?} should have val type", composite)
+                    })
                     .cloned()
                     .unwrap();
 

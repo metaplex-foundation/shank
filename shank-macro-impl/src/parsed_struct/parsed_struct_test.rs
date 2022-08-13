@@ -2,10 +2,13 @@ use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use quote::quote;
+use syn::Ident;
 
-use crate::types::{Composite, TypeKind};
+use crate::types::{Composite, RustType, TypeKind};
 
-use super::{parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField};
+use super::{
+    parse_struct, struct_field_attr::StructFieldAttr, ParsedStruct, StructField,
+};
 use assert_matches::assert_matches;
 
 fn parse(input: TokenStream) -> ParsedStruct {
@@ -29,7 +32,12 @@ fn match_vec_field(field: &StructField, field_ident: &str, inner_ty: &str) {
     });
 }
 
-fn match_array_field(field: &StructField, field_ident: &str, inner_ty: &str, size: usize) {
+fn match_array_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_ty: &str,
+    size: usize,
+) {
     assert_matches!(field, StructField { ident, rust_type, .. } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
@@ -60,6 +68,61 @@ fn match_array_field_with_attrs(
     });
 }
 
+// -----------------
+// Tuple asserts
+// -----------------
+fn assert_tuple(
+    ident: &Ident,
+    field_ident: &str,
+    rust_type: &RustType,
+    inner_tys: &[&str],
+) {
+    assert_eq!(ident, field_ident);
+    assert_eq!(rust_type.ident, "Tuple");
+    match &rust_type.kind {
+        TypeKind::Composite(_, inners) => {
+            for (idx, inner) in inners.iter().enumerate() {
+                assert_eq!(inner.ident.to_string(), inner_tys[idx]);
+            }
+        }
+        _ => assert!(false, "expected composite to represent tuple"),
+    };
+}
+
+fn match_tuple_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        assert_tuple(ident, field_ident, rust_type, inner_tys);
+    });
+}
+
+fn match_inner_tuple_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        let rust_type = rust_type.kind.inner_composite_rust_type().unwrap();
+        assert_tuple(ident, field_ident, &rust_type, inner_tys);
+    });
+}
+
+fn match_inner_tuples_field(
+    field: &StructField,
+    field_ident: &str,
+    inner_tys1: &[&str],
+    inner_tys2: &[&str],
+) {
+    assert_matches!(field, StructField { ident, rust_type, .. } => {
+        let (rt1, rt2) = rust_type.kind.inner_composite_rust_types();
+        assert_tuple(ident, field_ident, &rt1.unwrap(), inner_tys1);
+        assert_tuple(ident, field_ident, &rt2.unwrap(), inner_tys2);
+    });
+}
+
 mod accounts_mpl_examples_auction_house {
 
     use super::*;
@@ -87,7 +150,11 @@ mod accounts_mpl_examples_auction_house {
         assert_eq!(res.ident.to_string(), "AuctionHouse");
         match_field(&res.fields[0], "auction_house_fee_account", "Pubkey");
         match_field(&res.fields[1], "auction_house_treasury", "Pubkey");
-        match_field(&res.fields[2], "treasury_withdrawal_destination", "Pubkey");
+        match_field(
+            &res.fields[2],
+            "treasury_withdrawal_destination",
+            "Pubkey",
+        );
         match_field(&res.fields[3], "fee_withdrawal_destination", "Pubkey");
         match_field(&res.fields[4], "treasury_mint", "Pubkey");
         match_field(&res.fields[5], "authority", "Pubkey");
@@ -236,27 +303,43 @@ mod account_with_padding_examples {
 
 mod account_tuples_examples {
     use super::*;
-    // TODO(thlorenz): these tests don't assert anything yet but would have to change once we
-    // support more than just two element tuples, therefore they serve purely as debugging tool for
-    // now
 
     #[test]
-    fn tuple() {
+    fn top_level_tuples() {
         let res = parse(quote! {
             pub struct AccountWithTuples {
-                pub two_u8s: (u8, u8),
+                pub u8_u8: (u8, u8),
+                pub u8_u16_u32_u64: (u8, u16, u32, u64),
+                pub u8_string_custom: (u8, String, Custom),
             }
         });
-        eprintln!("{:#?}", res);
+        match_tuple_field(&res.fields[0], "u8_u8", &["u8", "u8"]);
+        match_tuple_field(
+            &res.fields[1],
+            "u8_u16_u32_u64",
+            &["u8", "u16", "u32", "u64"],
+        );
+        match_tuple_field(
+            &res.fields[2],
+            "u8_string_custom",
+            &["u8", "String", "Custom"],
+        );
     }
 
     #[test]
-    fn vec_tuple() {
+    fn nested_tuples() {
         let res = parse(quote! {
-            pub struct AccountWithTuples {
-                pub two_u8s: Vec<(u8, u8)>,
+            pub struct AccountWithNestedTuples {
+                pub vec_u8_u8: Vec<(u8, u8)>,
+                pub hashmap_string_u8_u16_option_u8_i16: HashMap<(String, u8, u16), (Option<u8>, i16)>,
             }
         });
-        eprintln!("{:#?}", res);
+        match_inner_tuple_field(&res.fields[0], "vec_u8_u8", &["u8", "u8"]);
+        match_inner_tuples_field(
+            &res.fields[1],
+            "hashmap_string_u8_u16_option_u8_i16",
+            &["String", "u8", "u16"],
+            &["Option", "i16"],
+        );
     }
 }
