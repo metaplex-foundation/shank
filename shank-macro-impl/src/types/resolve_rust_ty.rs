@@ -175,6 +175,13 @@ pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustT
             (format_ident!("Array"), kind)
         }
         Type::Tuple(TypeTuple { elems, .. }) => {
+            if elems.len() < 2 {
+                return Err(ParseError::new(
+                    ty.span(),
+                    "A Tuple should have at least 2 type parameters",
+                ));
+            }
+
             let mut types: Vec<RustType> = vec![];
             for elem in elems {
                 match elem {
@@ -196,24 +203,7 @@ pub fn resolve_rust_ty(ty: &Type, context: RustTypeContext) -> ParseResult<RustT
                     }
                 }
             }
-            // TODO(thlorenz): Need to modify Composite everywhere to allow more than 2 inner
-            // RustTypes
-            assert!(types.len() <= 2, "Only supporting two item tuple for now");
-
-            let inner1 = types.get(0).ok_or_else(|| {
-                ParseError::new(
-                    ty.span(),
-                    "A tuple should have two inner types but is missing even the first one",
-                )
-            })?;
-            let inner2 = types.get(1).ok_or_else(|| {
-                ParseError::new(
-                    ty.span(),
-                    "A tuple should have two inner types but is missing the second one",
-                )
-            })?;
-
-            let kind = TypeKind::Composite(Composite::Tuple, vec![inner1.clone(), inner2.clone()]);
+            let kind = TypeKind::Composite(Composite::Tuple, types);
             (format_ident!("Tuple"), kind)
         }
         _ => {

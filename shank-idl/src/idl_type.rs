@@ -3,7 +3,9 @@ use std::convert::{TryFrom, TryInto};
 use anyhow::{Error, Result};
 
 use serde::{Deserialize, Serialize};
-use shank_macro_impl::types::{Composite, Primitive, RustType, TypeKind, Value};
+use shank_macro_impl::types::{
+    Composite, Primitive, RustType, TypeKind, Value,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -95,39 +97,53 @@ impl TryFrom<RustType> for IdlType {
                         anyhow::bail!("Rust Option Composite needs inner type")
                     }
                 },
-                Composite::Tuple => match (inners.get(0).cloned(), inners.get(1).cloned()) {
-                    // TODO(thlorenz): update once we support more than two inner tuple types
-                    (Some(inner1), Some(inner2)) => {
-                        let inner1_idl: IdlType = inner1.try_into()?;
-                        let inner2_idl: IdlType = inner2.try_into()?;
-                        IdlType::Tuple(vec![inner1_idl, inner2_idl])
+                Composite::Tuple => {
+                    if inners.len() < 2 {
+                        anyhow::bail!("Rust Tuple Composite needs at least two inner types");
+                    } else {
+                        let idl_types: Result<Vec<IdlType>> =
+                            inners.into_iter().map(IdlType::try_from).collect();
+                        IdlType::Tuple(idl_types?)
                     }
-                    _ => {
-                        anyhow::bail!("Rust Tuple Composite needs at least two inner types")
+                }
+                Composite::HashMap => {
+                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                        (Some(inner1), Some(inner2)) => {
+                            let inner1_idl: IdlType = inner1.try_into()?;
+                            let inner2_idl: IdlType = inner2.try_into()?;
+                            IdlType::HashMap(
+                                Box::new(inner1_idl),
+                                Box::new(inner2_idl),
+                            )
+                        }
+                        _ => {
+                            anyhow::bail!(
+                                "Rust HashMap Composite needs two inner types"
+                            )
+                        }
                     }
-                },
-                Composite::HashMap => match (inners.get(0).cloned(), inners.get(1).cloned()) {
-                    (Some(inner1), Some(inner2)) => {
-                        let inner1_idl: IdlType = inner1.try_into()?;
-                        let inner2_idl: IdlType = inner2.try_into()?;
-                        IdlType::HashMap(Box::new(inner1_idl), Box::new(inner2_idl))
+                }
+                Composite::BTreeMap => {
+                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                        (Some(inner1), Some(inner2)) => {
+                            let inner1_idl: IdlType = inner1.try_into()?;
+                            let inner2_idl: IdlType = inner2.try_into()?;
+                            IdlType::BTreeMap(
+                                Box::new(inner1_idl),
+                                Box::new(inner2_idl),
+                            )
+                        }
+                        _ => {
+                            anyhow::bail!(
+                                "Rust BTreeMap Composite needs two inner types"
+                            )
+                        }
                     }
-                    _ => {
-                        anyhow::bail!("Rust HashMap Composite needs two inner types")
-                    }
-                },
-                Composite::BTreeMap => match (inners.get(0).cloned(), inners.get(1).cloned()) {
-                    (Some(inner1), Some(inner2)) => {
-                        let inner1_idl: IdlType = inner1.try_into()?;
-                        let inner2_idl: IdlType = inner2.try_into()?;
-                        IdlType::BTreeMap(Box::new(inner1_idl), Box::new(inner2_idl))
-                    }
-                    _ => {
-                        anyhow::bail!("Rust BTreeMap Composite needs two inner types")
-                    }
-                },
+                }
                 Composite::Custom(_) => {
-                    anyhow::bail!("Rust Custom Composite IDL type not yet supported")
+                    anyhow::bail!(
+                        "Rust Custom Composite IDL type not yet supported"
+                    )
                 }
             },
             TypeKind::Unit => anyhow::bail!("IDL types cannot be Unit ()"),
@@ -153,7 +169,8 @@ mod tests {
             (Primitive::USize, IdlType::U64),
         ] {
             let rust_ty = RustType::owned_primitive("prim", rust_prim);
-            let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+            let idl_ty: IdlType =
+                rust_ty.try_into().expect("Failed to convert");
             assert_eq!(idl_ty, idl_expected);
         }
     }
@@ -194,7 +211,8 @@ mod tests {
 
     #[test]
     fn idl_from_rust_type_array_u8() {
-        let rust_ty = RustType::owned_array_primitive("bytes", Primitive::U8, 5);
+        let rust_ty =
+            RustType::owned_array_primitive("bytes", Primitive::U8, 5);
         let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
         assert_eq!(idl_ty, IdlType::Array(Box::new(IdlType::U8), 5));
     }

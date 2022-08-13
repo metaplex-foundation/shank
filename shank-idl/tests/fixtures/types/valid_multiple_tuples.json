@@ -67,6 +67,80 @@
           }
         ]
       }
+    },
+    {
+      "name": "MoreElementTuples",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8U8U8",
+            "type": {
+              "tuple": ["u8", "u8", "u8"]
+            }
+          },
+          {
+            "name": "u8U16I32Bool",
+            "type": {
+              "tuple": ["u8", "u16", "i32", "bool"]
+            }
+          },
+          {
+            "name": "stringCustomOptionI128U8U16U32U64",
+            "type": {
+              "tuple": [
+                "string",
+                {
+                  "defined": "Custom"
+                },
+                {
+                  "option": "i128"
+                },
+                "u8",
+                "u16",
+                "u32",
+                "u64"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NestedMultiElementTuples",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vecU8U8U16U16U32Uy32",
+            "type": {
+              "vec": {
+                "tuple": ["u8", "u8", "u16", "u16", "u32", "u32"]
+              }
+            }
+          },
+          {
+            "name": "hashMapU8U16U32StringCustomU8U8",
+            "type": {
+              "hashMap": [
+                {
+                  "tuple": ["u8", "u16", "u32"]
+                },
+                {
+                  "tuple": [
+                    "string",
+                    {
+                      "defined": "Custom"
+                    },
+                    "u8",
+                    "u8"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "metadata": {
