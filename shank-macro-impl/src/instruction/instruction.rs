@@ -27,7 +27,8 @@ impl Instruction {
         skip_derive_attr_check: bool,
     ) -> ParseResult<Option<Instruction>> {
         if skip_derive_attr_check
-            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR).is_some()
+            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+                .is_some()
         {
             let parsed_enum = ParsedEnum::try_from(item_enum)?;
             Instruction::try_from(&parsed_enum).map(Some)
@@ -41,7 +42,9 @@ impl TryFrom<&ParsedEnum> for Option<Instruction> {
     type Error = ParseError;
 
     fn try_from(parsed_enum: &ParsedEnum) -> ParseResult<Self> {
-        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR).map(|_| parsed_enum) {
+        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+            .map(|_| parsed_enum)
+        {
             Some(ix_enum) => ix_enum.try_into().map(Some),
             None => Ok(None),
         }
@@ -67,13 +70,19 @@ impl TryFrom<&ParsedEnum> for Instruction {
     }
 }
 
+#[derive(Debug)]
+pub enum InstructionVariantFields {
+    Unnamed(Vec<RustType>),
+    Named(Vec<(String, RustType)>),
+}
+
 // -----------------
 // Instruction Variant
 // -----------------
 #[derive(Debug)]
 pub struct InstructionVariant {
     pub ident: Ident,
-    pub field_tys: Vec<RustType>,
+    pub field_tys: InstructionVariantFields,
     pub accounts: Vec<InstructionAccount>,
     pub discriminant: usize,
 }
@@ -90,13 +99,29 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             ..
         } = variant;
 
-        // if fields.len() > 1 {
-        //     return Err(ParseError::new_spanned(
-        //         fields.get(1).map(|x| &x.rust_type.ident),
-        //         "An Instruction can only have one arg field",
-        //     ));
-        // }
-        let field_tys = fields.iter().map(|x| x.rust_type.clone()).collect();
+        let field_tys: InstructionVariantFields = if fields.len() > 0 {
+            // Determine if the InstructionType is tuple or struct variant
+            let field = fields.get(0).unwrap();
+            match &field.ident {
+                Some(_) => InstructionVariantFields::Named(
+                    fields
+                        .iter()
+                        .map(|x| {
+                            (
+                                x.ident.as_ref().unwrap().to_string(),
+                                x.rust_type.clone(),
+                            )
+                        })
+                        .collect(),
+                ),
+                None => InstructionVariantFields::Unnamed(
+                    fields.iter().map(|x| x.rust_type.clone()).collect(),
+                ),
+            }
+        } else {
+            InstructionVariantFields::Unnamed(vec![])
+        };
+
         let attrs: &[Attribute] = attrs.as_ref();
         let accounts: InstructionAccounts = attrs.try_into()?;
 
