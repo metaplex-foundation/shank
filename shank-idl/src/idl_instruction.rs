@@ -4,8 +4,7 @@ use anyhow::{anyhow, ensure, Error, Result};
 use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
-    Instruction, InstructionAccount, InstructionVariant,
-    InstructionVariantFields,
+    Instruction, InstructionAccount, InstructionVariant, InstructionVariantFields,
 };
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
@@ -61,7 +60,6 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
                 let mut parsed: Vec<IdlField> = vec![];
                 for (field_name, field_ty) in args.iter() {
                     let ty = IdlType::try_from(field_ty.clone())?;
-                    println!("\t{}: {:?}", &field_name.to_mixed_case(), ty);
                     parsed.push(IdlField {
                         name: field_name.to_mixed_case(),
                         ty,

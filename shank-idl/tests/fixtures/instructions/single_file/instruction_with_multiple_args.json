@@ -1,0 +1,43 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "CloseThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "instructionArgs0",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "instructionArgs1",
+          "type": {
+            "defined": "ComplexArgs"
+          }
+        },
+        {
+          "name": "instructionArgs2",
+          "type": {
+            "defined": "ComplexArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
