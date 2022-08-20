@@ -31,6 +31,7 @@ pub struct ParseIdlConfig {
     pub program_name: String,
     pub detect_custom_struct: DetectCustomTypeConfig,
     pub require_program_address: bool,
+    pub override_program_address: Option<String>,
 }
 
 impl Default for ParseIdlConfig {
@@ -40,6 +41,7 @@ impl Default for ParseIdlConfig {
             program_name: Default::default(),
             detect_custom_struct: Default::default(),
             require_program_address: true,
+            override_program_address: None,
         }
     }
 }
@@ -58,10 +60,7 @@ impl ParseIdlConfig {
 // -----------------
 
 /// Parse an entire interface file.
-pub fn parse_file(
-    filename: impl AsRef<Path>,
-    config: &ParseIdlConfig,
-) -> Result<Option<Idl>> {
+pub fn parse_file(filename: impl AsRef<Path>, config: &ParseIdlConfig) -> Result<Option<Idl>> {
     let ctx = CrateContext::parse(filename)?;
 
     let constants = constants(&ctx)?;
@@ -71,7 +70,11 @@ pub fn parse_file(
     let types = types(&ctx, &config.detect_custom_struct)?;
     let events = events(&ctx)?;
     let errors = errors(&ctx)?;
-    let metadata = metadata(&ctx, config.require_program_address)?;
+    let metadata = metadata(
+        &ctx,
+        config.require_program_address,
+        config.override_program_address.as_ref(),
+    )?;
 
     let idl = Idl {
         version: config.program_version.to_string(),
@@ -101,8 +104,7 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 }
 
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
-    let instruction_enums =
-        extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
+    let instruction_enums = extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
 
     let mut instructions: Vec<IdlInstruction> = Vec::new();
     // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
@@ -157,12 +159,17 @@ fn types(
 fn metadata(
     ctx: &CrateContext,
     require_program_address: bool,
+    override_program_address: Option<&String>,
 ) -> Result<IdlMetadata> {
     let macros: Vec<_> = ctx.macros().cloned().collect();
-    let address = match ProgramId::try_from(&macros[..]) {
-        Ok(ProgramId { id }) => Ok(Some(id)),
-        Err(err) if require_program_address => Err(err),
-        Err(_) => Ok(None),
+    let address = if let Some(program_address) = override_program_address {
+        Ok(Some(program_address.clone()))
+    } else {
+        match ProgramId::try_from(&macros[..]) {
+            Ok(ProgramId { id }) => Ok(Some(id)),
+            Err(err) if require_program_address => Err(err),
+            Err(_) => Ok(None),
+        }
     }?;
     Ok(IdlMetadata {
         origin: "shank".to_string(),
