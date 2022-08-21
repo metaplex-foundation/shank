@@ -5,6 +5,7 @@ use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
     Instruction, InstructionAccount, InstructionVariant,
+    InstructionVariantFields,
 };
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
@@ -49,27 +50,48 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
     fn try_from(variant: InstructionVariant) -> Result<Self> {
         let InstructionVariant {
             ident,
-            field_ty,
+            field_tys,
             accounts,
             discriminant,
         } = variant;
 
         let name = ident.to_string();
-        let args: Vec<IdlField> = if let Some(field_ty) = field_ty {
-            let name = if field_ty.kind.is_custom() {
-                field_ty.ident.to_string().to_mixed_case()
-            } else {
-                "instructionArgs".to_string()
-            };
-            let ty = IdlType::try_from(field_ty)?;
-            vec![IdlField {
-                name,
-                ty,
-                attrs: None,
-            }]
-        } else {
-            vec![]
+        let parsed_idl_fields: Result<Vec<IdlField>, Error> = match field_tys {
+            InstructionVariantFields::Named(args) => {
+                let mut parsed: Vec<IdlField> = vec![];
+                for (field_name, field_ty) in args.iter() {
+                    let ty = IdlType::try_from(field_ty.clone())?;
+                    parsed.push(IdlField {
+                        name: field_name.to_mixed_case(),
+                        ty,
+                        attrs: None,
+                    })
+                }
+                Ok(parsed)
+            }
+            InstructionVariantFields::Unnamed(args) => {
+                let mut parsed: Vec<IdlField> = vec![];
+                for (index, field_ty) in args.iter().enumerate() {
+                    let name = if args.len() == 1 {
+                        if field_ty.kind.is_custom() {
+                            field_ty.ident.to_string().to_mixed_case()
+                        } else {
+                            "args".to_string()
+                        }
+                    } else {
+                        format!("arg{}", index).to_string()
+                    };
+                    let ty = IdlType::try_from(field_ty.clone())?;
+                    parsed.push(IdlField {
+                        name,
+                        ty,
+                        attrs: None,
+                    })
+                }
+                Ok(parsed)
+            }
         };
+        let args: Vec<IdlField> = parsed_idl_fields?;
 
         let accounts = accounts.into_iter().map(IdlAccountItem::from).collect();
         ensure!(

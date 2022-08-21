@@ -22,9 +22,18 @@
           "type": {
             "defined": "SomeArgs"
           }
+        },
+        {
+          "name": "otherArgs",
+          "type": {
+            "defined": "OtherArgs"
+          }
         }
       ],
-      "discriminant": { "type": "u8", "value": 0 }
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
     },
     {
       "name": "CloseThing",
@@ -43,7 +52,10 @@
           }
         }
       ],
-      "discriminant": { "type": "u8", "value": 1 }
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
     }
   ],
   "metadata": {

@@ -70,13 +70,19 @@ impl TryFrom<&ParsedEnum> for Instruction {
     }
 }
 
+#[derive(Debug)]
+pub enum InstructionVariantFields {
+    Unnamed(Vec<RustType>),
+    Named(Vec<(String, RustType)>),
+}
+
 // -----------------
 // Instruction Variant
 // -----------------
 #[derive(Debug)]
 pub struct InstructionVariant {
     pub ident: Ident,
-    pub field_ty: Option<RustType>,
+    pub field_tys: InstructionVariantFields,
     pub accounts: Vec<InstructionAccount>,
     pub discriminant: usize,
 }
@@ -93,19 +99,35 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             ..
         } = variant;
 
-        if fields.len() > 1 {
-            return Err(ParseError::new_spanned(
-                fields.get(1).map(|x| &x.rust_type.ident),
-                "An Instruction can only have one arg field",
-            ));
-        }
-        let field_ty = fields.first().map(|x| x.rust_type.clone());
+        let field_tys: InstructionVariantFields = if fields.len() > 0 {
+            // Determine if the InstructionType is tuple or struct variant
+            let field = fields.get(0).unwrap();
+            match &field.ident {
+                Some(_) => InstructionVariantFields::Named(
+                    fields
+                        .iter()
+                        .map(|x| {
+                            (
+                                x.ident.as_ref().unwrap().to_string(),
+                                x.rust_type.clone(),
+                            )
+                        })
+                        .collect(),
+                ),
+                None => InstructionVariantFields::Unnamed(
+                    fields.iter().map(|x| x.rust_type.clone()).collect(),
+                ),
+            }
+        } else {
+            InstructionVariantFields::Unnamed(vec![])
+        };
+
         let attrs: &[Attribute] = attrs.as_ref();
         let accounts: InstructionAccounts = attrs.try_into()?;
 
         Ok(Self {
             ident: ident.clone(),
-            field_ty,
+            field_tys,
             accounts: accounts.0,
             discriminant: *discriminant,
         })
