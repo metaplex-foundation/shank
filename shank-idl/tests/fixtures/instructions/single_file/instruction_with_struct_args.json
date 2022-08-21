@@ -46,7 +46,7 @@
       ],
       "args": [
         {
-          "name": "instructionArgs",
+          "name": "args",
           "type": {
             "option": "u8"
           }

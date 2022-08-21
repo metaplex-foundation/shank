@@ -4,7 +4,8 @@ use anyhow::{anyhow, ensure, Error, Result};
 use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
-    Instruction, InstructionAccount, InstructionVariant, InstructionVariantFields,
+    Instruction, InstructionAccount, InstructionVariant,
+    InstructionVariantFields,
 };
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
@@ -75,10 +76,10 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
                         if field_ty.kind.is_custom() {
                             field_ty.ident.to_string().to_mixed_case()
                         } else {
-                            "instructionArgs".to_string()
+                            "args".to_string()
                         }
                     } else {
-                        format!("instructionArgs{}", index).to_string()
+                        format!("arg{}", index).to_string()
                     };
                     let ty = IdlType::try_from(field_ty.clone())?;
                     parsed.push(IdlField {
