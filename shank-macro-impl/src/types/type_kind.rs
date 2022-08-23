@@ -167,18 +167,18 @@ impl TypeKind {
             {
                 let key = inners
                     .get(0)
+                    .cloned()
                     .ok_or_else(|| {
                         format!("{:?} should have key type", composite)
                     })
-                    .cloned()
                     .unwrap();
 
                 let val = inners
                     .get(1)
+                    .cloned()
                     .ok_or_else(|| {
                         format!("{:?} should have val type", composite)
                     })
-                    .cloned()
                     .unwrap();
 
                 Some((key, val))
