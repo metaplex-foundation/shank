@@ -43,7 +43,8 @@ impl Default for ParseIdlOpts {
 // -----------------
 pub fn extract_idl(file: &str, opts: ParseIdlOpts) -> Result<Option<Idl>> {
     let file = shellexpand::tilde(file);
-    let manifest_from_path = std::env::current_dir()?.join(PathBuf::from(&*file).parent().unwrap());
+    let manifest_from_path =
+        std::env::current_dir()?.join(PathBuf::from(&*file).parent().unwrap());
     let cargo = Manifest::discover_from_path(manifest_from_path)?
         .ok_or_else(|| anyhow!("Cargo.toml not found"))?;
     let program_name = cargo

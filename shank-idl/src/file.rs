@@ -60,7 +60,10 @@ impl ParseIdlConfig {
 // -----------------
 
 /// Parse an entire interface file.
-pub fn parse_file(filename: impl AsRef<Path>, config: &ParseIdlConfig) -> Result<Option<Idl>> {
+pub fn parse_file(
+    filename: impl AsRef<Path>,
+    config: &ParseIdlConfig,
+) -> Result<Option<Idl>> {
     let ctx = CrateContext::parse(filename)?;
 
     let constants = constants(&ctx)?;
@@ -104,7 +107,8 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 }
 
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
-    let instruction_enums = extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
+    let instruction_enums =
+        extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
 
     let mut instructions: Vec<IdlInstruction> = Vec::new();
     // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
