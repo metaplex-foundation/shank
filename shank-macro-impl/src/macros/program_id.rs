@@ -40,14 +40,14 @@ impl TryFrom<&[ItemMacro]> for ProgramId {
             Err(ParseError::new_spanned(
                 &matches[0].0,
                 format!(
-                    "Found more than one program id candidate: {:?}. Specify one with -p",
+                    "Found more than one program id candidate: {:?}. You should either have exactly one `declare_id!` in your code or override the program id via -p.",
                     matches.iter().map(|x| x.1.clone()).collect::<Vec<String>>()
                 ),
             ))
         } else if matches.is_empty() {
             Err(ParseError::new(
                 Span::call_site(),
-                "Could not find a `declare_id(\"<program-id>\")` invocation in the program. Override program address with -p",
+                "Could not find a `declare_id(\"<program-id>\")` invocation in the program. If this is intentional provide a program address via the -p argument instead",
             ))
         } else {
             Ok(ProgramId {
@@ -125,7 +125,7 @@ mod tests {
 
         assert_eq!(
             err.to_string().as_str(),
-            "Found more than one program id candidate: [\"otherid\", \"metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s\"]. Specify one with -p"
+            "Found more than one program id candidate: [\"otherid\", \"metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s\"]. You should either have exactly one `declare_id!` in your code or override the program id via -p."
         );
     }
 
@@ -143,7 +143,7 @@ mod tests {
 
         assert_eq!(
             err.to_string().as_str(),
-            "Could not find a `declare_id(\"<program-id>\")` invocation in the program. Override program address with -p"
+            "Could not find a `declare_id(\"<program-id>\")` invocation in the program. If this is intentional provide a program address via the -p argument instead"
         );
     }
 }
