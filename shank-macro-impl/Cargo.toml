@@ -1,6 +1,6 @@
 [package]
 name = "shank_macro_impl"
-version = "0.0.7"
+version = "0.0.8"
 description = "Implements and tests shank derive macros"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/shank"
