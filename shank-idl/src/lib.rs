@@ -25,7 +25,7 @@ pub use file::*;
 pub struct ParseIdlOpts {
     pub detect_custom_struct: DetectCustomTypeConfig,
     pub require_program_address: bool,
-    pub override_program_address: Option<String>,
+    pub program_address_override: Option<String>,
 }
 
 impl Default for ParseIdlOpts {
@@ -33,7 +33,7 @@ impl Default for ParseIdlOpts {
         Self {
             detect_custom_struct: Default::default(),
             require_program_address: true,
-            override_program_address: None,
+            program_address_override: None,
         }
     }
 }
@@ -57,7 +57,7 @@ pub fn extract_idl(file: &str, opts: ParseIdlOpts) -> Result<Option<Idl>> {
             program_version: cargo.version(),
             detect_custom_struct: opts.detect_custom_struct,
             require_program_address: opts.require_program_address,
-            program_address_override: opts.override_program_address,
+            program_address_override: opts.program_address_override,
         },
     )
 }

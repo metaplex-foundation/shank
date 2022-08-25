@@ -89,7 +89,7 @@ pub fn idl(out_dir: String, crate_root: Option<String>, program_id: Option<Strin
 
     // Extract IDL and convert to JSON
     let mut opts = ParseIdlOpts::default();
-    opts.override_program_address = program_id;
+    opts.program_address_override = program_id;
     let idl = extract_idl(lib_full_path, opts)?.ok_or(anyhow!("No IDL could be extracted"))?;
     let idl_json = idl.try_into_json()?;
 
