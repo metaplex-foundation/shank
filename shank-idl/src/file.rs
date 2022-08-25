@@ -31,6 +31,7 @@ pub struct ParseIdlConfig {
     pub program_name: String,
     pub detect_custom_struct: DetectCustomTypeConfig,
     pub require_program_address: bool,
+    pub program_address_override: Option<String>,
 }
 
 impl Default for ParseIdlConfig {
@@ -40,6 +41,7 @@ impl Default for ParseIdlConfig {
             program_name: Default::default(),
             detect_custom_struct: Default::default(),
             require_program_address: true,
+            program_address_override: None,
         }
     }
 }
@@ -71,7 +73,11 @@ pub fn parse_file(
     let types = types(&ctx, &config.detect_custom_struct)?;
     let events = events(&ctx)?;
     let errors = errors(&ctx)?;
-    let metadata = metadata(&ctx, config.require_program_address)?;
+    let metadata = metadata(
+        &ctx,
+        config.require_program_address,
+        config.program_address_override.as_ref(),
+    )?;
 
     let idl = Idl {
         version: config.program_version.to_string(),
@@ -157,12 +163,17 @@ fn types(
 fn metadata(
     ctx: &CrateContext,
     require_program_address: bool,
+    program_address_override: Option<&String>,
 ) -> Result<IdlMetadata> {
     let macros: Vec<_> = ctx.macros().cloned().collect();
-    let address = match ProgramId::try_from(&macros[..]) {
-        Ok(ProgramId { id }) => Ok(Some(id)),
-        Err(err) if require_program_address => Err(err),
-        Err(_) => Ok(None),
+    let address = if let Some(program_address) = program_address_override {
+        Ok(Some(program_address.clone()))
+    } else {
+        match ProgramId::try_from(&macros[..]) {
+            Ok(ProgramId { id }) => Ok(Some(id)),
+            Err(err) if require_program_address => Err(err),
+            Err(_) => Ok(None),
+        }
     }?;
     Ok(IdlMetadata {
         origin: "shank".to_string(),

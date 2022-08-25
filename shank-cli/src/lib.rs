@@ -28,6 +28,10 @@ pub enum Command {
         /// Directory of program crate for which to generate the IDL.
         #[clap(short = 'r', long)]
         crate_root: Option<String>,
+
+        /// Manually specify and override the address in the IDL
+        #[clap(short = 'p', long)]
+        program_id: Option<String>,
     },
 }
 
@@ -36,7 +40,8 @@ pub fn entry(opts: Opts) -> Result<()> {
         Command::Idl {
             out_dir,
             crate_root,
-        } => idl(out_dir, crate_root),
+            program_id,
+        } => idl(out_dir, crate_root, program_id),
     }
 }
 
@@ -59,7 +64,7 @@ pub fn try_resolve_path(p: Option<String>, label: &str) -> Result<PathBuf> {
     Ok(p)
 }
 
-pub fn idl(out_dir: String, crate_root: Option<String>) -> Result<()> {
+pub fn idl(out_dir: String, crate_root: Option<String>, program_id: Option<String>) -> Result<()> {
     // Resolve input and output directories
     let crate_root = try_resolve_path(crate_root, "crate_root")?;
     let out_dir = try_resolve_path(Some(out_dir), "out_dir")?;
@@ -83,8 +88,9 @@ pub fn idl(out_dir: String, crate_root: Option<String>) -> Result<()> {
     let lib_full_path = lib_full_path_str.to_str().ok_or(anyhow!("Invalid Path"))?;
 
     // Extract IDL and convert to JSON
-    let idl = extract_idl(lib_full_path, ParseIdlOpts::default())?
-        .ok_or(anyhow!("No IDL could be extracted"))?;
+    let mut opts = ParseIdlOpts::default();
+    opts.program_address_override = program_id;
+    let idl = extract_idl(lib_full_path, opts)?.ok_or(anyhow!("No IDL could be extracted"))?;
     let idl_json = idl.try_into_json()?;
 
     // Write to JSON file

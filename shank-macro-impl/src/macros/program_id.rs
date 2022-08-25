@@ -40,17 +40,14 @@ impl TryFrom<&[ItemMacro]> for ProgramId {
             Err(ParseError::new_spanned(
                 &matches[0].0,
                 format!(
-                    "Found more than one program id candidate: {:?}",
-                    matches
-                        .iter()
-                        .map(|x| x.1.clone())
-                        .collect::<Vec<String>>()
+                    "Found more than one program id candidate: {:?}. You should either have exactly one `declare_id!` in your code or override the program id via -p.",
+                    matches.iter().map(|x| x.1.clone()).collect::<Vec<String>>()
                 ),
             ))
         } else if matches.is_empty() {
             Err(ParseError::new(
                 Span::call_site(),
-                "Could not find a `declare_id(\"<program-id>\")` invocation in the program",
+                "Could not find a `declare_id(\"<program-id>\")` invocation in the program. If this is intentional provide a program address via the -p argument instead",
             ))
         } else {
             Ok(ProgramId {
@@ -86,8 +83,9 @@ mod tests {
             },
             quote! {
                 solana_program::declare_id!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
-            }
-        ]).expect("Should parse fine");
+            },
+        ])
+        .expect("Should parse fine");
 
         assert_eq!(
             parsed.id,
@@ -122,11 +120,12 @@ mod tests {
             quote! {
                 solana_program::declare_id!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
             },
-        ]).expect_err("Should error");
+        ])
+        .expect_err("Should error");
 
         assert_eq!(
             err.to_string().as_str(),
-            "Found more than one program id candidate: [\"otherid\", \"metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s\"]"
+            "Found more than one program id candidate: [\"otherid\", \"metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s\"]. You should either have exactly one `declare_id!` in your code or override the program id via -p."
         );
     }
 
@@ -139,11 +138,12 @@ mod tests {
             quote! {
                 declare_some_other_id!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
             },
-        ]).expect_err("Should error");
+        ])
+        .expect_err("Should error");
 
         assert_eq!(
             err.to_string().as_str(),
-            "Could not find a `declare_id(\"<program-id>\")` invocation in the program"
+            "Could not find a `declare_id(\"<program-id>\")` invocation in the program. If this is intentional provide a program address via the -p argument instead"
         );
     }
 }
