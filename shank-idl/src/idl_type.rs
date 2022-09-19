@@ -31,6 +31,8 @@ pub enum IdlType {
     Vec(Box<IdlType>),
     HashMap(Box<IdlType>, Box<IdlType>),
     BTreeMap(Box<IdlType>, Box<IdlType>),
+    HashSet(Box<IdlType>),
+    BTreeSet(Box<IdlType>),
 }
 
 impl TryFrom<RustType> for IdlType {
@@ -140,6 +142,28 @@ impl TryFrom<RustType> for IdlType {
                         }
                     }
                 }
+                Composite::HashSet => match inners.get(0).cloned() {
+                    Some(inner) => {
+                        let inner_idl: IdlType = inner.try_into()?;
+                        IdlType::HashSet(Box::new(inner_idl))
+                    }
+                    _ => {
+                        anyhow::bail!(
+                            "Rust HashSet Composite needs one inner type"
+                        )
+                    }
+                },
+                Composite::BTreeSet => match inners.get(0).cloned() {
+                    Some(inner) => {
+                        let inner_idl: IdlType = inner.try_into()?;
+                        IdlType::BTreeSet(Box::new(inner_idl))
+                    }
+                    _ => {
+                        anyhow::bail!(
+                            "Rust BTreeSet Composite needs one inner type"
+                        )
+                    }
+                },
                 Composite::Custom(_) => {
                     anyhow::bail!(
                         "Rust Custom Composite IDL type not yet supported"
