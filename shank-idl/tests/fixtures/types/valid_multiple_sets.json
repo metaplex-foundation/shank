@@ -1,0 +1,138 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "OneHashSetStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8Set",
+            "type": {
+              "hashSet": "u8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MultipleHashSetsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8Set",
+            "type": {
+              "hashSet": "u8"
+            }
+          },
+          {
+            "name": "stringSet",
+            "type": {
+              "hashSet": "string"
+            }
+          },
+          {
+            "name": "optionI128Set",
+            "type": {
+              "hashSet": {
+                "option": "i128"
+              }
+            }
+          },
+          {
+            "name": "vecCustomSet",
+            "type": {
+              "hashSet": {
+                "vec": {
+                  "defined": "Custom"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OneBTreeSetStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8Set",
+            "type": {
+              "bTreeSet": "u8"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MultipleBTreeSetsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "u8Set",
+            "type": {
+              "bTreeSet": "u8"
+            }
+          },
+          {
+            "name": "stringSet",
+            "type": {
+              "bTreeSet": "string"
+            }
+          },
+          {
+            "name": "optionI128Set",
+            "type": {
+              "bTreeSet": {
+                "option": "i128"
+              }
+            }
+          },
+          {
+            "name": "vecCustomSet",
+            "type": {
+              "bTreeSet": {
+                "vec": {
+                  "defined": "Custom"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "NestedSetsStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "vecHashMapU8",
+            "type": {
+              "vec": {
+                "hashSet": "u8"
+              }
+            }
+          },
+          {
+            "name": "optionBtreeMapU8",
+            "type": {
+              "option": {
+                "bTreeSet": "u8"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

@@ -93,6 +93,22 @@ fn type_valid_maps() {
 }
 
 #[test]
+fn type_valid_sets() {
+    let file = fixtures_dir().join("valid_multiple_sets.rs");
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_multiple_sets.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
 fn type_valid_tuples() {
     let file = fixtures_dir().join("valid_multiple_tuples.rs");
     let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
