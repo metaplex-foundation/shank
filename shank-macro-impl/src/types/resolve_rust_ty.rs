@@ -285,35 +285,35 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
             args,
             ..
         }) => {
+            let pat = ident_str.as_str();
             match args.len() {
                 // -----------------
                 // Single Type Parameter
                 // -----------------
                 1 => match &args[0] {
-                    GenericArgument::Type(ty) => match ident_str.as_str() {
-                        "Vec" => match resolve_rust_ty(
-                            ty,
-                            RustTypeContext::CollectionItem,
-                        ) {
-                            Ok(inner) => {
-                                TypeKind::Composite(Composite::Vec, vec![inner])
+                    GenericArgument::Type(ty) => match pat {
+                        "Vec" | "Option" | "HashSet" | "BTreeSet" => {
+                            let composite = match pat {
+                                "Vec" => Composite::Vec,
+                                "Option" => Composite::Option,
+                                "HashSet" => Composite::HashSet,
+                                "BTreeSet" => Composite::BTreeSet,
+                                _ => {
+                                    panic!("Rust you are drunk (pat only matches on those specific strings)")
+                                }
+                            };
+                            match resolve_rust_ty(
+                                ty,
+                                RustTypeContext::CollectionItem,
+                            ) {
+                                Ok(inner) => {
+                                    TypeKind::Composite(composite, vec![inner])
+                                }
+                                Err(_) => {
+                                    TypeKind::Composite(composite, vec![])
+                                }
                             }
-                            Err(_) => {
-                                TypeKind::Composite(Composite::Vec, vec![])
-                            }
-                        },
-                        "Option" => match resolve_rust_ty(
-                            ty,
-                            RustTypeContext::OptionItem,
-                        ) {
-                            Ok(inner) => TypeKind::Composite(
-                                Composite::Option,
-                                vec![inner],
-                            ),
-                            Err(_) => {
-                                TypeKind::Composite(Composite::Option, vec![])
-                            }
-                        },
+                        }
                         _ => match resolve_rust_ty(
                             ty,
                             RustTypeContext::CustomItem,

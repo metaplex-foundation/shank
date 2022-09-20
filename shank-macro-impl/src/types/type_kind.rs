@@ -132,7 +132,9 @@ impl TypeKind {
             TypeKind::Primitive(_) => None,
             TypeKind::Value(_) => None,
             TypeKind::Composite(Composite::Vec, inners)
-            | TypeKind::Composite(Composite::Array(_), inners) => {
+            | TypeKind::Composite(Composite::Array(_), inners)
+            | TypeKind::Composite(Composite::HashSet, inners)
+            | TypeKind::Composite(Composite::BTreeSet, inners) => {
                 inners.get(0).cloned()
             }
             TypeKind::Composite(_, _) => None,
@@ -298,6 +300,8 @@ pub enum Composite {
     Option,
     HashMap,
     BTreeMap,
+    HashSet,
+    BTreeSet,
     Custom(String),
 }
 
@@ -310,6 +314,8 @@ impl Debug for Composite {
             Composite::Option => write!(f, "Composite::Option"),
             Composite::HashMap => write!(f, "Composite::HashMap"),
             Composite::BTreeMap => write!(f, "Composite::BTreeMap"),
+            Composite::HashSet => write!(f, "Composite::HashSet"),
+            Composite::BTreeSet => write!(f, "Composite::BTreeSet"),
             Composite::Custom(name) => {
                 write!(f, "Composite::Custom(\"{}\")", name)
             }
