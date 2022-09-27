@@ -299,6 +299,7 @@ mod tests {
                 /* literal    */ "lit:prefix",
                 /* program_id */ program_id,
                 /* pubkey     */ some_pubkey("description of some pubkey"),
+                /* byte       */ some_byte("description of byte", u8),
             )]
             struct AccountStructWithLiteralSeed {
                 count: u8,
@@ -307,6 +308,6 @@ mod tests {
         let all_structs = vec![&account_struct].into_iter();
 
         let res = extract_account_structs(all_structs);
-        // eprintln!("{:#?}", res);
+        eprintln!("{:#?}", res);
     }
 }
