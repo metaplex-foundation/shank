@@ -230,4 +230,83 @@ mod tests {
             assert!(err.to_string().contains("AccountStructWithTwoPaddedFields has more than one padded field"));
         });
     }
+
+    // -----------------
+    // Seeds
+    // -----------------
+
+    /*
+    fn candy_guard_seeds() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/30481839256f192840da609d0d2c26c28a1051f4/program/src/guards/mint_limit.rs#L51
+        let seeds = [
+            &[self.id],
+            user.as_ref(),
+            candy_guard_key.as_ref(),
+            candy_machine_key.as_ref(),
+        ];
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/wrap.rs#L12
+        let seeds = [SEED, &candy_guard.base.to_bytes(), &[candy_guard.bump]];
+
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/update.rs#L83
+        let seeds = [SEED, candy_guard.base.key().as_ref()];
+    }
+    */
+
+    /*
+    fn token_metadata_seeds() {
+        // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L411
+        let edition_seeds: &[&[u8]; 4] = &[
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            mint.as_ref(),
+            EDITION.as_bytes(),
+        ];
+
+        // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/processor.rs#L1959
+        let edition_marker_number = print_edition
+            .edition
+            .checked_div(EDITION_MARKER_BIT_SIZE)
+            .ok_or(MetadataError::NumericalOverflowError)?;
+        let edition_marker_number_str = edition_marker_number.to_string();
+
+        // Ensure we were passed the correct edition marker PDA.
+        let edition_marker_info_path = Vec::from([
+            PREFIX.as_bytes(),
+            program_id.as_ref(),
+            // AccountInfo
+            master_edition_mint_info.key.as_ref(),
+            EDITION.as_bytes(),
+            edition_marker_number_str.as_bytes(),
+        ]);
+    }
+
+    fn account_struct_with_literal_seeds() -> ItemStruct {
+        parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds("lit_one", "lit_two")]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        })
+    }
+    */
+
+    #[test]
+    fn extract_account_from_account_struct_experiment() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                /* literal    */ "lit:prefix",
+                /* program_id */ program_id,
+                /* pubkey     */ some_pubkey("description of some pubkey"),
+            )]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+        let all_structs = vec![&account_struct].into_iter();
+
+        let res = extract_account_structs(all_structs);
+        // eprintln!("{:#?}", res);
+    }
 }

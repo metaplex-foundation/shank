@@ -67,7 +67,10 @@ pub fn attr_is_derive(attr: &&Attribute, derive: &str) -> bool {
             }
         }
         Ok(_) => false,
-        Err(_) => false,
+        Err(err) => {
+            eprintln!("{:#?}", err);
+            false
+        }
     }
 }
 

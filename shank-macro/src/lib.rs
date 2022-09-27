@@ -31,7 +31,7 @@ mod instruction;
 ///
 /// The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
 /// with `BorshSerialize` or `BorshDeserialize`.
-#[proc_macro_derive(ShankAccount, attributes(padding))]
+#[proc_macro_derive(ShankAccount, attributes(padding, seeds))]
 pub fn shank_account(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_account(input)
