@@ -10,11 +10,17 @@ const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[seeds("literal", program_id, pubkey("description"), byte("desc", u8), other_type("desc", u32))]"##;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Seeds(Vec<Seed>);
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum StructAttr {
     Seeds(Seeds),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Seeds(Vec<Seed>);
+
+impl Seeds {
+    pub fn get_literals(&self) -> Vec<String> {
+        self.0.iter().filter_map(|x| x.get_literal()).collect()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -22,6 +28,22 @@ pub enum Seed {
     Literal(String),
     ProgramId,
     Param(String, String, Option<String>),
+}
+
+impl Seed {
+    pub fn is_literal(&self) -> bool {
+        match self {
+            Seed::Literal(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn get_literal(&self) -> Option<String> {
+        match self {
+            Seed::Literal(lit) => Some(lit.to_string()),
+            _ => None,
+        }
+    }
 }
 
 impl From<&StructAttr> for String {
@@ -34,6 +56,14 @@ impl From<&StructAttr> for String {
 
 #[derive(Debug)]
 pub struct StructAttrs(pub HashSet<StructAttr>);
+impl StructAttrs {
+    pub fn items(&self) -> Vec<&StructAttr> {
+        self.0.iter().collect::<Vec<&StructAttr>>()
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
 impl TryFrom<&[Attribute]> for StructAttrs {
     type Error = ParseError;
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {

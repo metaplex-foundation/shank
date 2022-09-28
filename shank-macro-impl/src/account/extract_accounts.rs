@@ -75,7 +75,7 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
 #[cfg(test)]
 mod tests {
 
-    use crate::parsed_struct::StructFieldAttr;
+    use crate::parsed_struct::{StructAttr, StructFieldAttr};
 
     use super::*;
     use assert_matches::assert_matches;
@@ -309,5 +309,29 @@ mod tests {
 
         let res = extract_account_structs(all_structs);
         eprintln!("{:#?}", res);
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_literal_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds("lit:prefix")]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+        let all_structs = vec![&account_struct].into_iter();
+
+        let res = extract_account_structs(all_structs)
+            .expect("Should parse struct without error");
+
+        let struct_attrs = &res[0].struct_attrs;
+        assert_eq!(struct_attrs.len(), 1, "Extracts one attr");
+
+        let attr = struct_attrs.items()[0];
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["lit:prefix".to_string()]);
+        });
     }
 }

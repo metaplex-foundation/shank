@@ -87,8 +87,6 @@ impl TryFrom<&ItemStruct> for ParsedStruct {
             }
         };
         let struct_attrs = StructAttrs::try_from(item.attrs.as_slice())?;
-        eprintln!("{:#?}", struct_attrs);
-
         Ok(ParsedStruct {
             ident: item.ident.clone(),
             fields,
