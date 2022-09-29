@@ -5,7 +5,7 @@ mod struct_attr;
 mod struct_field_attr;
 
 pub use parsed_struct::*;
-pub use struct_attr::StructAttr;
+pub use struct_attr::*;
 pub use struct_field_attr::StructFieldAttr;
 
 #[cfg(test)]

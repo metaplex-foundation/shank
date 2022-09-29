@@ -21,6 +21,14 @@ impl Seeds {
     pub fn get_literals(&self) -> Vec<String> {
         self.0.iter().filter_map(|x| x.get_literal()).collect()
     }
+
+    pub fn get_program_ids(&self) -> Vec<Seed> {
+        self.0.iter().filter_map(|x| x.get_program_id()).collect()
+    }
+
+    pub fn get_params(&self) -> Vec<Seed> {
+        self.0.iter().filter_map(|x| x.get_param()).collect()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -31,16 +39,25 @@ pub enum Seed {
 }
 
 impl Seed {
-    pub fn is_literal(&self) -> bool {
-        match self {
-            Seed::Literal(_) => true,
-            _ => false,
-        }
-    }
-
     pub fn get_literal(&self) -> Option<String> {
         match self {
             Seed::Literal(lit) => Some(lit.to_string()),
+            _ => None,
+        }
+    }
+
+    pub fn get_program_id(&self) -> Option<Seed> {
+        match self {
+            Seed::ProgramId => Some(Seed::ProgramId),
+            _ => None,
+        }
+    }
+
+    pub fn get_param(&self) -> Option<Seed> {
+        match self {
+            Seed::Param(name, desc, ty) => {
+                Some(Seed::Param(name.to_owned(), desc.to_owned(), ty.clone()))
+            }
             _ => None,
         }
     }
@@ -57,8 +74,11 @@ impl From<&StructAttr> for String {
 #[derive(Debug)]
 pub struct StructAttrs(pub HashSet<StructAttr>);
 impl StructAttrs {
-    pub fn items(&self) -> Vec<&StructAttr> {
+    pub fn items_ref(&self) -> Vec<&StructAttr> {
         self.0.iter().collect::<Vec<&StructAttr>>()
+    }
+    pub fn items(self) -> Vec<StructAttr> {
+        self.0.into_iter().collect::<Vec<StructAttr>>()
     }
     pub fn len(&self) -> usize {
         self.0.len()

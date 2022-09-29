@@ -75,7 +75,7 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
 #[cfg(test)]
 mod tests {
 
-    use crate::parsed_struct::{StructAttr, StructFieldAttr};
+    use crate::parsed_struct::{Seed, StructAttr, StructFieldAttr};
 
     use super::*;
     use assert_matches::assert_matches;
@@ -311,6 +311,21 @@ mod tests {
         eprintln!("{:#?}", res);
     }
 
+    fn extract_seeds_attr(account_struct: &ItemStruct) -> StructAttr {
+        let all_structs = vec![account_struct].into_iter();
+        let res = extract_account_structs(all_structs)
+            .expect("Should parse struct without error");
+
+        let struct_attrs = res.into_iter().nth(0).unwrap().struct_attrs;
+        assert_eq!(struct_attrs.len(), 1, "Extracts one attr");
+
+        struct_attrs
+            .items()
+            .into_iter()
+            .nth(0)
+            .expect("Should extract one struct attr")
+    }
+
     #[test]
     fn extract_account_from_account_struct_with_literal_seed() {
         let account_struct = parse_struct(quote! {
@@ -320,18 +335,96 @@ mod tests {
                 count: u8,
             }
         });
-        let all_structs = vec![&account_struct].into_iter();
 
-        let res = extract_account_structs(all_structs)
-            .expect("Should parse struct without error");
-
-        let struct_attrs = &res[0].struct_attrs;
-        assert_eq!(struct_attrs.len(), 1, "Extracts one attr");
-
-        let attr = struct_attrs.items()[0];
+        let attr = extract_seeds_attr(&account_struct);
         assert_matches!(attr,
          StructAttr::Seeds(seeds) => {
             assert_eq!(seeds.get_literals(), vec!["lit:prefix".to_string()]);
+        });
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_program_id_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(program_id)]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+        });
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_pubkey_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(mypubkey("desc of my pubkey"))]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param("mypubkey".to_string(), "desc of my pubkey".to_string(), None)]
+            );
+        });
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_byte_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(mybyte("desc of my byte", u8))]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param(
+                    "mybyte".to_string(),
+                    "desc of my byte".to_string(),
+                    Some("u8".to_string())
+                )]
+            );
+        });
+    }
+
+    #[test]
+    fn extract_account_from_account_struct_with_u32_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(myu32("desc of my u32", u32))]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param(
+                    "myu32".to_string(),
+                    "desc of my u32".to_string(),
+                    Some("u32".to_string())
+                )]
+            );
         });
     }
 }
