@@ -236,23 +236,6 @@ mod tests {
     // -----------------
 
     /*
-    fn candy_guard_seeds() {
-        // https://github.com/metaplex-foundation/candy-guard/blob/30481839256f192840da609d0d2c26c28a1051f4/program/src/guards/mint_limit.rs#L51
-        let seeds = [
-            &[self.id],
-            user.as_ref(),
-            candy_guard_key.as_ref(),
-            candy_machine_key.as_ref(),
-        ];
-        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/wrap.rs#L12
-        let seeds = [SEED, &candy_guard.base.to_bytes(), &[candy_guard.bump]];
-
-        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/update.rs#L83
-        let seeds = [SEED, candy_guard.base.key().as_ref()];
-    }
-    */
-
-    /*
     fn token_metadata_seeds() {
         // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L411
         let edition_seeds: &[&[u8]; 4] = &[
@@ -278,16 +261,6 @@ mod tests {
             EDITION.as_bytes(),
             edition_marker_number_str.as_bytes(),
         ]);
-    }
-
-    fn account_struct_with_literal_seeds() -> ItemStruct {
-        parse_struct(quote! {
-            #[derive(ShankAccount)]
-            #[seeds("lit_one", "lit_two")]
-            struct AccountStructWithLiteralSeed {
-                count: u8,
-            }
-        })
     }
     */
 
@@ -327,7 +300,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_account_from_account_struct_with_literal_seed() {
+    fn account_with_literal_seed() {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds("lit:prefix")]
@@ -344,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_account_from_account_struct_with_program_id_seed() {
+    fn account_with_program_id_seed() {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(program_id)]
@@ -361,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_account_from_account_struct_with_pubkey_seed() {
+    fn account_with_pubkey_seed() {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(mypubkey("desc of my pubkey"))]
@@ -381,7 +354,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_account_from_account_struct_with_byte_seed() {
+    fn account_with_byte_seed() {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(mybyte("desc of my byte", u8))]
@@ -405,7 +378,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_account_from_account_struct_with_u32_seed() {
+    fn account_with_u32_seed() {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(myu32("desc of my u32", u32))]
@@ -424,6 +397,156 @@ mod tests {
                     "desc of my u32".to_string(),
                     Some("u32".to_string())
                 )]
+            );
+        });
+    }
+
+    #[test]
+    fn candy_guard_seeds_mint_limit() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/30481839256f192840da609d0d2c26c28a1051f4/program/src/guards/mint_limit.rs#L51
+        /*
+        let seeds = [
+            &[self.id],                 // self.id: u8
+            user.as_ref(),              // Pubkey
+            candy_guard_key.as_ref(),   // &Pubkey
+            candy_machine_key.as_ref(), // &Pubkey
+        ];
+        */
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                id("MintLimit id", u8),
+                user("User key"),
+                candy_guard_key("Candy Guard key"),
+                candy_machine_key("Candy Machine key"),
+            )]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "id".to_string(),
+                        "MintLimit id".to_string(),
+                        Some("u8".to_string())
+                    ),
+                    Seed::Param(
+                        "user".to_string(),
+                        "User key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_key".to_string(),
+                        "Candy Guard key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_machine_key".to_string(),
+                        "Candy Machine key".to_string(),
+                        None,
+                    ),
+                ]
+            );
+        });
+    }
+
+    #[test]
+    fn candy_guard_seeds_wrap() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/wrap.rs#L12
+        // pub const SEED: &[u8] = b"candy_guard";
+        // let seeds = [
+        //   SEED,                          // &[u8] (passing as literal)
+        //   &candy_guard.base.to_bytes(),  // candy_guard: Account .base: Pubkey
+        //   &[candy_guard.bump]            // candy_guard.bump: u8
+        // ];
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "candy_guard",
+                user("User key"),
+                candy_guard_base("Candy Guard base"),
+                candy_guard_bump("Determined bump", u8),
+            )]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["candy_guard".to_string()]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "user".to_string(),
+                        "User key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_base".to_string(),
+                        "Candy Guard base".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_bump".to_string(),
+                        "Determined bump".to_string(),
+                        Some(
+                            "u8".to_string(),
+                        ),
+                    ),
+                ],
+            );
+        });
+    }
+
+    #[test]
+    fn candy_guard_seeds_update() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/update.rs#L83
+        // #[account(
+        //   seeds = [
+        //       SEED,                           // same as candy_guard_seeds_wrap
+        //       candy_guard.base.key().as_ref() // candy_guard: Account, base: Pubkey
+        //   ];
+        //   bump = candy_guard.bump             // u8
+        // )]
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "candy_guard",
+                candy_guard_base("Candy Guard base"),
+                candy_guard_bump("Determined bump", u8),
+            )]
+            struct AccountStructWithLiteralSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["candy_guard".to_string()]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "candy_guard_base".to_string(),
+                        "Candy Guard base".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_bump".to_string(),
+                        "Determined bump".to_string(),
+                        Some(
+                            "u8".to_string(),
+                        ),
+                    ),
+                ],
             );
         });
     }
