@@ -84,6 +84,9 @@ impl StructAttrs {
         self.0.len()
     }
 }
+
+// TODO(thlorenz): Include the stringified representation of invalid seeds when possible in order
+// to improve error messages during IDL generation via shank-cli
 impl TryFrom<&[Attribute]> for StructAttrs {
     type Error = ParseError;
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
