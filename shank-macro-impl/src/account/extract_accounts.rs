@@ -235,35 +235,6 @@ mod tests {
     // Seeds
     // -----------------
 
-    /*
-    fn token_metadata_seeds() {
-        // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L411
-        let edition_seeds: &[&[u8]; 4] = &[
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            mint.as_ref(),
-            EDITION.as_bytes(),
-        ];
-
-        // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/processor.rs#L1959
-        let edition_marker_number = print_edition
-            .edition
-            .checked_div(EDITION_MARKER_BIT_SIZE)
-            .ok_or(MetadataError::NumericalOverflowError)?;
-        let edition_marker_number_str = edition_marker_number.to_string();
-
-        // Ensure we were passed the correct edition marker PDA.
-        let edition_marker_info_path = Vec::from([
-            PREFIX.as_bytes(),
-            program_id.as_ref(),
-            // AccountInfo
-            master_edition_mint_info.key.as_ref(),
-            EDITION.as_bytes(),
-            edition_marker_number_str.as_bytes(),
-        ]);
-    }
-    */
-
     #[test]
     fn extract_account_from_account_struct_experiment() {
         let account_struct = parse_struct(quote! {
@@ -274,7 +245,7 @@ mod tests {
                 /* pubkey     */ some_pubkey("description of some pubkey"),
                 /* byte       */ some_byte("description of byte", u8),
             )]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -304,7 +275,7 @@ mod tests {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds("lit:prefix")]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -321,7 +292,7 @@ mod tests {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(program_id)]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -338,7 +309,7 @@ mod tests {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(mypubkey("desc of my pubkey"))]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -358,7 +329,7 @@ mod tests {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(mybyte("desc of my byte", u8))]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -382,7 +353,7 @@ mod tests {
         let account_struct = parse_struct(quote! {
             #[derive(ShankAccount)]
             #[seeds(myu32("desc of my u32", u32))]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -401,6 +372,9 @@ mod tests {
         });
     }
 
+    // -----------------
+    // Seeds: Candy Guard
+    // -----------------
     #[test]
     fn candy_guard_seeds_mint_limit() {
         // https://github.com/metaplex-foundation/candy-guard/blob/30481839256f192840da609d0d2c26c28a1051f4/program/src/guards/mint_limit.rs#L51
@@ -420,7 +394,7 @@ mod tests {
                 candy_guard_key("Candy Guard key"),
                 candy_machine_key("Candy Machine key"),
             )]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -473,7 +447,7 @@ mod tests {
                 candy_guard_base("Candy Guard base"),
                 candy_guard_bump("Determined bump", u8),
             )]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -523,7 +497,7 @@ mod tests {
                 candy_guard_base("Candy Guard base"),
                 candy_guard_bump("Determined bump", u8),
             )]
-            struct AccountStructWithLiteralSeed {
+            struct AccountStructWithSeed {
                 count: u8,
             }
         });
@@ -545,6 +519,103 @@ mod tests {
                         Some(
                             "u8".to_string(),
                         ),
+                    ),
+                ],
+            );
+        });
+    }
+
+    // -----------------
+    // Seeds: token-metadata
+    // -----------------
+    #[test]
+    fn token_metadata_seeds_update() {
+        // // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L411
+        // pub const PREFIX: &str = "metadata";
+        // pub const EDITION: &str = "edition";
+        // let edition_seeds: &[&[u8]; 4] = &[
+        //     PREFIX.as_bytes(),   // &str
+        //     program_id.as_ref(), // &Pubkey
+        //     mint.as_ref(),       // &Pubkey
+        //     EDITION.as_bytes(),  // &str
+        // ];
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "metadata",
+                program_id,
+                mint("The mint"),
+                "edition"
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["metadata".to_string(), "edition".to_string()]);
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "mint".to_string(),
+                        "The mint".to_string(),
+                        None,
+                    ),
+                ],
+            );
+        });
+    }
+
+    #[test]
+    fn token_metadata_seeds_burn_edition_nft() {
+        // // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/processor.rs#L1959
+        // let edition_marker_number = print_edition
+        //     .edition
+        //     .checked_div(EDITION_MARKER_BIT_SIZE)
+        //     .ok_or(MetadataError::NumericalOverflowError)?;
+        // let edition_marker_number_str = edition_marker_number.to_string();
+
+        // // Ensure we were passed the correct edition marker PDA.
+        // let edition_marker_info_path = Vec::from([
+        //     PREFIX.as_bytes(),                      // &str
+        //     program_id.as_ref(),                    // program_id
+        //     master_edition_mint_info.key.as_ref(),  // AccountInfo .key: &Pubkey
+        //     EDITION.as_bytes(),                     // &str
+        //     edition_marker_number_str.as_bytes(),   // String
+        // ]);
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "metadata",
+                program_id,
+                master_edition_mint("The master edition mint"),
+                "edition",
+                edition_marker_number_str("Stringified edition marker number", String)
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["metadata".to_string(), "edition".to_string()]);
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "master_edition_mint".to_string(),
+                        "The master edition mint".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "edition_marker_number_str".to_string(),
+                        "Stringified edition marker number".to_string(),
+                        Some("String".to_string())
                     ),
                 ],
             );
