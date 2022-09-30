@@ -1,10 +1,12 @@
 use proc_macro2::TokenStream;
 
 mod parsed_struct;
+mod seed;
 mod struct_attr;
 mod struct_field_attr;
 
 pub use parsed_struct::*;
+pub use seed::*;
 pub use struct_attr::*;
 pub use struct_field_attr::StructFieldAttr;
 

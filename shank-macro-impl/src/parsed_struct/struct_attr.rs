@@ -6,6 +6,8 @@ use syn::{
     Meta, MetaList, NestedMeta, Path, Result as ParseResult,
 };
 
+use super::Seed;
+
 const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[seeds("literal", program_id, pubkey("description"), byte("desc", u8), other_type("desc", u32))]"##;
 
@@ -28,38 +30,6 @@ impl Seeds {
 
     pub fn get_params(&self) -> Vec<Seed> {
         self.0.iter().filter_map(|x| x.get_param()).collect()
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Seed {
-    Literal(String),
-    ProgramId,
-    Param(String, String, Option<String>),
-}
-
-impl Seed {
-    pub fn get_literal(&self) -> Option<String> {
-        match self {
-            Seed::Literal(lit) => Some(lit.to_string()),
-            _ => None,
-        }
-    }
-
-    pub fn get_program_id(&self) -> Option<Seed> {
-        match self {
-            Seed::ProgramId => Some(Seed::ProgramId),
-            _ => None,
-        }
-    }
-
-    pub fn get_param(&self) -> Option<Seed> {
-        match self {
-            Seed::Param(name, desc, ty) => {
-                Some(Seed::Param(name.to_owned(), desc.to_owned(), ty.clone()))
-            }
-            _ => None,
-        }
     }
 }
 

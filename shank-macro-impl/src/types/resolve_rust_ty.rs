@@ -42,6 +42,9 @@ impl From<&str> for IdentWrap {
 // RustType creation helper methods
 // -----------------
 impl RustType {
+    // -----------------
+    // Owned
+    // -----------------
     pub fn owned<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
         let ident_wrap: IdentWrap = ident.into();
         RustType {
@@ -107,6 +110,19 @@ impl RustType {
                 vec![RustType::owned_primitive("inner", primitive)],
             ),
         )
+    }
+
+    // -----------------
+    // References
+    // -----------------
+    pub fn reference<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
+        let ident_wrap: IdentWrap = ident.into();
+        RustType {
+            ident: ident_wrap.0,
+            kind,
+            reference: ParsedReference::Ref(None),
+            context: RustTypeContext::Default,
+        }
     }
 }
 
