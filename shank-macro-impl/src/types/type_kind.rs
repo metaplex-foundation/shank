@@ -4,7 +4,7 @@ use std::fmt::Debug;
 // -----------------
 // TypeKind
 // -----------------
-#[derive(Clone)]
+#[derive(Clone, Eq)]
 pub enum TypeKind {
     Primitive(Primitive),
     Value(Value),
@@ -195,7 +195,7 @@ impl TypeKind {
 // --------------
 // Primitive
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Primitive {
     U8,
     I8,
@@ -234,7 +234,7 @@ impl Debug for Primitive {
 // --------------
 // Value
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Value {
     CString,
     String,
@@ -292,7 +292,7 @@ impl Value {
 // --------------
 // Composite
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Composite {
     Vec,
     Array(usize),

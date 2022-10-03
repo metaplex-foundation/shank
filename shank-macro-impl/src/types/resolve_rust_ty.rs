@@ -10,7 +10,7 @@ use syn::{
 use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
 use syn::{Error as ParseError, Result as ParseResult};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RustType {
     pub ident: Ident,
 
@@ -27,6 +27,15 @@ impl TryFrom<&Type> for RustType {
 
     fn try_from(ty: &Type) -> ParseResult<Self> {
         resolve_rust_ty(ty, super::RustTypeContext::Default)
+    }
+}
+
+impl TryFrom<&str> for RustType {
+    type Error = ParseError;
+
+    fn try_from(s: &str) -> ParseResult<Self> {
+        let ty: Type = syn::parse_str(s)?;
+        resolve_rust_ty(&ty, super::RustTypeContext::Default)
     }
 }
 
@@ -126,7 +135,7 @@ impl RustType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RustTypeContext {
     Default,
     CollectionItem,

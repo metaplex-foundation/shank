@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use syn::{Lifetime, TypeReference};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum ParsedReference {
     Owned,
     Ref(Option<syn::Ident>),

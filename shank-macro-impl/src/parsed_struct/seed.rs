@@ -1,15 +1,16 @@
+use crate::types::{RustType, TypeKind, Value};
 use std::convert::TryFrom;
+use syn::{Error as ParseError, Result as ParseResult};
 
-use proc_macro2::{Span, TokenStream};
-use quote::quote;
-use syn::{Error as ParseError, Ident, Result as ParseResult};
-
-use crate::types::{Primitive, RustType, TypeKind, Value};
+const PROGRAM_ID_DESC: &str = "The id of the program";
+const PROGRAM_ID_NAME: &str = "program_id";
+pub const PUBKEY_TY: &str = "Pubkey";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Seed {
     Literal(String),
     ProgramId,
+    /// Seed param with (name, desc, type)
     Param(String, String, Option<String>),
 }
 
@@ -38,6 +39,7 @@ impl Seed {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SeedArg {
     name: String,
     desc: String,
@@ -50,13 +52,13 @@ impl SeedArg {
 }
 
 pub struct ProcessedSeed {
-    item: TokenStream,
-    arg: Option<SeedArg>,
+    pub seed: Seed,
+    pub arg: Option<SeedArg>,
 }
 
 impl ProcessedSeed {
-    fn new(item: TokenStream, arg: Option<SeedArg>) -> Self {
-        Self { item, arg }
+    fn new(seed: Seed, arg: Option<SeedArg>) -> Self {
+        Self { seed, arg }
     }
 }
 
@@ -64,32 +66,33 @@ impl TryFrom<&Seed> for ProcessedSeed {
     type Error = ParseError;
     fn try_from(seed: &Seed) -> ParseResult<Self> {
         match seed {
-            Seed::Literal(lit) => {
-                let ident = Ident::new(lit, Span::call_site());
-                let item = quote! { b"#ident"  };
-                Ok(ProcessedSeed::new(item, None))
-            }
+            Seed::Literal(_) => Ok(ProcessedSeed::new(seed.clone(), None)),
             Seed::ProgramId => {
-                let name = "program_id".to_string();
-                let desc = "The id of the program".to_string();
+                let name = PROGRAM_ID_NAME.to_string();
+                let desc = PROGRAM_ID_DESC.to_string();
+                // TODO(thlorenz): Include lifetime info
                 let ty = RustType::reference(
-                    "program_id",
-                    TypeKind::Value(Value::Custom("Pubkey".to_string())),
+                    PUBKEY_TY,
+                    TypeKind::Value(Value::Custom(PUBKEY_TY.to_string())),
                 );
-                let item = seed_item("program_id", &ty)?;
-                Ok(ProcessedSeed::new(item, Some(SeedArg::new(name, desc, ty))))
+                Ok(ProcessedSeed::new(
+                    seed.clone(),
+                    Some(SeedArg::new(name, desc, ty)),
+                ))
             }
             Seed::Param(name, desc, maybe_kind) => {
-                let kind = maybe_kind
-                    .as_ref()
-                    .map(|s| TypeKind::Value(Value::Custom(s.to_string())))
-                    .unwrap_or_else(|| {
-                        TypeKind::Value(Value::Custom("Pubkey".to_string()))
-                    });
-                let ty = RustType::reference(name.as_str(), kind.clone());
-                let item = seed_item(name.as_str(), &ty)?;
+                let ty = match maybe_kind {
+                    // TODO(thlorenz): Add reference + lifetime info
+                    Some(s) => RustType::try_from(s.as_str()),
+                    None => {
+                        let kind = TypeKind::Value(Value::Custom(
+                            PUBKEY_TY.to_string(),
+                        ));
+                        Ok(RustType::reference(PUBKEY_TY, kind.clone()))
+                    }
+                }?;
                 Ok(ProcessedSeed::new(
-                    item,
+                    seed.clone(),
                     Some(SeedArg::new(name.to_owned(), desc.to_owned(), ty)),
                 ))
             }
@@ -97,36 +100,67 @@ impl TryFrom<&Seed> for ProcessedSeed {
     }
 }
 
-fn seed_item(name: &str, ty: &RustType) -> ParseResult<TokenStream> {
-    let ident = Ident::new(name, Span::call_site());
-    match &ty.kind {
-        TypeKind::Primitive(p) if p == &Primitive::Bool => {
-            Ok(quote! { &[if #ident { 1 } else { 0 } ] })
-        }
-        TypeKind::Primitive(_p) => Ok(quote! { &[#ident] }),
-        TypeKind::Value(Value::String)
-        | TypeKind::Value(Value::CString)
-        | TypeKind::Value(Value::Str) => Ok(quote! { #ident.as_bytes() }),
-        TypeKind::Value(Value::Custom(x)) if x == "Pubkey" => {
-            Ok(quote! { #ident.as_ref() })
-        }
-        TypeKind::Value(Value::Custom(x)) => Err(ParseError::new(
-            ty.ident.span(),
-            format!("Custom seed type {} not supported yet", x),
-        )),
-        TypeKind::Composite(k1, k2) => Err(ParseError::new(
-            ty.ident.span(),
-            format!(
-                "Composite seed types aren't supported yet ({:?}, {:?})",
-                k1, k2
-            ),
-        )),
-        TypeKind::Unit => {
-            Err(ParseError::new(ident.span(), "Seeds cannot be unit type"))
-        }
-        TypeKind::Unknown => Err(ParseError::new(
-            ident.span(),
-            "Seeds cannot be of unknown type",
-        )),
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_matches::assert_matches;
+
+    #[test]
+    fn process_seed_literal() {
+        let seed = Seed::Literal("uno".to_string());
+        let ProcessedSeed { arg, .. } = ProcessedSeed::try_from(&seed)
+            .expect("Should parse seed without error");
+
+        assert!(arg.is_none());
+    }
+
+    #[test]
+    fn process_seed_program_id() {
+        let seed = Seed::ProgramId;
+        let ProcessedSeed { arg, .. } = ProcessedSeed::try_from(&seed)
+            .expect("Should parse seed without error");
+
+        assert_matches!(arg, Some(SeedArg { name, desc, ty }) => {
+            assert_eq!(name, PROGRAM_ID_NAME);
+            assert_eq!(desc, PROGRAM_ID_DESC);
+            assert_eq!(ty.ident.to_string().as_str(), "Pubkey");
+            assert!(ty.kind.is_custom());
+            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"Pubkey\"))")
+        });
+    }
+
+    #[test]
+    fn process_seed_pubkey() {
+        let seed =
+            Seed::Param("mypubkey".to_string(), "my desc".to_string(), None);
+        let ProcessedSeed { arg, .. } = ProcessedSeed::try_from(&seed)
+            .expect("Should parse seed without error");
+
+        assert_matches!(arg, Some(SeedArg { name, desc, ty }) => {
+            assert_eq!(name, "mypubkey");
+            assert_eq!(desc, "my desc");
+            assert_eq!(ty.ident.to_string().as_str(), "Pubkey");
+            assert!(ty.kind.is_custom());
+            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"Pubkey\"))")
+        });
+    }
+
+    #[test]
+    fn process_seed_u8() {
+        let seed = Seed::Param(
+            "myu8".to_string(),
+            "u8 desc".to_string(),
+            Some("u8".to_string()),
+        );
+        let ProcessedSeed { arg, .. } = ProcessedSeed::try_from(&seed)
+            .expect("Should parse seed without error");
+
+        assert_matches!(arg, Some(SeedArg { name, desc, ty }) => {
+            assert_eq!(name, "myu8");
+            assert_eq!(desc, "u8 desc");
+            assert_eq!(ty.ident.to_string().as_str(), "u8");
+            assert!(ty.kind.is_primitive());
+            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Primitive(Primitive::U8)")
+        });
     }
 }
