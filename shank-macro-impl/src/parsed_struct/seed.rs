@@ -41,9 +41,9 @@ impl Seed {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SeedArg {
-    name: String,
-    desc: String,
-    ty: RustType,
+    pub name: String,
+    pub desc: String,
+    pub ty: RustType,
 }
 impl SeedArg {
     fn new(name: String, desc: String, ty: RustType) -> Self {

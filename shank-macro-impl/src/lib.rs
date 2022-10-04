@@ -13,3 +13,7 @@ pub mod types;
 
 pub const DERIVE_INSTRUCTION_ATTR: &str = "ShankInstruction";
 pub const DERIVE_ACCOUNT_ATTR: &str = "ShankAccount";
+
+pub mod syn {
+    pub use syn::*;
+}

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, convert::TryFrom};
+use std::{collections::HashSet, convert::TryFrom, slice::Iter, vec::IntoIter};
 
 use proc_macro2::Span;
 use syn::{
@@ -6,7 +6,7 @@ use syn::{
     Meta, MetaList, NestedMeta, Path, Result as ParseResult,
 };
 
-use super::Seed;
+use super::{ProcessedSeed, Seed};
 
 const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[seeds("literal", program_id, pubkey("description"), byte("desc", u8), other_type("desc", u32))]"##;
@@ -17,7 +17,7 @@ pub enum StructAttr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Seeds(Vec<Seed>);
+pub struct Seeds(pub Vec<Seed>);
 
 impl Seeds {
     pub fn get_literals(&self) -> Vec<String> {
@@ -30,6 +30,20 @@ impl Seeds {
 
     pub fn get_params(&self) -> Vec<Seed> {
         self.0.iter().filter_map(|x| x.get_param()).collect()
+    }
+
+    pub fn iter(&self) -> Iter<Seed> {
+        self.0.iter()
+    }
+
+    pub fn into_iter(self) -> IntoIter<Seed> {
+        self.0.into_iter()
+    }
+
+    pub fn process(&self) -> ParseResult<Vec<ProcessedSeed>> {
+        self.iter()
+            .map(ProcessedSeed::try_from)
+            .collect::<ParseResult<Vec<ProcessedSeed>>>()
     }
 }
 
@@ -44,6 +58,9 @@ impl From<&StructAttr> for String {
 #[derive(Debug)]
 pub struct StructAttrs(pub HashSet<StructAttr>);
 impl StructAttrs {
+    pub fn new() -> Self {
+        Self(HashSet::new())
+    }
     pub fn items_ref(&self) -> Vec<&StructAttr> {
         self.0.iter().collect::<Vec<&StructAttr>>()
     }
@@ -52,6 +69,9 @@ impl StructAttrs {
     }
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+    pub fn insert(&mut self, attr: StructAttr) -> bool {
+        self.0.insert(attr)
     }
 }
 
