@@ -37,6 +37,38 @@ pub fn try_render_seeds(
     Ok(items)
 }
 
+// -----------------
+// Function Args
+// -----------------
+fn render_function_arg(
+    seed: &ProcessedSeed,
+) -> Opion<ParseResult<TokenStream>> {
+    // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
+    // that the arg is set
+    match &seed.seed {
+        Seed::Literal(_) => {
+            // Literal items don't need to be passed to the function
+            None
+        }
+        Seed::ProgramId => {
+            // @@@: RustType should know how to render itself and we should just invoke that here
+
+            let item = seed_item("program_id", &seed.arg.as_ref().unwrap().ty)?;
+            Ok(item)
+        }
+        Seed::Param(name, _, _) => {
+            // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
+            // that the arg is set
+            let item =
+                seed_item(name.as_str(), &seed.arg.as_ref().unwrap().ty)?;
+            Ok(item)
+        }
+    }
+}
+
+// -----------------
+// Seed Items
+// -----------------
 fn render_seed_item(seed: &ProcessedSeed) -> ParseResult<TokenStream> {
     match &seed.seed {
         Seed::Literal(lit) => {
@@ -48,8 +80,8 @@ fn render_seed_item(seed: &ProcessedSeed) -> ParseResult<TokenStream> {
             Ok(item)
         }
         Seed::Param(name, _, _) => {
-            // TODO(thlorenz): Make sure that we always have the Pubkey here if maybe kind wasn't
-            // provided
+            // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
+            // that the arg is set
             let item =
                 seed_item(name.as_str(), &seed.arg.as_ref().unwrap().ty)?;
             Ok(item)
