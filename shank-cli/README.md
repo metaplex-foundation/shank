@@ -5,6 +5,8 @@ attributes](../shank-macro/README.md). This IDL can then be fed to
 [solita](https://github.com/metaplex-foundation/solita) in order to generate low level
 TypeScript SDK for that particular Rust program.
 
+![shank-logo](../shank/assets/shank-logo.gif)
+
 ## Installation
 
 ### Via Cargo
