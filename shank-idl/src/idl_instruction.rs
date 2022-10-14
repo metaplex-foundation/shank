@@ -4,7 +4,7 @@ use anyhow::{anyhow, ensure, Error, Result};
 use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
-    Instruction, InstructionAccount, InstructionVariant,
+    Instruction, InstructionAccount, InstructionStrategy, InstructionVariant,
     InstructionVariantFields,
 };
 
@@ -37,10 +37,13 @@ impl TryFrom<Instruction> for IdlInstructions {
 /// We also expect it to only have one arg which is a custom type containing the
 /// respective instruction args.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct IdlInstruction {
     pub name: String,
     pub accounts: Vec<IdlAccountItem>,
     pub args: Vec<IdlField>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub default_optional_accounts: Option<bool>,
     pub discriminant: IdlInstructionDiscriminant,
 }
 
@@ -52,6 +55,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             ident,
             field_tys,
             accounts,
+            strategies,
             discriminant,
         } = variant;
 
@@ -94,6 +98,14 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
         let args: Vec<IdlField> = parsed_idl_fields?;
 
         let accounts = accounts.into_iter().map(IdlAccountItem::from).collect();
+        let default_optional_accounts = if strategies
+            .contains(&InstructionStrategy::DefaultOptionalAccounts)
+        {
+            Some(true)
+        } else {
+            None
+        };
+
         ensure!(
             discriminant < u8::MAX as usize,
             anyhow!(
@@ -109,6 +121,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             name,
             accounts,
             args,
+            default_optional_accounts,
             discriminant: (discriminant as u8).into(),
         })
     }
