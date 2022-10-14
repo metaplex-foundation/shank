@@ -51,9 +51,10 @@ fn instruction_with_default_optional_accounts() {
     );
 
     assert_eq!(strategies.0.len(), 1, "includes one instruction strategy");
-    assert_eq!(
-        strategies.0[0],
-        InstructionStrategy::DefaultOptionalAccounts,
+    assert!(
+        strategies
+            .0
+            .contains(&InstructionStrategy::DefaultOptionalAccounts),
         "to default optional accounts"
     );
 }

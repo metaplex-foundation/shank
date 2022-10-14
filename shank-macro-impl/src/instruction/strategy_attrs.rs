@@ -1,14 +1,16 @@
+use std::collections::HashSet;
+
 use syn::Attribute;
 
 const DEFAULT_OPTIONAL_ACCOUNTS: &str = "default_optional_accounts";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum InstructionStrategy {
     DefaultOptionalAccounts,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct InstructionStrategies(pub Vec<InstructionStrategy>);
+pub struct InstructionStrategies(pub HashSet<InstructionStrategy>);
 
 impl InstructionStrategy {
     pub fn from_account_attr(attr: &Attribute) -> Option<InstructionStrategy> {
@@ -28,7 +30,7 @@ impl From<&[Attribute]> for InstructionStrategies {
         let strategies = attrs
             .into_iter()
             .filter_map(InstructionStrategy::from_account_attr)
-            .collect::<Vec<InstructionStrategy>>();
+            .collect::<HashSet<InstructionStrategy>>();
 
         InstructionStrategies(strategies)
     }

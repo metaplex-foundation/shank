@@ -1,4 +1,7 @@
-use std::convert::{TryFrom, TryInto};
+use std::{
+    collections::HashSet,
+    convert::{TryFrom, TryInto},
+};
 use syn::{Attribute, Error as ParseError, ItemEnum, Result as ParseResult};
 
 use syn::Ident;
@@ -87,7 +90,7 @@ pub struct InstructionVariant {
     pub ident: Ident,
     pub field_tys: InstructionVariantFields,
     pub accounts: Vec<InstructionAccount>,
-    pub strategies: Vec<InstructionStrategy>,
+    pub strategies: HashSet<InstructionStrategy>,
     pub discriminant: usize,
 }
 
