@@ -1,4 +1,7 @@
-use std::convert::{TryFrom, TryInto};
+use std::{
+    collections::HashSet,
+    convert::{TryFrom, TryInto},
+};
 use syn::{Attribute, Error as ParseError, ItemEnum, Result as ParseResult};
 
 use syn::Ident;
@@ -10,7 +13,10 @@ use crate::{
     DERIVE_INSTRUCTION_ATTR,
 };
 
-use super::account_attrs::{InstructionAccount, InstructionAccounts};
+use super::{
+    account_attrs::{InstructionAccount, InstructionAccounts},
+    InstructionStrategies, InstructionStrategy,
+};
 
 // -----------------
 // Instruction
@@ -84,6 +90,7 @@ pub struct InstructionVariant {
     pub ident: Ident,
     pub field_tys: InstructionVariantFields,
     pub accounts: Vec<InstructionAccount>,
+    pub strategies: HashSet<InstructionStrategy>,
     pub discriminant: usize,
 }
 
@@ -124,11 +131,13 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
 
         let attrs: &[Attribute] = attrs.as_ref();
         let accounts: InstructionAccounts = attrs.try_into()?;
+        let strategies: InstructionStrategies = attrs.into();
 
         Ok(Self {
             ident: ident.clone(),
             field_tys,
             accounts: accounts.0,
+            strategies: strategies.0,
             discriminant: *discriminant,
         })
     }

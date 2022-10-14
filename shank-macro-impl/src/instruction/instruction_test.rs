@@ -27,6 +27,7 @@ fn assert_instruction_variant(
         field_tys,
         accounts,
         discriminant,
+        ..
     } = variant;
 
     assert_eq!(ident.to_string(), name);

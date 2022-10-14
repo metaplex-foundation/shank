@@ -60,7 +60,7 @@ impl From<&InstructionAccounts> for Vec<InstructionAccountWithoutIdent> {
     }
 }
 
-fn assert_instruction_account_matches(
+pub fn assert_instruction_account_matches(
     acc_actual: &InstructionAccount,
     acc_expected: InstructionAccountWithoutIdent,
 ) {
