@@ -1,4 +1,6 @@
+use proc_macro2::TokenStream;
 use quote::quote;
 
-const SOLANA_PROGRAM_PUBKEY: TokenStream =
-    quote! { ::solana_program::pubkey::Pubkey };
+pub fn solana_program_pubkey() -> TokenStream {
+    quote! { ::solana_program::pubkey::Pubkey }
+}

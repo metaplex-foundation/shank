@@ -42,26 +42,26 @@ pub fn try_render_seeds(
 // -----------------
 fn render_function_arg(
     seed: &ProcessedSeed,
-) -> Opion<ParseResult<TokenStream>> {
+) -> ParseResult<Option<TokenStream>> {
     // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
     // that the arg is set
     match &seed.seed {
         Seed::Literal(_) => {
             // Literal items don't need to be passed to the function
-            None
+            Ok(None)
         }
         Seed::ProgramId => {
             // @@@: RustType should know how to render itself and we should just invoke that here
 
             let item = seed_item("program_id", &seed.arg.as_ref().unwrap().ty)?;
-            Ok(item)
+            Ok(Some(item))
         }
         Seed::Param(name, _, _) => {
             // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
             // that the arg is set
             let item =
                 seed_item(name.as_str(), &seed.arg.as_ref().unwrap().ty)?;
-            Ok(item)
+            Ok(Some(item))
         }
     }
 }
