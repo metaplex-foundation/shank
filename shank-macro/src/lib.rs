@@ -78,6 +78,22 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// - `system_program` uses `SystemProgram.programId`
 /// - `rent` uses `SYSVAR_RENT_PUBKEY`
 ///
+/// # Strategies
+///
+/// ## Defaulting Optional Accounts
+///
+/// When the `#[default_optional_accounts]` attribute is added to an Instruction enum, shank will mark it
+/// such that optional accounts should default to the `progam_id` if they are not provided by the client.
+/// Thus their position is static and optional accounts that are set can follow ones that are not.
+///
+/// The default strategy (without `#[default_optional_accounts]`) is to just omit unset optional
+/// accounts from the accounts array.
+///
+/// **NOTE**: shank doesn't do anything different here aside from setting a flag for the
+/// particular instruction. Thus adding that strategy to an instruction enum is merely advisory and
+/// will is expected to be properly respected by code generator tools like
+/// [solita](https://github.com/metaplex-foundation/solita).
+///
 /// # Examples
 ///
 /// ```
@@ -116,7 +132,10 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///     ActivateVault(NumberOfShareArgs)
 /// }
 /// ```
-#[proc_macro_derive(ShankInstruction, attributes(account))]
+#[proc_macro_derive(
+    ShankInstruction,
+    attributes(account, default_optional_accounts)
+)]
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_instruction(input)
