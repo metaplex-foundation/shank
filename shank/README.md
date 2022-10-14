@@ -4,6 +4,8 @@ Entry point to shank crates used to annotate Rust programs in order to extract I
 used by [solita](https://github.com/metaplex-foundation/solita) in order to generate program
 SDKs.
 
+![shank-logo](./assets/shank-logo.gif)
+
 ## Shank Macro
 
 [Readme](../shank-macro/README.md) | [Docs](https://docs.rs/shank_macro)
