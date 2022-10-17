@@ -133,6 +133,27 @@ impl RustType {
             context: RustTypeContext::Default,
         }
     }
+    pub fn reference_mut<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
+        let ident_wrap: IdentWrap = ident.into();
+        RustType {
+            ident: ident_wrap.0,
+            kind,
+            reference: ParsedReference::RefMut(None),
+            context: RustTypeContext::Default,
+        }
+    }
+    pub fn ref_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+    ) -> Self {
+        RustType::reference(ident, TypeKind::Primitive(primitive))
+    }
+    pub fn refmut_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+    ) -> Self {
+        RustType::reference_mut(ident, TypeKind::Primitive(primitive))
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
