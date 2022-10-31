@@ -15,7 +15,7 @@ use crate::{
 
 use super::{
     account_attrs::{InstructionAccount, InstructionAccounts},
-    InstructionStrategies, InstructionStrategy,
+    IdlInstruction, InstructionStrategies, InstructionStrategy,
 };
 
 // -----------------
@@ -33,8 +33,7 @@ impl Instruction {
         skip_derive_attr_check: bool,
     ) -> ParseResult<Option<Instruction>> {
         if skip_derive_attr_check
-            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
-                .is_some()
+            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR).is_some()
         {
             let parsed_enum = ParsedEnum::try_from(item_enum)?;
             Instruction::try_from(&parsed_enum).map(Some)
@@ -48,9 +47,7 @@ impl TryFrom<&ParsedEnum> for Option<Instruction> {
     type Error = ParseError;
 
     fn try_from(parsed_enum: &ParsedEnum) -> ParseResult<Self> {
-        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR)
-            .map(|_| parsed_enum)
-        {
+        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR).map(|_| parsed_enum) {
             Some(ix_enum) => ix_enum.try_into().map(Some),
             None => Ok(None),
         }
@@ -106,19 +103,14 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             ..
         } = variant;
 
-        let field_tys: InstructionVariantFields = if fields.len() > 0 {
+        let mut field_tys: InstructionVariantFields = if !fields.is_empty() {
             // Determine if the InstructionType is tuple or struct variant
             let field = fields.get(0).unwrap();
             match &field.ident {
                 Some(_) => InstructionVariantFields::Named(
                     fields
                         .iter()
-                        .map(|x| {
-                            (
-                                x.ident.as_ref().unwrap().to_string(),
-                                x.rust_type.clone(),
-                            )
-                        })
+                        .map(|x| (x.ident.as_ref().unwrap().to_string(), x.rust_type.clone()))
                         .collect(),
                 ),
                 None => InstructionVariantFields::Unnamed(
@@ -130,8 +122,21 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
         };
 
         let attrs: &[Attribute] = attrs.as_ref();
-        let accounts: InstructionAccounts = attrs.try_into()?;
-        let strategies: InstructionStrategies = attrs.into();
+        let accounts: InstructionAccounts;
+        let strategies: InstructionStrategies;
+
+        let idl_instruction = IdlInstruction::try_from(attrs);
+        if idl_instruction.is_ok() {
+            let idl_ix = idl_instruction.unwrap();
+            accounts = idl_ix.to_accounts(ident.clone());
+            field_tys = idl_ix.to_instruction_fields(ident.clone());
+            strategies = InstructionStrategies(HashSet::<InstructionStrategy>::new());
+        } else {
+            let err = idl_instruction.unwrap_err();
+            println!("{}", err);
+            accounts = attrs.try_into()?;
+            strategies = attrs.into();
+        }
 
         Ok(Self {
             ident: ident.clone(),

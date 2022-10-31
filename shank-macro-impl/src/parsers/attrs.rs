@@ -7,8 +7,7 @@ fn flattened_idents_from_nested_meta(
     nested: &Punctuated<NestedMeta, Token![,]>,
 ) -> Vec<Ident> {
     nested
-        .iter()
-        .map(|nested| match nested {
+        .iter().flat_map(|nested| match nested {
             NestedMeta::Meta(Meta::Path(path)) => {
                 path.segments.iter().map(|x| x.ident.clone()).collect()
             }
@@ -17,14 +16,12 @@ fn flattened_idents_from_nested_meta(
             }
             _ => vec![],
         })
-        .flatten()
         .collect()
 }
 
 pub fn get_derive_names(attrs: &[Attribute]) -> Vec<String> {
     attrs
-        .iter()
-        .map(|attr| {
+        .iter().flat_map(|attr| {
             let meta = &attr.parse_meta();
             match meta {
                 Ok(Meta::List(MetaList { path, nested, .. })) => {
@@ -46,7 +43,6 @@ pub fn get_derive_names(attrs: &[Attribute]) -> Vec<String> {
                 Err(_) => vec![],
             }
         })
-        .flatten()
         .collect()
 }
 

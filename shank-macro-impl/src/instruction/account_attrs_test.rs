@@ -47,7 +47,7 @@ impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
             writable: *writable,
             signer: *signer,
             desc: desc.clone(),
-            optional: optional.clone(),
+            optional: *optional,
         }
     }
 }
@@ -320,10 +320,10 @@ fn account_multiple_attrs() {
                     InstructionAccountWithoutIdent {
                         index: None,
                         name: name.clone(),
-                        writable: writable.clone(),
-                        signer: signer.clone(),
+                        writable: *writable,
+                        signer: *signer,
                         desc: desc.clone(),
-                        optional: optional.clone(),
+                        optional: *optional,
                     }
                 },
             )

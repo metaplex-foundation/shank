@@ -1,0 +1,54 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "Create",
+      "accounts": [
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": true,
+          "desc": "Payer of the transaction"
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The deterministically defined 'state' account being created via `create_account_with_seed`"
+        },
+        {
+          "name": "base",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The program-derived-address signing off on the account creation. Seeds = &[] + bump seed."
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The system program"
+        },
+        {
+          "name": "program",
+          "isMut": false,
+          "isSigner": false,
+          "desc": "The program whose state is being constructed"
+        }
+      ],
+      "args": [
+        {
+          "name": "dataLen",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

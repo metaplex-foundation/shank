@@ -123,7 +123,7 @@ fn ident_and_kind_from_path(path: &Path) -> (Ident, TypeKind) {
     let PathSegment {
         ident, arguments, ..
     } = path.segments.first().unwrap();
-    (ident.clone(), ident_to_kind(&ident, &arguments))
+    (ident.clone(), ident_to_kind(ident, arguments))
 }
 
 fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
@@ -189,8 +189,8 @@ pub fn resolve_rust_ty(
             };
             let len = len_from_expr(len)?;
             let inner_ty = RustType {
-                kind: inner_kind.clone(),
-                ident: inner_ident.clone(),
+                kind: inner_kind,
+                ident: inner_ident,
                 reference: ParsedReference::Owned,
                 context: RustTypeContext::CollectionItem,
             };
@@ -239,7 +239,7 @@ pub fn resolve_rust_ty(
     };
 
     Ok(RustType {
-        ident: ident.clone(),
+        ident,
         kind,
         reference,
         context,
@@ -277,7 +277,7 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 _ => {}
             }
 
-            return TypeKind::Value(Value::Custom(ident_str.clone()));
+            TypeKind::Value(Value::Custom(ident_str))
         }
 
         // Composite Types

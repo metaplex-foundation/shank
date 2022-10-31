@@ -43,7 +43,7 @@ impl ProgramError {
                     |x| x.clone(),
                 );
                 Self::parse_account_error_args(
-                    &nested,
+                    nested,
                     &ident,
                     variant_ident,
                     variant_discriminant,
@@ -101,8 +101,7 @@ impl TryFrom<&ParsedEnum> for ProgramErrors {
             .collect::<ParseResult<Vec<Option<ProgramError>>>>()?;
         let program_errors = program_errors
             .into_iter()
-            .filter(Option::is_some)
-            .map(Option::unwrap)
+            .flatten()
             .collect::<Vec<ProgramError>>();
 
         Ok(ProgramErrors(program_errors))
@@ -130,7 +129,7 @@ impl ProgramError {
                 "shank expects no more than one #[error]s per variant",
             ))
         } else {
-            Ok(program_errors.to_owned().first().map(|x| x.clone()))
+            Ok(program_errors.first().cloned())
         }
     }
 }
