@@ -46,6 +46,26 @@
         "type": "u8",
         "value": 0
       }
+    },
+    {
+      "name": "CreateBuffer",
+      "accounts": [
+        {
+          "name": "buffer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
     }
   ],
   "metadata": {

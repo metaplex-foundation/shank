@@ -8,7 +8,7 @@ use syn::{
 };
 
 use crate::{instruction::account_attrs::identifier_from_nested_meta, types::{RustType, RustTypeContext, Primitive}};
-use crate::types::{TypeKind, Composite};
+use crate::types::{TypeKind, Composite, Value};
 
 use super::{InstructionAccount, InstructionAccounts, InstructionVariantFields};
 
@@ -208,23 +208,17 @@ impl IdlInstruction {
                     }
                 )]
             ),
-            IdlInstruction::CreateBuffer => {
-                InstructionVariantFields::Unnamed(vec![])
-            }
             IdlInstruction::SetAuthority => InstructionVariantFields::Named(
                 vec![(
                     "new_authority".to_string(),
                     RustType {
                         ident: ident.clone(),
-                        kind: TypeKind::Primitive(Primitive::U8),
+                        kind: TypeKind::Value(Value::Custom("Pubkey".to_string())),
                         context: RustTypeContext::Default,
                         reference: crate::types::ParsedReference::Owned
                     }
                 )]
             ),
-            IdlInstruction::SetBuffer => {
-                InstructionVariantFields::Unnamed(vec![])
-            }
             IdlInstruction::Write => InstructionVariantFields::Named(
                 vec![(
                     "idl_data".to_string(), 
@@ -242,7 +236,10 @@ impl IdlInstruction {
                         reference: crate::types::ParsedReference::Owned,
                     }
                 )]
-            )        
+            ),
+            IdlInstruction::CreateBuffer | IdlInstruction::SetBuffer => {
+                InstructionVariantFields::Unnamed(vec![])
+            }
         }
     }
 }

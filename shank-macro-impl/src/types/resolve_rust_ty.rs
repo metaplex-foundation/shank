@@ -238,6 +238,7 @@ pub fn resolve_rust_ty(
         }
     };
 
+    println!("[resolve_rust_ty] {:?}: {:?}", ident, kind);
     Ok(RustType {
         ident,
         kind,
