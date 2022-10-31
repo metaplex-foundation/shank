@@ -6,4 +6,6 @@ pub enum Instruction {
     CreateBuffer,
     #[idl_instruction(SetBuffer)]
     SetBuffer,
+    #[idl_instruction(SetAuthority)]
+    SetAuthority,
 }

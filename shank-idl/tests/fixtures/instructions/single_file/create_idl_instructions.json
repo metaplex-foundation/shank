@@ -93,6 +93,31 @@
         "type": "u8",
         "value": 2
       }
+    },
+    {
+      "name": "SetAuthority",
+      "accounts": [
+        {
+          "name": "idl",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "publicKey"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
     }
   ],
   "metadata": {
