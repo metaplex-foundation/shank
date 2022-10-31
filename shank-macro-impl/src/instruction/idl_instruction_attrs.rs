@@ -161,7 +161,7 @@ impl IdlInstruction {
                         ident: ident.clone(),
                         index: Some(1),
                         name: "idl".to_string(),
-                        desc: Some("The idl account to be updated with the buffer's data".to_string()),
+                        desc: Some("The idl account to be updated with the buffer's data.".to_string()),
                         signer: false,
                         writable: true,
                         optional: false,

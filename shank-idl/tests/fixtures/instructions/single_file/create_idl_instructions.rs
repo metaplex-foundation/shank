@@ -4,4 +4,6 @@ pub enum Instruction {
     Create,
     #[idl_instruction(CreateBuffer)]
     CreateBuffer,
+    #[idl_instruction(SetBuffer)]
+    SetBuffer,
 }

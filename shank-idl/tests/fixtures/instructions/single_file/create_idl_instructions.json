@@ -66,6 +66,33 @@
         "type": "u8",
         "value": 1
       }
+    },
+    {
+      "name": "SetBuffer",
+      "accounts": [
+        {
+          "name": "buffer",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The buffer with the new idl data."
+        },
+        {
+          "name": "idl",
+          "isMut": true,
+          "isSigner": false,
+          "desc": "The idl account to be updated with the buffer's data."
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
     }
   ],
   "metadata": {
