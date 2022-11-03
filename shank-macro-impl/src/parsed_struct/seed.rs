@@ -74,6 +74,7 @@ impl TryFrom<&Seed> for ProcessedSeed {
                 let ty = RustType::reference(
                     PUBKEY_TY,
                     TypeKind::Value(Value::Custom(PUBKEY_TY.to_string())),
+                    None,
                 );
                 Ok(ProcessedSeed::new(
                     seed.clone(),
@@ -88,7 +89,7 @@ impl TryFrom<&Seed> for ProcessedSeed {
                         let kind = TypeKind::Value(Value::Custom(
                             PUBKEY_TY.to_string(),
                         ));
-                        Ok(RustType::reference(PUBKEY_TY, kind.clone()))
+                        Ok(RustType::reference(PUBKEY_TY, kind.clone(), None))
                     }
                 }?;
                 Ok(ProcessedSeed::new(
