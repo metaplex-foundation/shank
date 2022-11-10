@@ -164,11 +164,43 @@ impl RustType {
     ) -> Self {
         RustType::reference_mut(ident, TypeKind::Primitive(primitive), lifetime)
     }
+
     pub fn ref_str<T: Into<IdentWrap>>(
         ident: T,
         lifetime: Option<Ident>,
     ) -> Self {
         RustType::reference(ident, TypeKind::Value(Value::Str), lifetime)
+    }
+
+    pub fn ref_string_mut<T: Into<IdentWrap>>(
+        ident: T,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference_mut(ident, TypeKind::Value(Value::String), lifetime)
+    }
+
+    pub fn ref_custom_value<T: Into<IdentWrap>>(
+        ident: T,
+        value: &str,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference(
+            ident,
+            TypeKind::Value(Value::Custom(value.to_string())),
+            lifetime,
+        )
+    }
+
+    pub fn ref_mut_custom_value<T: Into<IdentWrap>>(
+        ident: T,
+        value: &str,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference_mut(
+            ident,
+            TypeKind::Value(Value::Custom(value.to_string())),
+            lifetime,
+        )
     }
 }
 

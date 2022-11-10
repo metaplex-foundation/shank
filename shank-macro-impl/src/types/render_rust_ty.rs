@@ -25,7 +25,7 @@ impl RustType {
             ParsedReference::Ref(None) => quote! { & },
             ParsedReference::RefMut(None) => quote! { &mut },
             ParsedReference::RefMut(Some(lifetime)) => {
-                quote! { &#lifetime mut }
+                format!("&'{} mut", lifetime).parse().unwrap()
             }
         };
 
@@ -174,7 +174,7 @@ mod tests {
     }
 
     // -----------------
-    // Values
+    // Values (Strings)
     // -----------------
     #[test]
     fn owned_string() {
@@ -212,6 +212,128 @@ mod tests {
         assert_tokens_match(
             RustType::ref_str("my_str", ident("lt")).render_param(),
             "my_str: &'lt str".parse().unwrap(),
+        );
+    }
+
+    #[test]
+    fn ref_string_mut_with_lifetime() {
+        assert_tokens_match(
+            RustType::ref_string_mut("my_str", ident("lt")).render(),
+            "&'lt mut String".parse().unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_string_mut("my_str", ident("lt")).render_param(),
+            "my_str: &'lt mut String".parse().unwrap(),
+        );
+    }
+
+    // -----------------
+    // Values (Custom)
+    // -----------------
+    #[test]
+    fn owned_account_info() {
+        assert_tokens_match(
+            RustType::owned_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+            )
+            .render(),
+            "::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::owned_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+            )
+            .render_param(),
+            "my_info: ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+    }
+
+    #[test]
+    fn ref_account_info() {
+        assert_tokens_match(
+            RustType::ref_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                None,
+            )
+            .render(),
+            "& ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                None,
+            )
+            .render_param(),
+            "my_info: & ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+    }
+
+    #[test]
+    fn ref_account_info_with_lifetime() {
+        assert_tokens_match(
+            RustType::ref_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                ident("b"),
+            )
+            .render(),
+            "&'b ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                ident("b"),
+            )
+            .render_param(),
+            "my_info: &'b ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+    }
+
+    #[test]
+    fn ref_account_info_mut_with_lifetime() {
+        assert_tokens_match(
+            RustType::ref_mut_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                ident("b"),
+            )
+            .render(),
+            "&'b mut ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_mut_custom_value(
+                "my_info",
+                "::solana_program::account_info::AccountInfo<'info>",
+                ident("b"),
+            )
+            .render_param(),
+            "my_info: &'b mut ::solana_program::account_info::AccountInfo<'info>"
+                .parse()
+                .unwrap(),
         );
     }
 }
