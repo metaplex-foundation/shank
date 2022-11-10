@@ -3,13 +3,13 @@ use quote::quote;
 
 use crate::types::{ParsedReference, TypeKind};
 
-use super::{Primitive, RustType};
+use super::{Primitive, RustType, Value};
 
 impl RustType {
     pub fn render(&self) -> TokenStream {
         let ty = match &self.kind {
-            TypeKind::Primitive(kind) => kind.render(),
-            TypeKind::Value(_) => todo!(),
+            TypeKind::Primitive(prim) => prim.render(),
+            TypeKind::Value(val) => val.render(),
             TypeKind::Composite(_, _) => todo!(),
             TypeKind::Unit => todo!("should not render unit rust type"),
             TypeKind::Unknown => {
@@ -35,7 +35,7 @@ impl RustType {
     pub fn render_param(&self) -> TokenStream {
         let full_ty = match &self.kind {
             TypeKind::Primitive(_) => self.render(),
-            TypeKind::Value(_) => todo!(),
+            TypeKind::Value(_) => self.render(),
             TypeKind::Composite(_, _) => todo!(),
             TypeKind::Unit => todo!("should not render unit rust type"),
             TypeKind::Unknown => {
@@ -63,6 +63,19 @@ impl Primitive {
             Self::I128 => quote! { i128 },
             Self::USize => quote! { usize },
             Self::Bool => quote! { bool },
+        }
+    }
+}
+
+impl Value {
+    fn render(&self) -> TokenStream {
+        match self {
+            Value::CString => quote! { ::std::ffi::CString },
+            Value::String => quote! { String },
+            Value::Str => quote! { str },
+            Value::Custom(val) => val
+                .parse()
+                .expect(&format!("Failed to render Value::Custom({})", val)),
         }
     }
 }
@@ -157,6 +170,48 @@ mod tests {
             RustType::ref_primitive("x", Primitive::USize, ident("b"))
                 .render_param(),
             "x: &'b usize".parse().unwrap(),
+        );
+    }
+
+    // -----------------
+    // Values
+    // -----------------
+    #[test]
+    fn owned_string() {
+        assert_tokens_match(
+            RustType::owned_string("my_string").render(),
+            quote! { String },
+        );
+        // param
+        assert_tokens_match(
+            RustType::owned_string("my_string").render_param(),
+            quote! { my_string: String },
+        );
+    }
+
+    #[test]
+    fn ref_str() {
+        assert_tokens_match(
+            RustType::ref_str("my_str", None).render(),
+            quote! { &str },
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_str("my_str", None).render_param(),
+            quote! { my_str: &str },
+        );
+    }
+
+    #[test]
+    fn ref_str_with_lifetime() {
+        assert_tokens_match(
+            RustType::ref_str("my_str", ident("lt")).render(),
+            "&'lt str".parse().unwrap(),
+        );
+        // param
+        assert_tokens_match(
+            RustType::ref_str("my_str", ident("lt")).render_param(),
+            "my_str: &'lt str".parse().unwrap(),
         );
     }
 }

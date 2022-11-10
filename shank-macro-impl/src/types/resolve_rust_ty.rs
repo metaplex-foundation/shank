@@ -164,6 +164,12 @@ impl RustType {
     ) -> Self {
         RustType::reference_mut(ident, TypeKind::Primitive(primitive), lifetime)
     }
+    pub fn ref_str<T: Into<IdentWrap>>(
+        ident: T,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference(ident, TypeKind::Value(Value::Str), lifetime)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
