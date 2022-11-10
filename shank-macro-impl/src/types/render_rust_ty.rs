@@ -1,4 +1,4 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 
 use crate::types::{ParsedReference, TypeKind};
@@ -32,7 +32,7 @@ impl RustType {
         quote! { #reference #ty }
     }
 
-    pub fn render_param(&self) -> TokenStream {
+    pub fn render_param(&self, name: &str) -> TokenStream {
         let full_ty = match &self.kind {
             TypeKind::Primitive(_) => self.render(),
             TypeKind::Value(_) => self.render(),
@@ -43,7 +43,7 @@ impl RustType {
             }
         };
 
-        let ident = &self.ident;
+        let ident = Ident::new(name, self.ident.span());
         quote! { #ident: #full_ty }
     }
 }
@@ -102,16 +102,16 @@ mod tests {
     #[test]
     fn owned_primitive() {
         assert_tokens_match(
-            RustType::owned_primitive("x", Primitive::U8).render(),
+            RustType::owned_primitive("u8", Primitive::U8).render(),
             quote! { u8 },
         );
         assert_tokens_match(
-            RustType::owned_primitive("x", Primitive::I128).render(),
+            RustType::owned_primitive("i128", Primitive::I128).render(),
             quote! { i128 },
         );
         // param
         assert_tokens_match(
-            RustType::owned_primitive("x", Primitive::U8).render_param(),
+            RustType::owned_primitive("u8", Primitive::U8).render_param("x"),
             quote! { x: u8 },
         );
     }
@@ -119,17 +119,18 @@ mod tests {
     #[test]
     fn ref_primitive() {
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::USize, None).render(),
+            RustType::ref_primitive("usize", Primitive::USize, None).render(),
             quote! { &usize },
         );
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::I64, None).render(),
+            RustType::ref_primitive("i64", Primitive::I64, None).render(),
             quote! { &i64 },
         );
 
         // param
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::USize, None).render_param(),
+            RustType::ref_primitive("usize", Primitive::USize, None)
+                .render_param("x"),
             quote! { x: &usize },
         );
     }
@@ -137,18 +138,18 @@ mod tests {
     #[test]
     fn refmut_primitive() {
         assert_tokens_match(
-            RustType::refmut_primitive("x", Primitive::Bool, None).render(),
+            RustType::refmut_primitive("bool", Primitive::Bool, None).render(),
             quote! { &mut bool },
         );
         assert_tokens_match(
-            RustType::refmut_primitive("x", Primitive::U64, None).render(),
+            RustType::refmut_primitive("u64", Primitive::U64, None).render(),
             quote! { &mut u64 },
         );
 
         // param
         assert_tokens_match(
-            RustType::refmut_primitive("x", Primitive::Bool, None)
-                .render_param(),
+            RustType::refmut_primitive("bool", Primitive::Bool, None)
+                .render_param("x"),
             quote! { x: &mut bool },
         );
     }
@@ -156,19 +157,20 @@ mod tests {
     #[test]
     fn ref_primitive_with_lifetime() {
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::USize, ident("a")).render(),
+            RustType::ref_primitive("usize", Primitive::USize, ident("a"))
+                .render(),
             "&'a usize".parse().unwrap(),
         );
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::I64, ident("lifetime"))
+            RustType::ref_primitive("i64", Primitive::I64, ident("lifetime"))
                 .render(),
             "&'lifetime i64".parse().unwrap(),
         );
 
         // param
         assert_tokens_match(
-            RustType::ref_primitive("x", Primitive::USize, ident("b"))
-                .render_param(),
+            RustType::ref_primitive("usize", Primitive::USize, ident("b"))
+                .render_param("x"),
             "x: &'b usize".parse().unwrap(),
         );
     }
@@ -179,12 +181,12 @@ mod tests {
     #[test]
     fn owned_string() {
         assert_tokens_match(
-            RustType::owned_string("my_string").render(),
+            RustType::owned_string("String").render(),
             quote! { String },
         );
         // param
         assert_tokens_match(
-            RustType::owned_string("my_string").render_param(),
+            RustType::owned_string("String").render_param("my_string"),
             quote! { my_string: String },
         );
     }
@@ -192,12 +194,12 @@ mod tests {
     #[test]
     fn ref_str() {
         assert_tokens_match(
-            RustType::ref_str("my_str", None).render(),
+            RustType::ref_str("str", None).render(),
             quote! { &str },
         );
         // param
         assert_tokens_match(
-            RustType::ref_str("my_str", None).render_param(),
+            RustType::ref_str("str", None).render_param("my_str"),
             quote! { my_str: &str },
         );
     }
@@ -205,12 +207,12 @@ mod tests {
     #[test]
     fn ref_str_with_lifetime() {
         assert_tokens_match(
-            RustType::ref_str("my_str", ident("lt")).render(),
+            RustType::ref_str("str", ident("lt")).render(),
             "&'lt str".parse().unwrap(),
         );
         // param
         assert_tokens_match(
-            RustType::ref_str("my_str", ident("lt")).render_param(),
+            RustType::ref_str("str", ident("lt")).render_param("my_str"),
             "my_str: &'lt str".parse().unwrap(),
         );
     }
@@ -218,12 +220,13 @@ mod tests {
     #[test]
     fn ref_string_mut_with_lifetime() {
         assert_tokens_match(
-            RustType::ref_string_mut("my_str", ident("lt")).render(),
+            RustType::ref_string_mut("String", ident("lt")).render(),
             "&'lt mut String".parse().unwrap(),
         );
         // param
         assert_tokens_match(
-            RustType::ref_string_mut("my_str", ident("lt")).render_param(),
+            RustType::ref_string_mut("String", ident("lt"))
+                .render_param("my_str"),
             "my_str: &'lt mut String".parse().unwrap(),
         );
     }
@@ -235,7 +238,7 @@ mod tests {
     fn owned_account_info() {
         assert_tokens_match(
             RustType::owned_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
             )
             .render(),
@@ -246,10 +249,10 @@ mod tests {
         // param
         assert_tokens_match(
             RustType::owned_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
             )
-            .render_param(),
+            .render_param("my_info"),
             "my_info: ::solana_program::account_info::AccountInfo<'info>"
                 .parse()
                 .unwrap(),
@@ -260,7 +263,7 @@ mod tests {
     fn ref_account_info() {
         assert_tokens_match(
             RustType::ref_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 None,
             )
@@ -272,11 +275,11 @@ mod tests {
         // param
         assert_tokens_match(
             RustType::ref_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 None,
             )
-            .render_param(),
+            .render_param("my_info"),
             "my_info: & ::solana_program::account_info::AccountInfo<'info>"
                 .parse()
                 .unwrap(),
@@ -287,7 +290,7 @@ mod tests {
     fn ref_account_info_with_lifetime() {
         assert_tokens_match(
             RustType::ref_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 ident("b"),
             )
@@ -299,11 +302,11 @@ mod tests {
         // param
         assert_tokens_match(
             RustType::ref_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 ident("b"),
             )
-            .render_param(),
+            .render_param("my_info"),
             "my_info: &'b ::solana_program::account_info::AccountInfo<'info>"
                 .parse()
                 .unwrap(),
@@ -314,7 +317,7 @@ mod tests {
     fn ref_account_info_mut_with_lifetime() {
         assert_tokens_match(
             RustType::ref_mut_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 ident("b"),
             )
@@ -326,11 +329,11 @@ mod tests {
         // param
         assert_tokens_match(
             RustType::ref_mut_custom_value(
-                "my_info",
+                "AccountInfo",
                 "::solana_program::account_info::AccountInfo<'info>",
                 ident("b"),
             )
-            .render_param(),
+            .render_param("my_info"),
             "my_info: &'b mut ::solana_program::account_info::AccountInfo<'info>"
                 .parse()
                 .unwrap(),

@@ -82,7 +82,7 @@ fn render_seed_function_arg(
                 .unwrap()
                 .ty
                 .with_lifetime("a")?
-                .render_param();
+                .render_param("program_id");
             Ok(Some(arg))
         }
         Seed::Param(name, _, _) => {
