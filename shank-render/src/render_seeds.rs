@@ -88,9 +88,14 @@ fn render_seed_function_arg(
         Seed::Param(name, _, _) => {
             // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
             // that the arg is set
-            let item =
-                seed_array_item(name.as_str(), &seed.arg.as_ref().unwrap().ty)?;
-            Ok(Some(item))
+            let arg = seed
+                .arg
+                .as_ref()
+                .unwrap()
+                .ty
+                .with_lifetime("a")?
+                .render_param(name);
+            Ok(Some(arg))
         }
     }
 }
@@ -198,6 +203,23 @@ mod tests {
 
         let expected_item = quote! { program_id.as_ref() }.to_string();
         let expected_arg = "program_id : &'a Pubkey".to_string();
+        assert_eq!(seed_array_items.len(), 1);
+        assert_eq!(seed_fn_args.len(), 1);
+        assert_eq!(seed_array_items[0].to_string(), expected_item);
+        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+    }
+
+    #[test]
+    fn process_seed_custom_pubkey() {
+        let seed =
+            Seed::Param("owner".to_string(), "The owner".to_string(), None);
+        let RenderedSeeds {
+            seed_array_items,
+            seed_fn_args,
+        } = render_seeds(&[seed]);
+
+        let expected_item = quote! { owner.as_ref() }.to_string();
+        let expected_arg = "owner : &'a Pubkey".to_string();
         assert_eq!(seed_array_items.len(), 1);
         assert_eq!(seed_fn_args.len(), 1);
         assert_eq!(seed_array_items[0].to_string(), expected_item);
