@@ -197,12 +197,10 @@ mod tests {
         } = render_seeds(&[seed]);
 
         let expected_item = quote! { program_id.as_ref() }.to_string();
-        let expected_arg = quote! { program_id: &Pubkey };
+        let expected_arg = "program_id : &'a Pubkey".to_string();
         assert_eq!(seed_array_items.len(), 1);
         assert_eq!(seed_fn_args.len(), 1);
-        eprintln!("{}", seed_array_items[0]);
-        eprintln!("{}", seed_fn_args[0]);
-        // assert_eq!(item.to_string(), expected_item);
-        // assert_eq!(arg.unwrap().to_string(), expected_arg.to_string());
+        assert_eq!(seed_array_items[0].to_string(), expected_item);
+        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
     }
 }
