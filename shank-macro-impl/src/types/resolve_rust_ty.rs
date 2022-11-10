@@ -202,6 +202,39 @@ impl RustType {
             lifetime,
         )
     }
+
+    // -----------------
+    // Modifications
+    // -----------------
+    /// Sets the lifetime of this type.
+    /// This returns successfull if the for any Ref and RefMut.
+    /// If a lifetime already exists it is replaced, otherwise it is added.
+    ///
+    /// When the type is owned it returns an error.
+    pub fn with_lifetime(self: &Self, lifetime: &str) -> ParseResult<Self> {
+        use ParsedReference::*;
+        let reference = match self.reference {
+            Owned => {
+                return Err(ParseError::new(
+                    self.ident.span(),
+                    "Cannot add lifetime to owned type",
+                ))
+            }
+            Ref(_) => {
+                Ref(Some(Ident::new(lifetime, self.ident.span().clone())))
+            }
+            RefMut(_) => {
+                RefMut(Some(Ident::new(lifetime, self.ident.span().clone())))
+            }
+        };
+
+        Ok(Self {
+            ident: self.ident.clone(),
+            kind: self.kind.clone(),
+            reference,
+            context: self.context.clone(),
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

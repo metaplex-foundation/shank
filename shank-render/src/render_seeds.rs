@@ -76,7 +76,13 @@ fn render_seed_function_arg(
             Ok(None)
         }
         Seed::ProgramId => {
-            let arg = seed.arg.as_ref().unwrap().ty.render_param();
+            let arg = seed
+                .arg
+                .as_ref()
+                .unwrap()
+                .ty
+                .with_lifetime("a")?
+                .render_param();
             Ok(Some(arg))
         }
         Seed::Param(name, _, _) => {
