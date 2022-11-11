@@ -51,6 +51,7 @@ impl SeedArg {
     }
 }
 
+#[derive(Debug)]
 pub struct ProcessedSeed {
     pub seed: Seed,
     pub arg: Option<SeedArg>,
@@ -65,12 +66,14 @@ impl ProcessedSeed {
 impl TryFrom<&Seed> for ProcessedSeed {
     type Error = ParseError;
     fn try_from(seed: &Seed) -> ParseResult<Self> {
+        // NOTE: We include lifetimes as part of the render step to guarantee that they match
+        // NOTE: All seeds need to be passesd as references since we return an array containing
+        //       them and thus cannot take ownership.
         match seed {
             Seed::Literal(_) => Ok(ProcessedSeed::new(seed.clone(), None)),
             Seed::ProgramId => {
                 let name = PROGRAM_ID_NAME.to_string();
                 let desc = PROGRAM_ID_DESC.to_string();
-                // TODO(thlorenz): Include lifetime info
                 let ty = RustType::reference(
                     PUBKEY_TY,
                     TypeKind::Value(Value::Custom(PUBKEY_TY.to_string())),
@@ -83,15 +86,16 @@ impl TryFrom<&Seed> for ProcessedSeed {
             }
             Seed::Param(name, desc, maybe_kind) => {
                 let ty = match maybe_kind {
-                    // TODO(thlorenz): Add reference + lifetime info
-                    Some(s) => RustType::try_from(s.as_str()),
+                    Some(s) => {
+                        RustType::try_from(s.as_str())?.as_reference(None)
+                    }
                     None => {
                         let kind = TypeKind::Value(Value::Custom(
                             PUBKEY_TY.to_string(),
                         ));
-                        Ok(RustType::reference(PUBKEY_TY, kind.clone(), None))
+                        RustType::reference(PUBKEY_TY, kind.clone(), None)
                     }
-                }?;
+                };
                 Ok(ProcessedSeed::new(
                     seed.clone(),
                     Some(SeedArg::new(name.to_owned(), desc.to_owned(), ty)),

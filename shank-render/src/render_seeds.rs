@@ -225,4 +225,24 @@ mod tests {
         assert_eq!(seed_array_items[0].to_string(), expected_item);
         assert_eq!(seed_fn_args[0].to_string(), expected_arg);
     }
+
+    #[test]
+    fn process_seed_custom_pubkey_providing_type() {
+        let seed = Seed::Param(
+            "owner".to_string(),
+            "The owner".to_string(),
+            Some("Pubkey".to_string()),
+        );
+        let RenderedSeeds {
+            seed_array_items,
+            seed_fn_args,
+        } = render_seeds(&[seed]);
+
+        let expected_item = quote! { owner.as_ref() }.to_string();
+        let expected_arg = "owner : &'a Pubkey".to_string();
+        assert_eq!(seed_array_items.len(), 1);
+        assert_eq!(seed_fn_args.len(), 1);
+        assert_eq!(seed_array_items[0].to_string(), expected_item);
+        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+    }
 }
