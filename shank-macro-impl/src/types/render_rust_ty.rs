@@ -89,9 +89,9 @@ impl Value {
             Value::CString => quote! { ::std::ffi::CString },
             Value::String => quote! { String },
             Value::Str => quote! { str },
-            Value::Custom(val) => val
-                .parse()
-                .expect(&format!("Failed to render Value::Custom({})", val)),
+            Value::Custom(val) => val.parse().unwrap_or_else(|_| {
+                panic!("Failed to render Value::Custom({})", val)
+            }),
         }
     }
 }

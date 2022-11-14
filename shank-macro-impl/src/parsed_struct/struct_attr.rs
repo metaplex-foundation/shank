@@ -1,4 +1,4 @@
-use std::{collections::HashSet, convert::TryFrom, slice::Iter, vec::IntoIter};
+use std::{collections::HashSet, convert::TryFrom, slice::Iter};
 
 use proc_macro2::Span;
 use syn::{
@@ -39,10 +39,6 @@ impl Seeds {
         self.0.iter()
     }
 
-    pub fn into_iter(self) -> IntoIter<Seed> {
-        self.0.into_iter()
-    }
-
     pub fn process(&self) -> ParseResult<Vec<ProcessedSeed>> {
         self.iter()
             .map(ProcessedSeed::try_from)
@@ -81,11 +77,22 @@ impl StructAttrs {
     pub fn items(self) -> Vec<StructAttr> {
         self.0.into_iter().collect::<Vec<StructAttr>>()
     }
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.len()
     }
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     pub fn insert(&mut self, attr: StructAttr) -> bool {
         self.0.insert(attr)
+    }
+}
+
+impl Default for StructAttrs {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -94,16 +101,10 @@ impl StructAttrs {
 impl TryFrom<&[Attribute]> for StructAttrs {
     type Error = ParseError;
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
-        let seed_attrs = attrs
+        let seed_attrs: Vec<&Attribute> = attrs
             .iter()
-            .filter_map(|attr| {
-                if attr.path.is_ident("seeds") {
-                    Some(attr)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+            .filter(|attr| attr.path.is_ident("seeds"))
+            .collect();
 
         if seed_attrs.len() > 1 {
             return Err(ParseError::new(
@@ -207,7 +208,7 @@ fn param_args(
     let mut iter = meta.iter();
     let desc_meta = iter.next().ok_or_else(|| {
         ParseError::new(
-            span.clone(),
+            *span,
             format!("Failed to read Param description which should be the first argument.\n{}", SUPPORTED_FORMATS)
         )
     })?;
@@ -215,7 +216,7 @@ fn param_args(
 
     let desc = match desc_meta {
         NestedMeta::Meta(_) => Err(ParseError::new(
-            span.clone(),
+            *span,
             "Expected a literal string for the param description",
         )),
         NestedMeta::Lit(lit) => extract_lit_str(lit),

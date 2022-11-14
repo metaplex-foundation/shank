@@ -4,7 +4,7 @@ use syn::{Attribute, Error as ParseError, ItemEnum, Result as ParseResult};
 
 use super::ParsedEnumVariant;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ParsedEnum {
     /// The enum itself, i.e. CreateOwner
     pub ident: syn::Ident,

@@ -106,7 +106,7 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             ..
         } = variant;
 
-        let field_tys: InstructionVariantFields = if fields.len() > 0 {
+        let field_tys: InstructionVariantFields = if !fields.is_empty() {
             // Determine if the InstructionType is tuple or struct variant
             let field = fields.get(0).unwrap();
             match &field.ident {

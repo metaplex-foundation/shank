@@ -211,7 +211,7 @@ impl RustType {
     /// If a lifetime already exists it is replaced, otherwise it is added.
     ///
     /// When the type is owned it returns an error.
-    pub fn with_lifetime(self: &Self, lifetime: &str) -> ParseResult<Self> {
+    pub fn with_lifetime(&self, lifetime: &str) -> ParseResult<Self> {
         use ParsedReference::*;
         let reference = match self.reference {
             Owned => {
@@ -220,12 +220,8 @@ impl RustType {
                     "Cannot add lifetime to owned type",
                 ))
             }
-            Ref(_) => {
-                Ref(Some(Ident::new(lifetime, self.ident.span().clone())))
-            }
-            RefMut(_) => {
-                RefMut(Some(Ident::new(lifetime, self.ident.span().clone())))
-            }
+            Ref(_) => Ref(Some(Ident::new(lifetime, self.ident.span()))),
+            RefMut(_) => RefMut(Some(Ident::new(lifetime, self.ident.span()))),
         };
 
         Ok(Self {
@@ -236,21 +232,21 @@ impl RustType {
         })
     }
 
-    pub fn as_reference(self: Self, lifetime: Option<Ident>) -> Self {
+    pub fn as_reference(self, lifetime: Option<Ident>) -> Self {
         Self {
             ident: self.ident.clone(),
             kind: self.kind.clone(),
             reference: ParsedReference::Ref(lifetime),
-            context: self.context.clone(),
+            context: self.context,
         }
     }
 
-    pub fn as_owned(self: Self) -> Self {
+    pub fn as_owned(self) -> Self {
         Self {
             ident: self.ident.clone(),
             kind: self.kind.clone(),
             reference: ParsedReference::Owned,
-            context: self.context.clone(),
+            context: self.context,
         }
     }
 }
@@ -268,7 +264,7 @@ fn ident_and_kind_from_path(path: &Path) -> (Ident, TypeKind) {
     let PathSegment {
         ident, arguments, ..
     } = path.segments.first().unwrap();
-    (ident.clone(), ident_to_kind(&ident, &arguments))
+    (ident.clone(), ident_to_kind(ident, arguments))
 }
 
 fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
@@ -334,8 +330,8 @@ pub fn resolve_rust_ty(
             };
             let len = len_from_expr(len)?;
             let inner_ty = RustType {
-                kind: inner_kind.clone(),
-                ident: inner_ident.clone(),
+                kind: inner_kind,
+                ident: inner_ident,
                 reference: ParsedReference::Owned,
                 context: RustTypeContext::CollectionItem,
             };
@@ -384,7 +380,7 @@ pub fn resolve_rust_ty(
     };
 
     Ok(RustType {
-        ident: ident.clone(),
+        ident,
         kind,
         reference,
         context,
@@ -422,7 +418,7 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 _ => {}
             }
 
-            return TypeKind::Value(Value::Custom(ident_str.clone()));
+            TypeKind::Value(Value::Custom(ident_str))
         }
 
         // Composite Types

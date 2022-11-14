@@ -91,7 +91,7 @@ impl TryFrom<&Seed> for ProcessedSeed {
                         let kind = TypeKind::Value(Value::Custom(
                             FULL_PUBKEY_TY.to_string(),
                         ));
-                        RustType::reference(PUBKEY_TY, kind.clone(), None)
+                        RustType::reference(PUBKEY_TY, kind, None)
                     }
                     Some(s) => RustType::try_from(s)?.as_reference(None),
                 };
@@ -129,7 +129,7 @@ mod tests {
             assert_eq!(desc, PROGRAM_ID_DESC);
             assert_eq!(ty.ident.to_string().as_str(), "Pubkey");
             assert!(ty.kind.is_custom());
-            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"Pubkey\"))")
+            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"::solana_program::pubkey::Pubkey\"))")
         });
     }
 
@@ -145,7 +145,7 @@ mod tests {
             assert_eq!(desc, "my desc");
             assert_eq!(ty.ident.to_string().as_str(), "Pubkey");
             assert!(ty.kind.is_custom());
-            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"Pubkey\"))")
+            assert_eq!(&format!("{:?}", ty.kind), "TypeKind::Value(Value::Custom(\"::solana_program::pubkey::Pubkey\"))")
         });
     }
 

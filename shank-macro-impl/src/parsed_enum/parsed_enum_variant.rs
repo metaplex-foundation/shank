@@ -10,7 +10,7 @@ use crate::types::RustType;
 // -----------------
 // Enum Variant
 // -----------------
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ParsedEnumVariant {
     /// The identifier name of the variant, i.e. Red
     pub ident: Ident,
@@ -81,7 +81,7 @@ impl TryFrom<(usize, usize, &Variant)> for ParsedEnumVariant {
 // -----------------
 // Enum Variant Field
 // -----------------
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ParsedEnumVariantField {
     /// The Rust type of the field
     pub rust_type: RustType,

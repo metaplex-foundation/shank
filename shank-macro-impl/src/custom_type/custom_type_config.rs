@@ -44,6 +44,6 @@ impl DetectCustomTypeConfig {
                 saw_include = self.include_derives.contains(&derive);
             }
         }
-        return saw_include;
+        saw_include
     }
 }

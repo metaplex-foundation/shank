@@ -20,7 +20,7 @@ fn parse_first_enum_variant_attrs(
     attrs.try_into()
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccountWithoutIdent {
     pub index: Option<u32>,
     pub name: String,
@@ -47,7 +47,7 @@ impl From<&InstructionAccount> for InstructionAccountWithoutIdent {
             writable: *writable,
             signer: *signer,
             desc: desc.clone(),
-            optional: optional.clone(),
+            optional: *optional,
         }
     }
 }
@@ -320,10 +320,10 @@ fn account_multiple_attrs() {
                     InstructionAccountWithoutIdent {
                         index: None,
                         name: name.clone(),
-                        writable: writable.clone(),
-                        signer: signer.clone(),
+                        writable: *writable,
+                        signer: *signer,
                         desc: desc.clone(),
-                        optional: optional.clone(),
+                        optional: *optional,
                     }
                 },
             )

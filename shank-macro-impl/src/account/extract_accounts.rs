@@ -261,13 +261,13 @@ mod tests {
         let res = extract_account_structs(all_structs)
             .expect("Should parse struct without error");
 
-        let struct_attrs = res.into_iter().nth(0).unwrap().struct_attrs;
+        let struct_attrs = res.into_iter().next().unwrap().struct_attrs;
         assert_eq!(struct_attrs.len(), 1, "Extracts one attr");
 
         struct_attrs
             .items()
             .into_iter()
-            .nth(0)
+            .next()
             .expect("Should extract one struct attr")
     }
 

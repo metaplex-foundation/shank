@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 
+#[allow(clippy::module_inception)]
 mod parsed_struct;
 mod seed;
 mod struct_attr;
