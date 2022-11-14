@@ -244,6 +244,15 @@ impl RustType {
             context: self.context.clone(),
         }
     }
+
+    pub fn as_owned(self: Self) -> Self {
+        Self {
+            ident: self.ident.clone(),
+            kind: self.kind.clone(),
+            reference: ParsedReference::Owned,
+            context: self.context.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

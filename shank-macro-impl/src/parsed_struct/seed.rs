@@ -5,6 +5,7 @@ use syn::{Error as ParseError, Result as ParseResult};
 const PROGRAM_ID_DESC: &str = "The id of the program";
 const PROGRAM_ID_NAME: &str = "program_id";
 pub const PUBKEY_TY: &str = "Pubkey";
+pub const FULL_PUBKEY_TY: &str = "::solana_program::pubkey::Pubkey";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Seed {
@@ -76,7 +77,7 @@ impl TryFrom<&Seed> for ProcessedSeed {
                 let desc = PROGRAM_ID_DESC.to_string();
                 let ty = RustType::reference(
                     PUBKEY_TY,
-                    TypeKind::Value(Value::Custom(PUBKEY_TY.to_string())),
+                    TypeKind::Value(Value::Custom(FULL_PUBKEY_TY.to_string())),
                     None,
                 );
                 Ok(ProcessedSeed::new(
@@ -85,16 +86,14 @@ impl TryFrom<&Seed> for ProcessedSeed {
                 ))
             }
             Seed::Param(name, desc, maybe_kind) => {
-                let ty = match maybe_kind {
-                    Some(s) => {
-                        RustType::try_from(s.as_str())?.as_reference(None)
-                    }
-                    None => {
+                let ty = match maybe_kind.as_ref().map(String::as_str) {
+                    Some("Pubkey") | None => {
                         let kind = TypeKind::Value(Value::Custom(
-                            PUBKEY_TY.to_string(),
+                            FULL_PUBKEY_TY.to_string(),
                         ));
                         RustType::reference(PUBKEY_TY, kind.clone(), None)
                     }
+                    Some(s) => RustType::try_from(s)?.as_reference(None),
                 };
                 Ok(ProcessedSeed::new(
                     seed.clone(),

@@ -3,7 +3,9 @@ use std::str::FromStr;
 
 use proc_macro2::{Ident, Span, TokenStream};
 use shank_macro_impl::{
-    parsed_struct::{ProcessedSeed, Seed, StructAttr, StructAttrs},
+    parsed_struct::{
+        ProcessedSeed, Seed, StructAttr, StructAttrs, FULL_PUBKEY_TY, PUBKEY_TY,
+    },
     syn::{Error as ParseError, Result as ParseResult},
     types::{Composite, Primitive, RustType, TypeKind, Value},
 };
@@ -11,19 +13,21 @@ use shank_macro_impl::{
 pub fn try_render_seeds_fn(
     struct_attrs: &StructAttrs,
 ) -> ParseResult<Option<TokenStream>> {
+    let lifetime = "a";
     let RenderedSeedsParts {
         seed_array_items,
         seed_fn_args,
-    } = try_render_seeds_parts(struct_attrs)?;
+    } = try_render_seeds_parts(struct_attrs, lifetime)?;
     if seed_array_items.is_empty() {
         return Ok(None);
     }
 
     let len = seed_array_items.len();
+    let lifetime_toks = format!("<'{}>", lifetime).parse::<TokenStream>()?;
     // The seed function will be part of an impl block for the Account for which we're
     // deriving the seeds, thus we can re-use the same name without clashes
     Ok(Some(quote! {
-        pub fn account_seeds(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
+        pub fn account_seeds#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
             [#(#seed_array_items),*]
         }
     }))
@@ -37,6 +41,7 @@ struct RenderedSeedsParts {
 
 fn try_render_seeds_parts(
     struct_attrs: &StructAttrs,
+    lifetime: &str,
 ) -> ParseResult<RenderedSeedsParts> {
     let all_seeds = struct_attrs
         .items_ref()
@@ -63,7 +68,7 @@ fn try_render_seeds_parts(
 
     let seed_fn_args = processed
         .iter()
-        .map(render_seed_function_arg)
+        .map(|x| render_seed_function_arg(x, lifetime))
         .collect::<ParseResult<Vec<Option<TokenStream>>>>()?
         .into_iter()
         .filter(Option::is_some)
@@ -88,6 +93,7 @@ fn try_render_seeds_parts(
 // -----------------
 fn render_seed_function_arg(
     seed: &ProcessedSeed,
+    lifetime: &str,
 ) -> ParseResult<Option<TokenStream>> {
     // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs
     //       always ensures that the arg is set
@@ -102,7 +108,7 @@ fn render_seed_function_arg(
                 .as_ref()
                 .unwrap()
                 .ty
-                .with_lifetime("a")?
+                .with_lifetime(lifetime)?
                 .render_param("program_id");
             Ok(Some(arg))
         }
@@ -121,8 +127,10 @@ fn render_seed_function_arg(
 fn adapt_seed_function_arg_type_kind(ty: RustType) -> RustType {
     match ty.kind {
         TypeKind::Primitive(Primitive::U8) => {
-            let kind =
-                TypeKind::Composite(Composite::Array(1), vec![ty.clone()]);
+            let kind = TypeKind::Composite(
+                Composite::Array(1),
+                vec![ty.clone().as_owned()],
+            );
             RustType { kind, ..ty }
         }
         // TODO(thlorenz): technically most of the below are not supported so we should ideally add
@@ -165,11 +173,13 @@ fn seed_array_item(name: &str, ty: &RustType) -> ParseResult<TokenStream> {
         TypeKind::Primitive(p) if p == &Primitive::Bool => {
             Ok(quote! { &[if #ident { 1 } else { 0 } ] })
         }
-        TypeKind::Primitive(_p) => Ok(quote! { &[#ident] }),
+        TypeKind::Primitive(_) => Ok(quote! { #ident }),
         TypeKind::Value(Value::String)
         | TypeKind::Value(Value::CString)
         | TypeKind::Value(Value::Str) => Ok(quote! { #ident.as_bytes() }),
-        TypeKind::Value(Value::Custom(x)) if x == "Pubkey" => {
+        TypeKind::Value(Value::Custom(x))
+            if x == PUBKEY_TY || x == FULL_PUBKEY_TY =>
+        {
             Ok(quote! { #ident.as_ref() })
         }
         TypeKind::Value(Value::Custom(x)) if x == "AccountInfo" => {
@@ -211,7 +221,12 @@ mod tests {
 
     fn render_seeds_parts(seeds: &[Seed]) -> RenderedSeedsParts {
         let attrs = struct_attrs_with_seeds(seeds);
-        try_render_seeds_parts(&attrs).expect("Should render seeds fine")
+        try_render_seeds_parts(&attrs, "a").expect("Should render seeds fine")
+    }
+
+    fn assert_tokenstream_eq(actual: &TokenStream, expected: &str) {
+        let expected_ts = expected.parse::<TokenStream>().unwrap().to_string();
+        assert_eq!(actual.to_string(), expected_ts.to_string());
     }
 
     #[test]
@@ -222,9 +237,8 @@ mod tests {
             seed_fn_args,
         } = render_seeds_parts(&[seed]);
 
-        let expected_item = quote! { b"uno" }.to_string();
         assert_eq!(seed_array_items.len(), 1);
-        assert_eq!(seed_array_items[0].to_string(), expected_item);
+        assert_tokenstream_eq(&seed_array_items[0], "b\"uno\"");
         assert_eq!(seed_fn_args.len(), 0);
     }
 
@@ -237,11 +251,14 @@ mod tests {
         } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { program_id.as_ref() }.to_string();
-        let expected_arg = "program_id : &'a Pubkey".to_string();
+
         assert_eq!(seed_array_items.len(), 1);
         assert_eq!(seed_fn_args.len(), 1);
         assert_eq!(seed_array_items[0].to_string(), expected_item);
-        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+        assert_tokenstream_eq(
+            &seed_fn_args[0],
+            "program_id : &'a ::solana_program::pubkey::Pubkey",
+        );
     }
 
     #[test]
@@ -254,11 +271,13 @@ mod tests {
         } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { owner.as_ref() }.to_string();
-        let expected_arg = "owner : &'a Pubkey".to_string();
         assert_eq!(seed_array_items.len(), 1);
         assert_eq!(seed_fn_args.len(), 1);
         assert_eq!(seed_array_items[0].to_string(), expected_item);
-        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+        assert_tokenstream_eq(
+            &seed_fn_args[0],
+            "owner : &'a ::solana_program::pubkey::Pubkey",
+        );
     }
 
     #[test]
@@ -274,11 +293,13 @@ mod tests {
         } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { owner.as_ref() }.to_string();
-        let expected_arg = "owner : &'a Pubkey".to_string();
         assert_eq!(seed_array_items.len(), 1);
         assert_eq!(seed_fn_args.len(), 1);
         assert_eq!(seed_array_items[0].to_string(), expected_item);
-        assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+        assert_tokenstream_eq(
+            &seed_fn_args[0],
+            "owner : &'a ::solana_program::pubkey::Pubkey",
+        );
     }
 }
 
@@ -310,8 +331,16 @@ mod seed_integration {
             .unwrap()
     }
 
+    fn assert_rendered_seeds_fn(code: TokenStream, expected: TokenStream) {
+        let rendered = render_seeds(code);
+        assert_eq!(
+            rendered.to_string().replace(" 'a", "'a"),
+            expected.to_string().replace(" 'a", "'a")
+        );
+    }
+
     #[test]
-    fn literal_and_pubkeys() {
+    fn literal_pubkeys_and_u8_byte() {
         let code = quote! {
             #[derive(ShankAccount)]
             #[seeds(
@@ -324,22 +353,22 @@ mod seed_integration {
                 count: u8,
             }
         };
-        // TODO(thlorenz): need to map `u8` to `&[u8]` for the seed fn
-        let expected = quote! {
-            pub fn account_seeds<'a>(
-                program_id: &'a Pubkey,
-                some_pubkey: &'a Pubkey,
-                some_byte: &'a [u8],
-            ) -> [&'a [u8]; 4usize] {
-                [
-                    b"lit:prefix",
-                    program_id.as_ref(),
-                    some_pubkey.as_ref(),
-                    some_byte,
-                ]
-            }
-        };
-        let rendered = render_seeds(code);
-        eprintln!("{}", rendered.to_string());
+        assert_rendered_seeds_fn(
+            code,
+            quote! {
+                pub fn account_seeds<'a>(
+                    program_id: &'a ::solana_program::pubkey::Pubkey,
+                    some_pubkey: &'a ::solana_program::pubkey::Pubkey,
+                    some_byte: &'a [u8; 1usize]
+                ) -> [&'a [u8]; 4usize] {
+                    [
+                        b"lit:prefix",
+                        program_id.as_ref(),
+                        some_pubkey.as_ref(),
+                        some_byte
+                    ]
+                }
+            },
+        );
     }
 }

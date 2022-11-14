@@ -10,7 +10,23 @@ impl RustType {
         let ty = match &self.kind {
             TypeKind::Primitive(prim) => prim.render(),
             TypeKind::Value(val) => val.render(),
-            TypeKind::Composite(_, _) => todo!(),
+            TypeKind::Composite(kind, inners) => {
+                use super::Composite::*;
+                match kind {
+                    Array(n) => {
+                        let inner = inners[0].render();
+                        quote!([#inner; #n])
+                    }
+                    Vec => todo!("Render Vec composite"),
+                    Tuple => todo!("Render Tuple composite"),
+                    Option => todo!("Render Option composite"),
+                    HashMap => todo!("Render HashMap composite"),
+                    BTreeMap => todo!("Render BTreeMap composite"),
+                    HashSet => todo!("Render HashSet composite"),
+                    BTreeSet => todo!("Render BTreeSet composite"),
+                    Custom(_) => todo!("Render Custom composite"),
+                }
+            }
             TypeKind::Unit => todo!("should not render unit rust type"),
             TypeKind::Unknown => {
                 todo!("should not render unknown rust type")
@@ -36,7 +52,7 @@ impl RustType {
         let full_ty = match &self.kind {
             TypeKind::Primitive(_) => self.render(),
             TypeKind::Value(_) => self.render(),
-            TypeKind::Composite(_, _) => todo!(),
+            TypeKind::Composite(_, _) => self.render(),
             TypeKind::Unit => todo!("should not render unit rust type"),
             TypeKind::Unknown => {
                 todo!("should not render unknown rust type")

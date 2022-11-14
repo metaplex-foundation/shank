@@ -11,6 +11,9 @@ use super::{ProcessedSeed, Seed};
 const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[seeds("literal", program_id, pubkey("description"), byte("desc", u8), other_type("desc", u32))]"##;
 
+// -----------------
+// StructAttr
+// -----------------
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum StructAttr {
     Seeds(Seeds),
@@ -55,6 +58,17 @@ impl From<&StructAttr> for String {
     }
 }
 
+impl StructAttr {
+    pub fn into_seeds(self) -> Option<Vec<Seed>> {
+        match self {
+            StructAttr::Seeds(seeds) => Some(seeds.0),
+        }
+    }
+}
+
+// -----------------
+// StructAttrs
+// -----------------
 #[derive(Debug)]
 pub struct StructAttrs(pub HashSet<StructAttr>);
 impl StructAttrs {
