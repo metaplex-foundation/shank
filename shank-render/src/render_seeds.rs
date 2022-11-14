@@ -46,8 +46,8 @@ fn try_render_seeds_parts(
     let all_seeds = struct_attrs
         .items_ref()
         .iter()
-        .filter_map(|attr| match attr {
-            StructAttr::Seeds(seeds) => Some(seeds),
+        .map(|attr| match attr {
+            StructAttr::Seeds(seeds) => seeds,
         })
         .collect::<Vec<_>>();
 
@@ -226,7 +226,7 @@ mod tests {
 
     fn assert_tokenstream_eq(actual: &TokenStream, expected: &str) {
         let expected_ts = expected.parse::<TokenStream>().unwrap().to_string();
-        assert_eq!(actual.to_string(), expected_ts.to_string());
+        assert_eq!(actual.to_string(), expected_ts);
     }
 
     #[test]
@@ -326,7 +326,7 @@ mod seed_integration {
             .expect("Should parse struct without error");
 
         let struct_attrs = &parsed_structs.first().unwrap().struct_attrs;
-        try_render_seeds_fn(&struct_attrs)
+        try_render_seeds_fn(struct_attrs)
             .expect("Should render seeds")
             .unwrap()
     }
