@@ -252,6 +252,7 @@ mod tests {
         let all_structs = vec![&account_struct].into_iter();
 
         let res = extract_account_structs(all_structs);
+        // TODO(thlorenz): Need to assert on the result or remove this test
         eprintln!("{:#?}", res);
     }
 
