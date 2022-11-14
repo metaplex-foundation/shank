@@ -5,18 +5,39 @@ use proc_macro2::{Ident, Span, TokenStream};
 use shank_macro_impl::{
     parsed_struct::{ProcessedSeed, Seed, StructAttr, StructAttrs},
     syn::{Error as ParseError, Result as ParseResult},
-    types::{Primitive, RustType, TypeKind, Value},
+    types::{Composite, Primitive, RustType, TypeKind, Value},
 };
 
+pub fn try_render_seeds_fn(
+    struct_attrs: &StructAttrs,
+) -> ParseResult<Option<TokenStream>> {
+    let RenderedSeedsParts {
+        seed_array_items,
+        seed_fn_args,
+    } = try_render_seeds_parts(struct_attrs)?;
+    if seed_array_items.is_empty() {
+        return Ok(None);
+    }
+
+    let len = seed_array_items.len();
+    // The seed function will be part of an impl block for the Account for which we're
+    // deriving the seeds, thus we can re-use the same name without clashes
+    Ok(Some(quote! {
+        pub fn account_seeds(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
+            [#(#seed_array_items),*]
+        }
+    }))
+}
+
 #[derive(Debug)]
-pub struct RenderedSeeds {
+struct RenderedSeedsParts {
     seed_array_items: Vec<TokenStream>,
     seed_fn_args: Vec<TokenStream>,
 }
 
-pub fn try_render_seeds(
+fn try_render_seeds_parts(
     struct_attrs: &StructAttrs,
-) -> ParseResult<RenderedSeeds> {
+) -> ParseResult<RenderedSeedsParts> {
     let all_seeds = struct_attrs
         .items_ref()
         .iter()
@@ -31,7 +52,7 @@ pub fn try_render_seeds(
     );
 
     if all_seeds.is_empty() {
-        return Ok(RenderedSeeds {
+        return Ok(RenderedSeedsParts {
             seed_array_items: vec![],
             seed_fn_args: vec![],
         });
@@ -56,7 +77,7 @@ pub fn try_render_seeds(
         .into_iter()
         .collect::<Vec<TokenStream>>();
 
-    Ok(RenderedSeeds {
+    Ok(RenderedSeedsParts {
         seed_fn_args,
         seed_array_items,
     })
@@ -88,15 +109,29 @@ fn render_seed_function_arg(
         Seed::Param(name, _, _) => {
             // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs always ensures
             // that the arg is set
-            let arg = seed
-                .arg
-                .as_ref()
-                .unwrap()
-                .ty
+            let ty = seed.arg.as_ref().unwrap().ty.clone();
+            let arg = adapt_seed_function_arg_type_kind(ty)
                 .with_lifetime("a")?
                 .render_param(name);
             Ok(Some(arg))
         }
+    }
+}
+
+fn adapt_seed_function_arg_type_kind(ty: RustType) -> RustType {
+    match ty.kind {
+        TypeKind::Primitive(Primitive::U8) => {
+            let kind =
+                TypeKind::Composite(Composite::Array(1), vec![ty.clone()]);
+            RustType { kind, ..ty }
+        }
+        // TODO(thlorenz): technically most of the below are not supported so we should ideally add
+        // some check here to detect invalid inputs
+        TypeKind::Primitive(_) => ty,
+        TypeKind::Value(_) => ty,
+        TypeKind::Composite(_, _) => ty,
+        TypeKind::Unit => ty,
+        TypeKind::Unknown => ty,
     }
 }
 
@@ -174,18 +209,18 @@ mod tests {
         attrs
     }
 
-    fn render_seeds(seeds: &[Seed]) -> RenderedSeeds {
+    fn render_seeds_parts(seeds: &[Seed]) -> RenderedSeedsParts {
         let attrs = struct_attrs_with_seeds(seeds);
-        try_render_seeds(&attrs).expect("Should render seeds fine")
+        try_render_seeds_parts(&attrs).expect("Should render seeds fine")
     }
 
     #[test]
     fn render_seed_literal() {
         let seed = Seed::Literal("uno".to_string());
-        let RenderedSeeds {
+        let RenderedSeedsParts {
             seed_array_items,
             seed_fn_args,
-        } = render_seeds(&[seed]);
+        } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { b"uno" }.to_string();
         assert_eq!(seed_array_items.len(), 1);
@@ -196,10 +231,10 @@ mod tests {
     #[test]
     fn process_seed_program_id() {
         let seed = Seed::ProgramId;
-        let RenderedSeeds {
+        let RenderedSeedsParts {
             seed_array_items,
             seed_fn_args,
-        } = render_seeds(&[seed]);
+        } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { program_id.as_ref() }.to_string();
         let expected_arg = "program_id : &'a Pubkey".to_string();
@@ -213,10 +248,10 @@ mod tests {
     fn process_seed_custom_pubkey() {
         let seed =
             Seed::Param("owner".to_string(), "The owner".to_string(), None);
-        let RenderedSeeds {
+        let RenderedSeedsParts {
             seed_array_items,
             seed_fn_args,
-        } = render_seeds(&[seed]);
+        } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { owner.as_ref() }.to_string();
         let expected_arg = "owner : &'a Pubkey".to_string();
@@ -227,16 +262,16 @@ mod tests {
     }
 
     #[test]
-    fn process_seed_custom_pubkey_providing_type() {
+    fn process_seed_explicit_custom_pubkey() {
         let seed = Seed::Param(
             "owner".to_string(),
             "The owner".to_string(),
             Some("Pubkey".to_string()),
         );
-        let RenderedSeeds {
+        let RenderedSeedsParts {
             seed_array_items,
             seed_fn_args,
-        } = render_seeds(&[seed]);
+        } = render_seeds_parts(&[seed]);
 
         let expected_item = quote! { owner.as_ref() }.to_string();
         let expected_arg = "owner : &'a Pubkey".to_string();
@@ -244,5 +279,67 @@ mod tests {
         assert_eq!(seed_fn_args.len(), 1);
         assert_eq!(seed_array_items[0].to_string(), expected_item);
         assert_eq!(seed_fn_args[0].to_string(), expected_arg);
+    }
+}
+
+// -----------------
+// Integration Tests based on Real World Examples
+// -----------------
+#[cfg(test)]
+mod seed_integration {
+    use shank_macro_impl::{
+        account::extract_account_structs,
+        syn::{self, ItemStruct},
+    };
+
+    use super::*;
+
+    fn parse_struct(code: TokenStream) -> ItemStruct {
+        syn::parse2::<ItemStruct>(code).expect("Should parse successfully")
+    }
+
+    fn render_seeds(code: TokenStream) -> TokenStream {
+        let account_struct = parse_struct(code);
+        let all_structs = vec![&account_struct].into_iter();
+        let parsed_structs = extract_account_structs(all_structs)
+            .expect("Should parse struct without error");
+
+        let struct_attrs = &parsed_structs.first().unwrap().struct_attrs;
+        try_render_seeds_fn(&struct_attrs)
+            .expect("Should render seeds")
+            .unwrap()
+    }
+
+    #[test]
+    fn literal_and_pubkeys() {
+        let code = quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                /* literal    */ "lit:prefix",
+                /* program_id */ program_id,
+                /* pubkey     */ some_pubkey("description of some pubkey"),
+                /* byte       */ some_byte("description of byte", u8),
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        };
+        // TODO(thlorenz): need to map `u8` to `&[u8]` for the seed fn
+        let expected = quote! {
+            pub fn account_seeds<'a>(
+                program_id: &'a Pubkey,
+                some_pubkey: &'a Pubkey,
+                some_byte: &'a [u8],
+            ) -> [&'a [u8]; 4usize] {
+                [
+                    b"lit:prefix",
+                    program_id.as_ref(),
+                    some_pubkey.as_ref(),
+                    some_byte,
+                ]
+            }
+        };
+        let rendered = render_seeds(code);
+        eprintln!("{}", rendered.to_string());
     }
 }
