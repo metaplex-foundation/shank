@@ -22,7 +22,7 @@ fn render_seeds(code: TokenStream) -> TokenStream {
         .expect("Should parse struct without error");
 
     let struct_attrs = &parsed_structs.first().unwrap().struct_attrs;
-    try_render_seeds_fn(struct_attrs)
+    try_render_seeds_fn(struct_attrs, None)
         .expect("Should render seeds")
         .unwrap()
 }

@@ -13,6 +13,7 @@ use shank_macro_impl::{
 
 pub fn try_render_seeds_fn(
     struct_attrs: &StructAttrs,
+    pub_modifier: Option<TokenStream>,
 ) -> ParseResult<Option<TokenStream>> {
     let lifetime = "a";
     let RenderedSeedsParts {
@@ -23,12 +24,13 @@ pub fn try_render_seeds_fn(
         return Ok(None);
     }
 
+    let pub_modifier = pub_modifier.unwrap_or_else(|| quote! { pub });
     let len = seed_array_items.len();
     let lifetime_toks = format!("<'{}>", lifetime).parse::<TokenStream>()?;
     // The seed function will be part of an impl block for the Account for which we're
     // deriving the seeds, thus we can re-use the same name without clashes
     Ok(Some(quote! {
-        pub fn account_seeds#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
+        #pub_modifier fn account_seeds#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
             [#(#seed_array_items),*]
         }
     }))
