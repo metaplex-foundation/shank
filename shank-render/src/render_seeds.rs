@@ -4,7 +4,8 @@ use std::str::FromStr;
 use proc_macro2::{Ident, Span, TokenStream};
 use shank_macro_impl::{
     parsed_struct::{
-        ProcessedSeed, Seed, StructAttr, StructAttrs, FULL_PUBKEY_TY, PUBKEY_TY,
+        ProcessedSeed, Seed, StructAttr, StructAttrs, ACCOUNT_INFO_TY,
+        FULL_ACCOUNT_INFO_TY, FULL_PUBKEY_TY, PUBKEY_TY,
     },
     syn::{Error as ParseError, Result as ParseResult},
     types::{Composite, Primitive, RustType, TypeKind, Value},
@@ -173,17 +174,24 @@ fn seed_array_item(name: &str, ty: &RustType) -> ParseResult<TokenStream> {
         TypeKind::Primitive(p) if p == &Primitive::Bool => {
             Ok(quote! { &[if #ident { 1 } else { 0 } ] })
         }
-        TypeKind::Primitive(_) => Ok(quote! { #ident }),
+        TypeKind::Primitive(Primitive::U8) => Ok(quote! { #ident }),
+        TypeKind::Primitive(prim) => Err(ParseError::new(
+            Span::call_site(),
+            format!(
+                "Unsupported primitive type: {}, only u8 is supported. Consider using String or str instead.",
+                prim
+            ),
+        )),
         TypeKind::Value(Value::String)
         | TypeKind::Value(Value::CString)
         | TypeKind::Value(Value::Str) => Ok(quote! { #ident.as_bytes() }),
         TypeKind::Value(Value::Custom(x))
-            if x == PUBKEY_TY || x == FULL_PUBKEY_TY =>
+            if x == PUBKEY_TY
+                || x == FULL_PUBKEY_TY
+                || x == ACCOUNT_INFO_TY
+                || x == FULL_ACCOUNT_INFO_TY =>
         {
             Ok(quote! { #ident.as_ref() })
-        }
-        TypeKind::Value(Value::Custom(x)) if x == "AccountInfo" => {
-            Ok(quote! { #ident.key.as_ref() })
         }
         TypeKind::Value(Value::Custom(x)) => Err(ParseError::new(
             ty.ident.span(),

@@ -6,6 +6,9 @@ const PROGRAM_ID_DESC: &str = "The id of the program";
 const PROGRAM_ID_NAME: &str = "program_id";
 pub const PUBKEY_TY: &str = "Pubkey";
 pub const FULL_PUBKEY_TY: &str = "::solana_program::pubkey::Pubkey";
+pub const ACCOUNT_INFO_TY: &str = "AccountInfo";
+pub const FULL_ACCOUNT_INFO_TY: &str =
+    "::solana_program::account_info::AccountInfo";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Seed {
@@ -87,11 +90,17 @@ impl TryFrom<&Seed> for ProcessedSeed {
             }
             Seed::Param(name, desc, maybe_kind) => {
                 let ty = match maybe_kind.as_ref().map(String::as_str) {
-                    Some("Pubkey") | None => {
+                    Some(PUBKEY_TY) | None => {
                         let kind = TypeKind::Value(Value::Custom(
                             FULL_PUBKEY_TY.to_string(),
                         ));
                         RustType::reference(PUBKEY_TY, kind, None)
+                    }
+                    Some(ACCOUNT_INFO_TY) => {
+                        let kind = TypeKind::Value(Value::Custom(
+                            FULL_ACCOUNT_INFO_TY.to_string(),
+                        ));
+                        RustType::reference(ACCOUNT_INFO_TY, kind, None)
                     }
                     Some(s) => RustType::try_from(s)?.as_reference(None),
                 };

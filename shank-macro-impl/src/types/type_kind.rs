@@ -1,5 +1,5 @@
 use super::RustType;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 // -----------------
 // TypeKind
@@ -202,6 +202,26 @@ impl Debug for Primitive {
             Primitive::I128 => "Primitive::I128",
             Primitive::USize => "Primitive::Usize",
             Primitive::Bool => "Primitive::Bool",
+        };
+        write!(f, "{}", ty)
+    }
+}
+
+impl Display for Primitive {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ty = match self {
+            Primitive::U8 => "u8",
+            Primitive::I8 => "i8",
+            Primitive::U16 => "u16",
+            Primitive::I16 => "i16",
+            Primitive::U32 => "u32",
+            Primitive::I32 => "i32",
+            Primitive::U64 => "u64",
+            Primitive::I64 => "i64",
+            Primitive::U128 => "u128",
+            Primitive::I128 => "i128",
+            Primitive::USize => "usize",
+            Primitive::Bool => "bool",
         };
         write!(f, "{}", ty)
     }
