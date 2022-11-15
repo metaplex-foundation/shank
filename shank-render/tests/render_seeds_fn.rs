@@ -5,7 +5,7 @@ use shank_macro_impl::{
     account::extract_account_structs,
     syn::{self, ItemStruct},
 };
-use shank_render::try_render_seeds_fn;
+use shank_render::{try_process_seeds, try_render_seeds_fn};
 
 // -----------------
 // Integration Tests and Real World Examples
@@ -22,7 +22,9 @@ fn render_seeds(code: TokenStream) -> TokenStream {
         .expect("Should parse struct without error");
 
     let struct_attrs = &parsed_structs.first().unwrap().struct_attrs;
-    try_render_seeds_fn(struct_attrs, None)
+    let processed_seeds = try_process_seeds(struct_attrs)
+        .expect("Should process seeds without error");
+    try_render_seeds_fn(&processed_seeds, None)
         .expect("Should render seeds")
         .unwrap()
 }

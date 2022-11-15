@@ -4,22 +4,22 @@ use std::str::FromStr;
 use proc_macro2::{Ident, Span, TokenStream};
 use shank_macro_impl::{
     parsed_struct::{
-        ProcessedSeed, Seed, StructAttr, StructAttrs, ACCOUNT_INFO_TY,
-        FULL_ACCOUNT_INFO_TY, FULL_PUBKEY_TY, PUBKEY_TY,
+        ProcessedSeed, Seed, ACCOUNT_INFO_TY, FULL_ACCOUNT_INFO_TY,
+        FULL_PUBKEY_TY, PUBKEY_TY,
     },
     syn::{Error as ParseError, Result as ParseResult},
     types::{Composite, Primitive, RustType, TypeKind, Value},
 };
 
 pub fn try_render_seeds_fn(
-    struct_attrs: &StructAttrs,
+    processed_seeds: &[ProcessedSeed],
     pub_modifier: Option<TokenStream>,
 ) -> ParseResult<Option<TokenStream>> {
     let lifetime = "a";
     let RenderedSeedsParts {
         seed_array_items,
         seed_fn_args,
-    } = try_render_seeds_parts(struct_attrs, lifetime)?;
+    } = try_render_seeds_parts(processed_seeds, lifetime)?;
     if seed_array_items.is_empty() {
         return Ok(None);
     }
@@ -43,33 +43,10 @@ struct RenderedSeedsParts {
 }
 
 fn try_render_seeds_parts(
-    struct_attrs: &StructAttrs,
+    processed_seeds: &[ProcessedSeed],
     lifetime: &str,
 ) -> ParseResult<RenderedSeedsParts> {
-    let all_seeds = struct_attrs
-        .items_ref()
-        .iter()
-        .map(|attr| match attr {
-            StructAttr::Seeds(seeds) => seeds,
-        })
-        .collect::<Vec<_>>();
-
-    assert!(
-        all_seeds.len() <= 1,
-        "Should only have one seed definition per account"
-    );
-
-    if all_seeds.is_empty() {
-        return Ok(RenderedSeedsParts {
-            seed_array_items: vec![],
-            seed_fn_args: vec![],
-        });
-    }
-
-    let seeds = all_seeds.first().unwrap();
-    let processed = seeds.process()?;
-
-    let seed_fn_args = processed
+    let seed_fn_args = processed_seeds
         .iter()
         .map(|x| render_seed_function_arg(x, lifetime))
         .collect::<ParseResult<Vec<Option<TokenStream>>>>()?
@@ -78,7 +55,7 @@ fn try_render_seeds_parts(
         .flatten()
         .collect::<Vec<TokenStream>>();
 
-    let seed_array_items = processed
+    let seed_array_items = processed_seeds
         .iter()
         .map(render_seed_array_item)
         .collect::<ParseResult<Vec<TokenStream>>>()?
@@ -222,16 +199,12 @@ mod tests {
 
     use super::*;
 
-    fn struct_attrs_with_seeds(seeds: &[Seed]) -> StructAttrs {
-        let struct_attr = StructAttr::Seeds(Seeds(seeds.to_vec()));
-        let mut attrs = StructAttrs::new();
-        attrs.insert(struct_attr);
-        attrs
-    }
-
     fn render_seeds_parts(seeds: &[Seed]) -> RenderedSeedsParts {
-        let attrs = struct_attrs_with_seeds(seeds);
-        try_render_seeds_parts(&attrs, "a").expect("Should render seeds fine")
+        let processed_seeds = Seeds(seeds.to_vec())
+            .process()
+            .expect("should process seeds without error");
+        try_render_seeds_parts(&processed_seeds, "a")
+            .expect("Should render seeds without error")
     }
 
     fn assert_tokenstream_eq(actual: &TokenStream, expected: &str) {
