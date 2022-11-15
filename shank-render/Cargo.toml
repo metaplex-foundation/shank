@@ -13,3 +13,6 @@ edition = "2018"
 proc-macro2 = "1.0.46"
 quote = "1.0.21"
 shank_macro_impl = { version = "0.0.10", path = "../shank-macro-impl" }
+
+[dev-dependencies]
+prettyplease = "0.1.21"
