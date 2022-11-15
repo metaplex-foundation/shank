@@ -75,8 +75,6 @@ fn render_seed_function_arg(
     seed: &ProcessedSeed,
     lifetime: &str,
 ) -> ParseResult<Option<TokenStream>> {
-    // NOTE: for a param seed shank-macro-impl:src/parsed_struct/seeds.rs
-    //       always ensures that the arg is set
     match &seed.seed {
         Seed::Literal(_) => {
             // Literal items don't need to be passed to the function
