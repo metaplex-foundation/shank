@@ -1,9 +1,8 @@
-#![allow(unused)]
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use shank_macro_impl::{
-    parsed_struct::{ProcessedSeed, Seed, StructAttrs},
-    syn::{parse2, Ident, Result as ParseResult},
+    parsed_struct::{ProcessedSeed, Seed},
+    syn::Ident,
 };
 
 use crate::consts::solana_program_pubkey;
@@ -46,10 +45,9 @@ fn render_pda_parts(processed_seeds: &[ProcessedSeed]) -> RenderedPdaParts {
     // -----------------
     // Incoming Args
     // -----------------
-    let mut has_program_id_seed = false;
     let mut pda_fn_args = processed_seeds
         .iter()
-        .map(|x| render_pda_function_arg(x, &mut has_program_id_seed))
+        .map(render_pda_function_arg)
         .collect::<Vec<Option<TokenStream>>>()
         .into_iter()
         .filter(Option::is_some)
@@ -83,10 +81,7 @@ fn render_pda_parts(processed_seeds: &[ProcessedSeed]) -> RenderedPdaParts {
     }
 }
 
-fn render_pda_function_arg(
-    seed: &ProcessedSeed,
-    has_program_id_seed: &mut bool,
-) -> Option<TokenStream> {
+fn render_pda_function_arg(seed: &ProcessedSeed) -> Option<TokenStream> {
     match &seed.seed {
         Seed::Literal(_) => {
             // Literal items don't need to be passed to the function
@@ -95,12 +90,6 @@ fn render_pda_function_arg(
         Seed::ProgramId => {
             // Since `Pubkey::find_program_address` depends on program_id, we always
             // render as the first argument of the function
-            // However we need to track if it is part of the seeds so we know if to pass it to the
-            // seeds fn as an argument
-            // // TODO(thlorenz): this may not be needed as the call to seed is rendered
-            // independently and iterates over all seeds as well (so implement that first and
-            // possibly remove this mut stuff)
-            *has_program_id_seed = true;
             None
         }
         Seed::Param(name, _, _) => {
