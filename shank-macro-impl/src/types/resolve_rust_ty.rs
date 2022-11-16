@@ -249,6 +249,19 @@ impl RustType {
             context: self.context,
         }
     }
+
+    // -----------------
+    // Queries
+    // -----------------
+    pub fn is_primitive(&self) -> bool {
+        matches!(self.kind, TypeKind::Primitive(_))
+    }
+    pub fn get_primitive(&self) -> Option<&Primitive> {
+        match &self.kind {
+            TypeKind::Primitive(primitive) => Some(primitive),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,4 +1,4 @@
-use crate::types::{RustType, TypeKind, Value};
+use crate::types::{Primitive, RustType, TypeKind, Value};
 use std::convert::TryFrom;
 use syn::{Error as ParseError, Result as ParseResult};
 
@@ -102,7 +102,23 @@ impl TryFrom<&Seed> for ProcessedSeed {
                         ));
                         RustType::reference(ACCOUNT_INFO_TY, kind, None)
                     }
-                    Some(s) => RustType::try_from(s)?.as_reference(None),
+                    Some(ty_name) => {
+                        let ty = RustType::try_from(ty_name)?;
+                        match ty.get_primitive() {
+                            Some(Primitive::U8) => {
+                                // u8 is the only primitive we allow for seeds and it is the only
+                                // type that we don't pass by ref
+                                // Instead when passed to the seeds fn it is wrapped as &[u8]
+                                RustType::owned("u8", ty.kind)
+                            }
+                            Some(_) => {
+                                return Err(ParseError::new_spanned(
+                                    ty.ident,
+                                    "Only u8 primitive is allowed for seeds. All other primitives need to be passed as strings."));
+                            }
+                            None => ty.as_reference(None),
+                        }
+                    }
                 };
                 Ok(ProcessedSeed::new(
                     seed.clone(),
