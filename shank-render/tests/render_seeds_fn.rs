@@ -1,52 +1,39 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
 
-use shank_macro_impl::{
-    account::extract_account_structs,
-    syn::{self, ItemStruct},
-};
-use shank_render::{try_process_seeds, try_render_seeds_fn};
+use shank_macro_impl::syn::{self, Ident};
+use shank_render::try_render_seeds_fn;
 
+mod utils;
 // -----------------
 // Integration Tests and Real World Examples
 // -----------------
 
-fn parse_struct(code: TokenStream) -> ItemStruct {
-    syn::parse2::<ItemStruct>(code).expect("Should parse successfully")
-}
-
 fn render_seeds(code: TokenStream) -> TokenStream {
-    let account_struct = parse_struct(code);
-    let all_structs = vec![&account_struct].into_iter();
-    let parsed_structs = extract_account_structs(all_structs)
-        .expect("Should parse struct without error");
-
-    let struct_attrs = &parsed_structs.first().unwrap().struct_attrs;
-    let processed_seeds = try_process_seeds(struct_attrs)
-        .expect("Should process seeds without error");
-    try_render_seeds_fn(&processed_seeds, None)
-        .expect("Should render seeds")
-        .unwrap()
+    let processed_seeds =
+        utils::process_seeds(code).expect("Should process seeds without error");
+    try_render_seeds_fn(
+        &processed_seeds,
+        &Ident::new("account_seeds", Span::call_site()),
+        None,
+    )
+    .expect("Should render seeds")
+    .unwrap()
 }
 
-fn pretty_print(code: TokenStream) -> String {
-    let syn_tree = syn::parse_file(code.to_string().as_str()).unwrap();
-    prettyplease::unparse(&syn_tree)
-}
-
-#[allow(dead_code)]
+#[allow(unused)]
 fn render_and_dump(code: &TokenStream) {
     let rendered = render_seeds(code.clone());
-    eprintln!("{}", pretty_print(rendered));
+    eprintln!("{}", utils::pretty_print(rendered));
 }
 
 fn assert_rendered_seeds_fn(code: TokenStream, expected: TokenStream) {
     let rendered = render_seeds(code);
-    assert_eq!(pretty_print(rendered), pretty_print(expected));
+    assert_eq!(utils::pretty_print(rendered), utils::pretty_print(expected));
 }
 
 #[test]
-fn literal_pubkeys_and_u8_byte() {
+fn literal_pubkeys_and_u8_byte_seeds() {
     let code = quote! {
         #[derive(ShankAccount)]
         #[seeds(
