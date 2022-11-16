@@ -8,7 +8,7 @@ use shank_macro_impl::{
         FULL_PUBKEY_TY, PUBKEY_TY,
     },
     syn::{Error as ParseError, Result as ParseResult},
-    types::{Composite, Primitive, RustType, TypeKind, Value},
+    types::{Composite, ParsedReference, Primitive, RustType, TypeKind, Value},
 };
 
 pub fn try_render_seeds_fn(
@@ -86,7 +86,7 @@ fn render_seed_function_arg(
                 .as_ref()
                 .unwrap()
                 .ty
-                .with_lifetime(lifetime)?
+                .try_with_lifetime(lifetime)?
                 .render_param("program_id");
             Ok(Some(arg))
         }
@@ -95,7 +95,7 @@ fn render_seed_function_arg(
             // that the arg is set
             let ty = seed.arg.as_ref().unwrap().ty.clone();
             let arg = adapt_seed_function_arg_type_kind(ty)
-                .with_lifetime("a")?
+                .try_with_lifetime(lifetime)?
                 .render_param(name);
             Ok(Some(arg))
         }
@@ -109,10 +109,14 @@ fn adapt_seed_function_arg_type_kind(ty: RustType) -> RustType {
                 Composite::Array(1),
                 vec![ty.clone().as_owned()],
             );
-            RustType { kind, ..ty }
+            RustType {
+                kind,
+                reference: ParsedReference::Ref(None),
+                ..ty
+            }
         }
-        // TODO(thlorenz): technically most of the below are not supported so we should ideally add
-        // some check here to detect invalid inputs
+        // TODO(thlorenz): most of the below are not supported and some already error when seeds
+        // are processed. We could add some more check here to detect invalid inputs.
         TypeKind::Primitive(_) => ty,
         TypeKind::Value(_) => ty,
         TypeKind::Composite(_, _) => ty,

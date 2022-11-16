@@ -211,7 +211,7 @@ impl RustType {
     /// If a lifetime already exists it is replaced, otherwise it is added.
     ///
     /// When the type is owned it returns an error.
-    pub fn with_lifetime(&self, lifetime: &str) -> ParseResult<Self> {
+    pub fn try_with_lifetime(&self, lifetime: &str) -> ParseResult<Self> {
         use ParsedReference::*;
         let reference = match self.reference {
             Owned => {
