@@ -24,6 +24,11 @@ pub fn render_pda_fn(
     }
 
     let pubkey = solana_program_pubkey();
+    let seed_bump_arg = if seed_fn_args.is_empty() {
+        quote! { bump_arg }
+    } else {
+        quote! { , bump_arg }
+    };
 
     Some(quote! {
         #[allow(unused)]
@@ -36,7 +41,7 @@ pub fn render_pda_fn(
         pub fn #pda_fn_with_bump_name(#(#pda_fn_args),*, bump: u8) -> (#pubkey, u8)  {
             #(#seed_param_assigns)*
             let bump_arg = &[bump];
-            let seeds = Self::#seeds_fn_with_bump_name(#(#seed_fn_args),*, bump_arg);
+            let seeds = Self::#seeds_fn_with_bump_name(#(#seed_fn_args),* #seed_bump_arg);
             #pubkey::find_program_address(&seeds, program_id)
         }
     })

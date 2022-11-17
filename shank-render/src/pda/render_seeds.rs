@@ -27,15 +27,19 @@ pub fn try_render_seeds_fn(
 
     let len = seed_array_items.len();
     let lifetime_toks = format!("<'{}>", lifetime).parse::<TokenStream>()?;
-    let len_with_bump = seed_array_items.len() + 1;
-    // TODO(thlorenz): need a version that takes an extra `bump: u8` arg
+    let len_with_bump = len + 1;
+    let bump = if seed_fn_args.is_empty() {
+        quote! { bump: &'a [u8; 1] }
+    } else {
+        quote! { , bump: &'a [u8; 1] }
+    };
     Ok(Some(quote! {
         #[allow(unused, clippy::needless_lifetimes)]
         pub fn #seeds_fn_name#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
             [#(#seed_array_items),*]
         }
         #[allow(unused, clippy::needless_lifetimes)]
-        pub fn #seeds_fn_with_bump_name#lifetime_toks(#(#seed_fn_args),*, bump: &'a [u8; 1]) -> [&'a [u8]; #len_with_bump] {
+        pub fn #seeds_fn_with_bump_name#lifetime_toks(#(#seed_fn_args),*#bump) -> [&'a [u8]; #len_with_bump] {
             [#(#seed_array_items),*, bump]
         }
     }))

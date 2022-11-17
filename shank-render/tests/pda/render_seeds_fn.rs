@@ -50,17 +50,22 @@ fn literal_pubkeys_and_u8_byte_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
+            #[allow(unused, clippy::needless_lifetimes)]
             pub fn shank_seeds<'a>(
                 program_id: &'a ::solana_program::pubkey::Pubkey,
                 some_pubkey: &'a ::solana_program::pubkey::Pubkey,
-                some_byte: &'a [u8; 1usize]
+                some_byte: &'a [u8; 1usize],
             ) -> [&'a [u8]; 4usize] {
-                [
-                    b"lit:prefix",
-                    program_id.as_ref(),
-                    some_pubkey.as_ref(),
-                    some_byte
-                ]
+                [b"lit:prefix", program_id.as_ref(), some_pubkey.as_ref(), some_byte]
+            }
+            #[allow(unused, clippy::needless_lifetimes)]
+            pub fn shank_seeds_with_bump<'a>(
+                program_id: &'a ::solana_program::pubkey::Pubkey,
+                some_pubkey: &'a ::solana_program::pubkey::Pubkey,
+                some_byte: &'a [u8; 1usize],
+                bump: &'a [u8; 1],
+            ) -> [&'a [u8]; 5usize] {
+                [b"lit:prefix", program_id.as_ref(), some_pubkey.as_ref(), some_byte, bump]
             }
         },
     );
@@ -85,6 +90,7 @@ fn candy_guard_edition_marker_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
+            #[allow(unused, clippy::needless_lifetimes)]
             pub fn shank_seeds<'a>(
                 prefix: &'a str,
                 program_id: &'a ::solana_program::pubkey::Pubkey,
@@ -98,6 +104,24 @@ fn candy_guard_edition_marker_seeds() {
                     master_edition_mint_info.as_ref(),
                     edition.as_bytes(),
                     edition_marker_number.as_bytes(),
+                ]
+            }
+            #[allow(unused, clippy::needless_lifetimes)]
+            pub fn shank_seeds_with_bump<'a>(
+                prefix: &'a str,
+                program_id: &'a ::solana_program::pubkey::Pubkey,
+                master_edition_mint_info: &'a ::solana_program::account_info::AccountInfo,
+                edition: &'a str,
+                edition_marker_number: &'a String,
+                bump: &'a [u8; 1],
+            ) -> [&'a [u8]; 6usize] {
+                [
+                    prefix.as_bytes(),
+                    program_id.as_ref(),
+                    master_edition_mint_info.as_ref(),
+                    edition.as_bytes(),
+                    edition_marker_number.as_bytes(),
+                    bump,
                 ]
             }
         },
@@ -122,18 +146,52 @@ fn candy_guard_mint_limit_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
+            #[allow(unused, clippy::needless_lifetimes)]
             pub fn shank_seeds<'a>(
                 id: &'a [u8; 1usize],
                 user: &'a ::solana_program::pubkey::Pubkey,
                 candy_guard_key: &'a ::solana_program::pubkey::Pubkey,
                 candy_machine_key: &'a ::solana_program::pubkey::Pubkey,
             ) -> [&'a [u8]; 4usize] {
-                [
-                    id,
-                    user.as_ref(),
-                    candy_guard_key.as_ref(),
-                    candy_machine_key.as_ref(),
-                ]
+                [id, user.as_ref(), candy_guard_key.as_ref(), candy_machine_key.as_ref()]
+            }
+            #[allow(unused, clippy::needless_lifetimes)]
+            pub fn shank_seeds_with_bump<'a>(
+                id: &'a [u8; 1usize],
+                user: &'a ::solana_program::pubkey::Pubkey,
+                candy_guard_key: &'a ::solana_program::pubkey::Pubkey,
+                candy_machine_key: &'a ::solana_program::pubkey::Pubkey,
+                bump: &'a [u8; 1],
+            ) -> [&'a [u8]; 5usize] {
+                [id, user.as_ref(), candy_guard_key.as_ref(), candy_machine_key.as_ref(), bump]
+            }
+        },
+    );
+}
+
+// -----------------
+// Edge Cases
+// -----------------
+#[test]
+fn struct_with_one_literal_seeds_fn() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        #[seeds("lit:prefix")]
+        struct SomeAccount {
+            count: u8,
+        }
+    };
+    render_and_dump(&code);
+    assert_rendered_seeds_fn(
+        code,
+        quote! {
+            #[allow(unused, clippy::needless_lifetimes)]
+            pub fn shank_seeds<'a>() -> [&'a [u8]; 1usize] {
+                [b"lit:prefix"]
+            }
+            #[allow(unused, clippy::needless_lifetimes)]
+            pub fn shank_seeds_with_bump<'a>(bump: &'a [u8; 1]) -> [&'a [u8]; 2usize] {
+                [b"lit:prefix", bump]
             }
         },
     );
