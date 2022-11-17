@@ -1,5 +1,5 @@
 use shank_macro_impl::{
-    parsed_struct::{ProcessedSeed, StructAttr, StructAttrs},
+    parsed_struct::{ProcessedSeed, SeedArg, StructAttr, StructAttrs},
     syn::Result as ParseResult,
 };
 
@@ -25,4 +25,20 @@ pub fn try_process_seeds(
         let seeds = all_seeds.first().unwrap();
         seeds.process()
     }
+}
+
+pub fn render_args_comments(
+    processed_seeds: &[ProcessedSeed],
+    exclude_program_id: bool,
+) -> Vec<String> {
+    processed_seeds
+        .iter()
+        .map(|x| x.arg.as_ref())
+        .filter(Option::is_some)
+        .flatten()
+        .filter(|x| !exclude_program_id || x.name != "program_id")
+        .map(|SeedArg { name, desc, ty }| {
+            format!("/// * **{}**: {} | [{}] ", name, desc, ty.ident)
+        })
+        .collect()
 }

@@ -11,10 +11,13 @@ use shank_macro_impl::{
     types::{Composite, ParsedReference, Primitive, RustType, TypeKind, Value},
 };
 
+use super::render_args_comments;
+
 pub fn try_render_seeds_fn(
     processed_seeds: &[ProcessedSeed],
     seeds_fn_name: &Ident,
     seeds_fn_with_bump_name: &Ident,
+    include_comments: bool,
 ) -> ParseResult<Option<TokenStream>> {
     let lifetime = "a";
     let RenderedSeedsParts {
@@ -33,11 +36,40 @@ pub fn try_render_seeds_fn(
     } else {
         quote! { , bump: &'a [u8; 1] }
     };
+
+    let (seeds_comments, seeds_with_bump_comments) = if include_comments {
+        let args_comments = render_args_comments(processed_seeds, false);
+        (
+            format!(
+                r#"
+                /// Derives the seeds for this account.
+                ///
+                {}"#,
+                args_comments.join("\n")
+            )
+            .parse()
+            .unwrap(),
+            format!(
+                r#"
+                /// Derives the seeds for this account allowing to provide a bump seed.
+                ///
+                {}
+                /// * **bump**: the bump seed to pass when deriving the PDA"#,
+                args_comments.join("\n")
+            )
+            .parse()
+            .unwrap(),
+        )
+    } else {
+        (TokenStream::new(), TokenStream::new())
+    };
     Ok(Some(quote! {
+        #seeds_comments
         #[allow(unused, clippy::needless_lifetimes)]
         pub fn #seeds_fn_name#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
             [#(#seed_array_items),*]
         }
+        #seeds_with_bump_comments
         #[allow(unused, clippy::needless_lifetimes)]
         pub fn #seeds_fn_with_bump_name#lifetime_toks(#(#seed_fn_args),*#bump) -> [&'a [u8]; #len_with_bump] {
             [#(#seed_array_items),*, bump]

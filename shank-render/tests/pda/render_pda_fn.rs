@@ -9,7 +9,7 @@ use crate::utils;
 // Integration Tests and Real World Examples
 // -----------------
 
-fn render_pda(code: TokenStream) -> TokenStream {
+fn render_pda(code: TokenStream, include_comments: bool) -> TokenStream {
     let processed_seeds =
         utils::process_seeds(code).expect("Should process seeds without error");
     render_pda_fn(
@@ -18,18 +18,19 @@ fn render_pda(code: TokenStream) -> TokenStream {
         &Ident::new("shank_seeds_with_bump", Span::call_site()),
         &Ident::new("shank_pda", Span::call_site()),
         &Ident::new("shank_pda_with_bump", Span::call_site()),
+        include_comments,
     )
     .unwrap()
 }
 
 #[allow(unused)]
 fn render_and_dump(code: &TokenStream) {
-    let rendered = render_pda(code.clone());
+    let rendered = render_pda(code.clone(), false);
     eprintln!("{}", utils::pretty_print(rendered));
 }
 
 fn assert_rendered_pda_fn(code: TokenStream, expected: TokenStream) {
-    let rendered = render_pda(code);
+    let rendered = render_pda(code, false);
     assert_eq!(utils::pretty_print(rendered), utils::pretty_print(expected));
 }
 

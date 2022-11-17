@@ -17,6 +17,7 @@ fn render_seeds(code: TokenStream) -> TokenStream {
         &processed_seeds,
         &Ident::new("shank_seeds", Span::call_site()),
         &Ident::new("shank_seeds_with_bump", Span::call_site()),
+        false,
     )
     .expect("Should render seeds")
     .unwrap()

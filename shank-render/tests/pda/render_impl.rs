@@ -8,19 +8,26 @@ use crate::utils;
 // Integration Tests and Real World Examples
 // -----------------
 
-fn render_impl(code: TokenStream) -> TokenStream {
+fn render_impl(code: TokenStream, include_comments: bool) -> TokenStream {
     let (struct_ident, struct_attrs) = utils::parse_struct_attrs(code);
-    render_pda_and_seeds_impl(&struct_attrs, &struct_ident).unwrap()
+    render_pda_and_seeds_impl(&struct_attrs, &struct_ident, include_comments)
+        .unwrap()
 }
 
 #[allow(unused)]
 fn render_and_dump(code: &TokenStream) {
-    let rendered = render_impl(code.clone());
+    let rendered = render_impl(code.clone(), false);
+    eprintln!("{}", utils::pretty_print(rendered));
+}
+
+#[allow(unused)]
+fn render_and_dump_commented(code: &TokenStream) {
+    let rendered = render_impl(code.clone(), true);
     eprintln!("{}", utils::pretty_print(rendered));
 }
 
 fn assert_rendered_impl_fn(code: TokenStream, expected: TokenStream) {
-    let rendered = render_impl(code);
+    let rendered = render_impl(code, false);
     assert_eq!(utils::pretty_print(rendered), utils::pretty_print(expected));
 }
 
@@ -166,6 +173,33 @@ fn candy_guard_mint_limit_impl() {
     )
 }
 
+// -----------------
+// Including Comments
+// -----------------
+
+// NOTE: once comments are involved it is very brittle to compare rendered code
+//       thus this test only exists to allow uncommenting dumping the rendered code
+// #[test]
+#[allow(unused)]
+fn literal_pubkeys_and_u8_byte_impl_commented() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        #[seeds(
+            /* literal    */ "lit:prefix",
+            /* program_id */ program_id,
+            /* pubkey     */ some_pubkey("description of some pubkey"),
+            /* byte       */ some_byte("description of byte", u8),
+        )]
+        struct AccountStructWithSeed {
+            count: u8,
+        }
+    };
+    render_and_dump_commented(&code);
+}
+
+// -----------------
+// Edge Cases
+// -----------------
 #[test]
 fn struct_without_seeds_impl() {
     let code = quote! {

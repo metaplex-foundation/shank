@@ -1,9 +1,9 @@
-mod process_seeds;
+mod pda_common;
 mod render_pda;
 mod render_seeds;
 
+pub use pda_common::*;
 use proc_macro2::{Span, TokenStream};
-pub use process_seeds::*;
 pub use render_pda::*;
 pub use render_seeds::*;
 
@@ -16,6 +16,7 @@ use shank_macro_impl::{
 pub fn render_pda_and_seeds_impl(
     struct_attrs: &StructAttrs,
     account_type_ident: &Ident,
+    include_comments: bool,
 ) -> ParseResult<TokenStream> {
     let processed_seeds = try_process_seeds(struct_attrs)?;
     if processed_seeds.is_empty() {
@@ -33,6 +34,7 @@ pub fn render_pda_and_seeds_impl(
         &processed_seeds,
         &seeds_fn_ident,
         &seeds_fn_with_bump_ident,
+        include_comments,
     )?;
     let pub_pda_fn = render_pda_fn(
         &processed_seeds,
@@ -40,6 +42,7 @@ pub fn render_pda_and_seeds_impl(
         &seeds_fn_with_bump_ident,
         &pda_fn_ident,
         &pda_fn_with_bump_ident,
+        include_comments,
     );
 
     if let (Some(pub_seeds_fn), Some(pub_pda_fn)) = (pub_seeds_fn, pub_pda_fn) {

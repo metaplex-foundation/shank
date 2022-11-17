@@ -1,11 +1,13 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use shank_macro_impl::{
-    parsed_struct::{ProcessedSeed, Seed},
+    parsed_struct::{ProcessedSeed, Seed, SeedArg},
     syn::Ident,
 };
 
 use crate::consts::solana_program_pubkey;
+
+use super::render_args_comments;
 
 pub fn render_pda_fn(
     processed_seeds: &[ProcessedSeed],
@@ -13,6 +15,7 @@ pub fn render_pda_fn(
     seeds_fn_with_bump_name: &Ident,
     pda_fn_name: &Ident,
     pda_fn_with_bump_name: &Ident,
+    include_comments: bool,
 ) -> Option<TokenStream> {
     let RenderedPdaParts {
         seed_param_assigns,
@@ -29,14 +32,44 @@ pub fn render_pda_fn(
     } else {
         quote! { , bump_arg }
     };
+    let (pda_comments, pda_with_bump_comments) = if include_comments {
+        let args_comments = render_args_comments(processed_seeds, true);
+        (
+            format!(
+                r#"
+                /// Derives the PDA for this account.
+                ///
+                /// * **program_id**: The id of the program
+                {}"#,
+                args_comments.join("\n")
+            )
+            .parse()
+            .unwrap(),
+            format!(
+                r#"
+                /// Derives the PDA for this account allowing to provide a bump seed.
+                ///
+                /// * **program_id**: The id of the program
+                {}
+                /// * **bump**: the bump seed to pass when deriving the PDA"#,
+                args_comments.join("\n")
+            )
+            .parse()
+            .unwrap(),
+        )
+    } else {
+        (TokenStream::new(), TokenStream::new())
+    };
 
     Some(quote! {
+        #pda_comments
         #[allow(unused)]
         pub fn #pda_fn_name(#(#pda_fn_args),*) -> (#pubkey, u8)  {
             #(#seed_param_assigns)*
             let seeds = Self::#seeds_fn_name(#(#seed_fn_args),*);
             #pubkey::find_program_address(&seeds, program_id)
         }
+        #pda_with_bump_comments
         #[allow(unused)]
         pub fn #pda_fn_with_bump_name(#(#pda_fn_args),*, bump: u8) -> (#pubkey, u8)  {
             #(#seed_param_assigns)*

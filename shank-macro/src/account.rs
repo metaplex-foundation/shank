@@ -15,6 +15,7 @@ pub fn derive_account(input: DeriveInput) -> ParseResult<TokenStream> {
             shank_render::pda::render_pda_and_seeds_impl(
                 &parsed_struct.struct_attrs,
                 &parsed_struct.ident,
+                true,
             )
         }
         _ => Err(ParseError::new_spanned(
