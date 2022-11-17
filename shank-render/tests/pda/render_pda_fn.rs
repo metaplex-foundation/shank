@@ -15,7 +15,9 @@ fn render_pda(code: TokenStream) -> TokenStream {
     render_pda_fn(
         &processed_seeds,
         &Ident::new("shank_seeds", Span::call_site()),
+        &Ident::new("shank_seeds_with_bump", Span::call_site()),
         &Ident::new("shank_pda", Span::call_site()),
+        &Ident::new("shank_pda_with_bump", Span::call_site()),
     )
     .unwrap()
 }

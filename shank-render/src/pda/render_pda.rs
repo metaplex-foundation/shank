@@ -10,7 +10,9 @@ use crate::consts::solana_program_pubkey;
 pub fn render_pda_fn(
     processed_seeds: &[ProcessedSeed],
     seeds_fn_name: &Ident,
+    seeds_fn_with_bump_name: &Ident,
     pda_fn_name: &Ident,
+    pda_fn_with_bump_name: &Ident,
 ) -> Option<TokenStream> {
     let RenderedPdaParts {
         seed_param_assigns,
@@ -24,9 +26,17 @@ pub fn render_pda_fn(
     let pubkey = solana_program_pubkey();
 
     Some(quote! {
+        #[allow(unused)]
         pub fn #pda_fn_name(#(#pda_fn_args),*) -> (#pubkey, u8)  {
             #(#seed_param_assigns)*
             let seeds = Self::#seeds_fn_name(#(#seed_fn_args),*);
+            #pubkey::find_program_address(&seeds, program_id)
+        }
+        #[allow(unused)]
+        pub fn #pda_fn_with_bump_name(#(#pda_fn_args),*, bump: u8) -> (#pubkey, u8)  {
+            #(#seed_param_assigns)*
+            let bump_arg = &[bump];
+            let seeds = Self::#seeds_fn_with_bump_name(#(#seed_fn_args),*, bump_arg);
             #pubkey::find_program_address(&seeds, program_id)
         }
     })

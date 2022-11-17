@@ -23,11 +23,24 @@ pub fn render_pda_and_seeds_impl(
     }
 
     let seeds_fn_ident = Ident::new("shank_seeds", Span::call_site());
+    let seeds_fn_with_bump_ident =
+        Ident::new("shank_seeds_with_bump", Span::call_site());
     let pda_fn_ident = Ident::new("shank_pda", Span::call_site());
+    let pda_fn_with_bump_ident =
+        Ident::new("shank_pda_with_bump", Span::call_site());
 
-    let pub_seeds_fn = try_render_seeds_fn(&processed_seeds, &seeds_fn_ident)?;
-    let pub_pda_fn =
-        render_pda_fn(&processed_seeds, &seeds_fn_ident, &pda_fn_ident);
+    let pub_seeds_fn = try_render_seeds_fn(
+        &processed_seeds,
+        &seeds_fn_ident,
+        &seeds_fn_with_bump_ident,
+    )?;
+    let pub_pda_fn = render_pda_fn(
+        &processed_seeds,
+        &seeds_fn_ident,
+        &seeds_fn_with_bump_ident,
+        &pda_fn_ident,
+        &pda_fn_with_bump_ident,
+    );
 
     if let (Some(pub_seeds_fn), Some(pub_pda_fn)) = (pub_seeds_fn, pub_pda_fn) {
         // TODO(thlorenz): Include some helpful comments for each fn
