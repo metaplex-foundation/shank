@@ -104,7 +104,7 @@ fn candy_guard_edition_marker_seeds() {
 }
 
 #[test]
-fn candy_candy_guard_mint_limit_seeds() {
+fn candy_guard_mint_limit_seeds() {
     let code = quote! {
         #[derive(ShankAccount)]
         #[seeds(

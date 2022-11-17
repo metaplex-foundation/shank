@@ -31,7 +31,7 @@ fn assert_rendered_impl_fn(code: TokenStream, expected: TokenStream) {
 
 // NOTE: the below tests use the same seeds as the ./render_seeds_fn.rs tests
 #[test]
-fn literal_pubkeys_and_u8_byte_pda() {
+fn literal_pubkeys_and_u8_byte_impl() {
     let code = quote! {
         #[derive(ShankAccount)]
         #[seeds(
@@ -44,7 +44,6 @@ fn literal_pubkeys_and_u8_byte_pda() {
             count: u8,
         }
     };
-    render_and_dump(&code);
     assert_rendered_impl_fn(
         code,
         quote! {
@@ -63,6 +62,54 @@ fn literal_pubkeys_and_u8_byte_pda() {
                 ) -> (::solana_program::pubkey::Pubkey, u8) {
                     let some_byte_arg = &[some_byte];
                     let seeds = Self::account_seeds(program_id, some_pubkey, some_byte_arg);
+                    ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
+                }
+            }
+        },
+    )
+}
+
+#[test]
+fn candy_guard_mint_limit_impl() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        #[seeds(
+            id("Guard Id", u8),
+            user("The User Pubkey"),
+            candy_guard_key("Candy Guard Key", Pubkey),
+            candy_machine_key("Candy Machine Key"),
+        )]
+        struct CandyGuardMintLimitSeeds {
+            count: u8,
+        }
+    };
+    render_and_dump(&code);
+    assert_rendered_impl_fn(
+        code,
+        quote! {
+            impl MyAccount {
+                pub fn account_seeds<'a>(
+                    id: &'a [u8; 1usize],
+                    user: &'a ::solana_program::pubkey::Pubkey,
+                    candy_guard_key: &'a ::solana_program::pubkey::Pubkey,
+                    candy_machine_key: &'a ::solana_program::pubkey::Pubkey,
+                ) -> [&'a [u8]; 4usize] {
+                    [id, user.as_ref(), candy_guard_key.as_ref(), candy_machine_key.as_ref()]
+                }
+                pub fn account_pda(
+                    program_id: &::solana_program::pubkey::Pubkey,
+                    id: u8,
+                    user: &::solana_program::pubkey::Pubkey,
+                    candy_guard_key: &::solana_program::pubkey::Pubkey,
+                    candy_machine_key: &::solana_program::pubkey::Pubkey,
+                ) -> (::solana_program::pubkey::Pubkey, u8) {
+                    let id_arg = &[id];
+                    let seeds = Self::account_seeds(
+                        id_arg,
+                        user,
+                        candy_guard_key,
+                        candy_machine_key,
+                    );
                     ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
                 }
             }

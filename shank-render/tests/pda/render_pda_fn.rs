@@ -102,7 +102,7 @@ fn candy_guard_edition_marker_pda() {
 }
 
 #[test]
-fn candy_candy_guard_mint_limit_pda() {
+fn candy_guard_mint_limit_pda() {
     let code = quote! {
         #[derive(ShankAccount)]
         #[seeds(
