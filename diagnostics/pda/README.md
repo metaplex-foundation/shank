@@ -37,10 +37,19 @@ _shank_ generates the following code:
 
 ```rs
 impl Game {
+    /// Derives the seeds for this account.
+    ///
+    /// * **game**: The key of the game | [Pubkey]
     #[allow(unused, clippy::needless_lifetimes)]
-    pub fn shank_seeds<'a>(game: &'a ::solana_program::pubkey::Pubkey) -> [&'a [u8]; 2usize] {
+    pub fn shank_seeds<'a>(
+        game: &'a ::solana_program::pubkey::Pubkey,
+    ) -> [&'a [u8]; 2usize] {
         [b"tictactoe", game.as_ref()]
     }
+    /// Derives the seeds for this account allowing to provide a bump seed.
+    ///
+    /// * **game**: The key of the game | [Pubkey]
+    /// * **bump**: the bump seed to pass when deriving the PDA
     #[allow(unused, clippy::needless_lifetimes)]
     pub fn shank_seeds_with_bump<'a>(
         game: &'a ::solana_program::pubkey::Pubkey,
@@ -48,6 +57,10 @@ impl Game {
     ) -> [&'a [u8]; 3usize] {
         [b"tictactoe", game.as_ref(), bump]
     }
+    /// Derives the PDA for this account.
+    ///
+    /// * **program_id**: The id of the program
+    /// * **game**: The key of the game | [Pubkey]
     #[allow(unused)]
     pub fn shank_pda(
         program_id: &::solana_program::pubkey::Pubkey,
@@ -56,6 +69,11 @@ impl Game {
         let seeds = Self::shank_seeds(game);
         ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
     }
+    /// Derives the PDA for this account allowing to provide a bump seed.
+    ///
+    /// * **program_id**: The id of the program
+    /// * **game**: The key of the game | [Pubkey]
+    /// * **bump**: the bump seed to pass when deriving the PDA
     #[allow(unused)]
     pub fn shank_pda_with_bump(
         program_id: &::solana_program::pubkey::Pubkey,
