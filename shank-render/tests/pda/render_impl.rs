@@ -110,3 +110,53 @@ fn candy_guard_mint_limit_impl() {
         },
     )
 }
+
+#[test]
+fn struct_without_seeds_impl() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        struct SomeAccount {
+            count: u8,
+        }
+    };
+    assert_rendered_impl_fn(code, TokenStream::new());
+}
+
+#[test]
+fn struct_with_empty_seeds_impl() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        #[seeds()]
+        struct SomeAccount {
+            count: u8,
+        }
+    };
+    assert_rendered_impl_fn(code, TokenStream::new());
+}
+
+#[test]
+fn struct_with_one_seed_impl() {
+    let code = quote! {
+        #[derive(ShankAccount)]
+        #[seeds("lit:prefix")]
+        struct SomeAccount {
+            count: u8,
+        }
+    };
+    assert_rendered_impl_fn(
+        code,
+        quote! {
+            impl SomeAccount {
+                pub fn shank_seeds<'a>() -> [&'a [u8]; 1usize] {
+                    [b"lit:prefix"]
+                }
+                pub fn shank_pda(
+                    program_id: &::solana_program::pubkey::Pubkey,
+                ) -> (::solana_program::pubkey::Pubkey, u8) {
+                    let seeds = Self::shank_seeds();
+                    ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
+                }
+            }
+        },
+    )
+}
