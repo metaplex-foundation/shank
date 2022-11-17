@@ -14,7 +14,6 @@ use shank_macro_impl::{
 pub fn try_render_seeds_fn(
     processed_seeds: &[ProcessedSeed],
     seeds_fn_name: &Ident,
-    pub_modifier: Option<TokenStream>,
 ) -> ParseResult<Option<TokenStream>> {
     let lifetime = "a";
     let RenderedSeedsParts {
@@ -25,11 +24,10 @@ pub fn try_render_seeds_fn(
         return Ok(None);
     }
 
-    let pub_modifier = pub_modifier.unwrap_or_else(|| quote! { pub });
     let len = seed_array_items.len();
     let lifetime_toks = format!("<'{}>", lifetime).parse::<TokenStream>()?;
     Ok(Some(quote! {
-        #pub_modifier fn #seeds_fn_name#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
+        pub fn #seeds_fn_name#lifetime_toks(#(#seed_fn_args),*) -> [&'a [u8]; #len] {
             [#(#seed_array_items),*]
         }
     }))

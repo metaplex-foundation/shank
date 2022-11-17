@@ -11,7 +11,6 @@ pub fn render_pda_fn(
     processed_seeds: &[ProcessedSeed],
     seeds_fn_name: &Ident,
     pda_fn_name: &Ident,
-    pub_modifier: Option<TokenStream>,
 ) -> Option<TokenStream> {
     let RenderedPdaParts {
         seed_param_assigns,
@@ -22,11 +21,10 @@ pub fn render_pda_fn(
         return None;
     }
 
-    let pub_modifier = pub_modifier.unwrap_or_else(|| quote! { pub });
     let pubkey = solana_program_pubkey();
 
     Some(quote! {
-        #pub_modifier fn #pda_fn_name(#(#pda_fn_args),*) -> (#pubkey, u8)  {
+        pub fn #pda_fn_name(#(#pda_fn_args),*) -> (#pubkey, u8)  {
             #(#seed_param_assigns)*
             let seeds = Self::#seeds_fn_name(#(#seed_fn_args),*);
             #pubkey::find_program_address(&seeds, program_id)

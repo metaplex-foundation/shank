@@ -16,7 +16,6 @@ fn render_pda(code: TokenStream) -> TokenStream {
         &processed_seeds,
         &Ident::new("account_seeds", Span::call_site()),
         &Ident::new("account_pda", Span::call_site()),
-        None,
     )
     .unwrap()
 }

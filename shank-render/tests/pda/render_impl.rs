@@ -48,44 +48,24 @@ fn literal_pubkeys_and_u8_byte_pda() {
     assert_rendered_impl_fn(
         code,
         quote! {
-                #[cfg(not(target_arch = "bpf"))]
-                impl MyAccount {
-                    pub fn account_seeds<'a>(
-                        program_id: &'a ::solana_program::pubkey::Pubkey,
-                        some_pubkey: &'a ::solana_program::pubkey::Pubkey,
-                        some_byte: &'a [u8; 1usize],
-                    ) -> [&'a [u8]; 4usize] {
-                        [b"lit:prefix", program_id.as_ref(), some_pubkey.as_ref(), some_byte]
-                    }
-                    pub fn account_pda(
-                        program_id: &::solana_program::pubkey::Pubkey,
-                        some_pubkey: &::solana_program::pubkey::Pubkey,
-                        some_byte: u8,
-                    ) -> (::solana_program::pubkey::Pubkey, u8) {
-                        let some_byte_arg = &[some_byte];
-                        let seeds = Self::account_seeds(program_id, some_pubkey, some_byte_arg);
-                        ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
-                    }
+            impl MyAccount {
+                pub fn account_seeds<'a>(
+                    program_id: &'a ::solana_program::pubkey::Pubkey,
+                    some_pubkey: &'a ::solana_program::pubkey::Pubkey,
+                    some_byte: &'a [u8; 1usize],
+                ) -> [&'a [u8]; 4usize] {
+                    [b"lit:prefix", program_id.as_ref(), some_pubkey.as_ref(), some_byte]
                 }
-                #[cfg(target_arch = "bpf")]
-                impl MyAccount {
-                    pub(crate) fn account_seeds<'a>(
-                        program_id: &'a ::solana_program::pubkey::Pubkey,
-                        some_pubkey: &'a ::solana_program::pubkey::Pubkey,
-                        some_byte: &'a [u8; 1usize],
-                    ) -> [&'a [u8]; 4usize] {
-                        [b"lit:prefix", program_id.as_ref(), some_pubkey.as_ref(), some_byte]
-                    }
-                    pub(crate) fn account_pda(
-                        program_id: &::solana_program::pubkey::Pubkey,
-                        some_pubkey: &::solana_program::pubkey::Pubkey,
-                        some_byte: u8,
-                    ) -> (::solana_program::pubkey::Pubkey, u8) {
-                        let some_byte_arg = &[some_byte];
-                        let seeds = Self::account_seeds(program_id, some_pubkey, some_byte_arg);
-                        ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
-                    }
+                pub fn account_pda(
+                    program_id: &::solana_program::pubkey::Pubkey,
+                    some_pubkey: &::solana_program::pubkey::Pubkey,
+                    some_byte: u8,
+                ) -> (::solana_program::pubkey::Pubkey, u8) {
+                    let some_byte_arg = &[some_byte];
+                    let seeds = Self::account_seeds(program_id, some_pubkey, some_byte_arg);
+                    ::solana_program::pubkey::Pubkey::find_program_address(&seeds, program_id)
                 }
+            }
         },
     )
 }
