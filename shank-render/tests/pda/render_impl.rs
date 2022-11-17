@@ -1,6 +1,5 @@
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::quote;
-use shank_macro_impl::syn::Ident;
 use shank_render::pda::render_pda_and_seeds_impl;
 
 use crate::utils;
@@ -10,12 +9,8 @@ use crate::utils;
 // -----------------
 
 fn render_impl(code: TokenStream) -> TokenStream {
-    let struct_attrs = utils::parse_struct_attrs(code);
-    render_pda_and_seeds_impl(
-        &struct_attrs,
-        &Ident::new("MyAccount", Span::call_site()),
-    )
-    .unwrap()
+    let (struct_ident, struct_attrs) = utils::parse_struct_attrs(code);
+    render_pda_and_seeds_impl(&struct_attrs, &struct_ident).unwrap()
 }
 
 #[allow(unused)]
@@ -47,7 +42,7 @@ fn literal_pubkeys_and_u8_byte_impl() {
     assert_rendered_impl_fn(
         code,
         quote! {
-            impl MyAccount {
+            impl AccountStructWithSeed {
                 pub fn shank_seeds<'a>(
                     program_id: &'a ::solana_program::pubkey::Pubkey,
                     some_pubkey: &'a ::solana_program::pubkey::Pubkey,
@@ -79,14 +74,14 @@ fn candy_guard_mint_limit_impl() {
             candy_guard_key("Candy Guard Key", Pubkey),
             candy_machine_key("Candy Machine Key"),
         )]
-        struct CandyGuardMintLimitSeeds {
+        struct CandyGuardMintLimit {
             count: u8,
         }
     };
     assert_rendered_impl_fn(
         code,
         quote! {
-            impl MyAccount {
+            impl CandyGuardMintLimit {
                 pub fn shank_seeds<'a>(
                     id: &'a [u8; 1usize],
                     user: &'a ::solana_program::pubkey::Pubkey,
