@@ -1,9 +1,9 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use shank_macro_impl::syn::Ident;
-use shank_render::render_pda_fn;
+use shank_render::pda::render_pda_fn;
 
-mod utils;
+use crate::utils;
 
 // -----------------
 // Integration Tests and Real World Examples

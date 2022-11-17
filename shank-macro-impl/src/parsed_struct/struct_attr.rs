@@ -65,7 +65,7 @@ impl StructAttr {
 // -----------------
 // StructAttrs
 // -----------------
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StructAttrs(pub HashSet<StructAttr>);
 impl StructAttrs {
     pub fn new() -> Self {
