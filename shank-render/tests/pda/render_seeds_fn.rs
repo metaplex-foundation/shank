@@ -15,7 +15,7 @@ fn render_seeds(code: TokenStream) -> TokenStream {
         utils::process_seeds(code).expect("Should process seeds without error");
     try_render_seeds_fn(
         &processed_seeds,
-        &Ident::new("account_seeds", Span::call_site()),
+        &Ident::new("shank_seeds", Span::call_site()),
     )
     .expect("Should render seeds")
     .unwrap()
@@ -49,7 +49,7 @@ fn literal_pubkeys_and_u8_byte_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
-            pub fn account_seeds<'a>(
+            pub fn shank_seeds<'a>(
                 program_id: &'a ::solana_program::pubkey::Pubkey,
                 some_pubkey: &'a ::solana_program::pubkey::Pubkey,
                 some_byte: &'a [u8; 1usize]
@@ -84,7 +84,7 @@ fn candy_guard_edition_marker_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
-            pub fn account_seeds<'a>(
+            pub fn shank_seeds<'a>(
                 prefix: &'a str,
                 program_id: &'a ::solana_program::pubkey::Pubkey,
                 master_edition_mint_info: &'a ::solana_program::account_info::AccountInfo,
@@ -121,7 +121,7 @@ fn candy_guard_mint_limit_seeds() {
     assert_rendered_seeds_fn(
         code,
         quote! {
-            pub fn account_seeds<'a>(
+            pub fn shank_seeds<'a>(
                 id: &'a [u8; 1usize],
                 user: &'a ::solana_program::pubkey::Pubkey,
                 candy_guard_key: &'a ::solana_program::pubkey::Pubkey,

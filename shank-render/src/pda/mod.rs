@@ -22,8 +22,8 @@ pub fn render_pda_and_seeds_impl(
         return Ok(TokenStream::new());
     }
 
-    let seeds_fn_ident = Ident::new("account_seeds", Span::call_site());
-    let pda_fn_ident = Ident::new("account_pda", Span::call_site());
+    let seeds_fn_ident = Ident::new("shank_seeds", Span::call_site());
+    let pda_fn_ident = Ident::new("shank_pda", Span::call_site());
 
     let pub_seeds_fn = try_render_seeds_fn(&processed_seeds, &seeds_fn_ident)?;
     let pub_pda_fn =
