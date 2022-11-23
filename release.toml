@@ -3,4 +3,3 @@ tag-message = "{{tag_name}}"
 tag-name = "{{crate_name}}@v{{version}}"
 consolidate-commits = true
 allow-branch = ["master"]
-dev-version = false
