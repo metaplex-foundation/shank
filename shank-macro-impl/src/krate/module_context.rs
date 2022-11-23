@@ -79,7 +79,8 @@ impl ParsedModule {
                 path: module.path.clone(),
                 name: item.ident.to_string(),
             }));
-            modules.insert(name.clone(), module);
+            let module_key = format!("{path}::{name}");
+            modules.insert(module_key, module);
         }
 
         modules.insert(root_mod.name.clone(), root_mod);
