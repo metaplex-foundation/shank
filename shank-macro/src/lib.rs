@@ -13,7 +13,7 @@ mod instruction;
 
 /// Annotates a _struct_ that shank will consider an account containing de/serializable data.
 ///
-/// # Examples
+/// # Example
 ///
 /// ```
 /// use shank::ShankAccount;
@@ -27,11 +27,50 @@ mod instruction;
 /// }
 /// ```
 ///
+/// # Seeds
+///
+/// You can include a `#[seeds]` annotation which allows shank to generate the following `impl`
+/// methods for the particular account.
+///
+/// A seed takes one of the following patterns:
+///
+/// - `"literal"` this will be hardcoded into the seed/pda methods and does not need to be passed
+/// via an argument
+/// - `program_id` (known pubkey) this is the program id of the program which is passed to methods
+/// - `label("description"[, type])` a seed of name _label_ with the provided description and an
+/// optional type (if no type is provided `Pubkey` is assumed); this will be passed as an argument
+///
+/// Below is an example of each:
+///
+/// ```
+/// #[derive(ShankAccount)]
+/// #[seeds(
+///     "lit:prefix",                        // a string literal which will be hard coded
+///     program_id                           // the public key of the program which needs to be provided
+///     pub_key_implicit("desc of the key"), // a public key which needs to be provided
+///     pub_key("desc of the key", Pubkey),  // same as the above, explicitly declaring as pubkey
+///     id("desc of byte", u8),              // a byte
+///     name("desc of name", String)         // a string
+/// )]
+/// struct AccountStructWithSeeds {
+///     count: u8,
+/// }
+/// ```
+/// When seeds are specified for an account it will derive the following _static_ methods for that
+/// account:
+///
+/// ```
+/// AccountName::shank_seeds<'a>(..) -> [&'a [u8]; Nusize]
+/// AccountName::shank_seeds_with_bump<'a>(.., bump: &'a [u8; 1]) -> [&'a [u8]; Nusize]
+///
+/// AccountName::shank_pda(program_id: Pubkey, ..) -> (Pubkey, u8)
+/// AccountName::shank_pda_with_bump(program_id: Pubkey, bump: u8, ..) -> (Pubkey, u8)
+/// ```
+///
 ///# Note
 ///
 /// The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
 /// with `BorshSerialize` or `BorshDeserialize`.
-/// TODO(thlorenz): document seeds
 #[proc_macro_derive(ShankAccount, attributes(padding, seeds))]
 pub fn shank_account(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
