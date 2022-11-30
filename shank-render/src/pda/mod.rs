@@ -46,7 +46,6 @@ pub fn render_pda_and_seeds_impl(
     );
 
     if let (Some(pub_seeds_fn), Some(pub_pda_fn)) = (pub_seeds_fn, pub_pda_fn) {
-        // TODO(thlorenz): Include some helpful comments for each fn
         Ok(quote! {
             impl #account_type_ident {
                 #pub_seeds_fn

@@ -1,7 +1,7 @@
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use shank_macro_impl::{
-    parsed_struct::{ProcessedSeed, Seed, SeedArg},
+    parsed_struct::{ProcessedSeed, Seed},
     syn::Ident,
 };
 

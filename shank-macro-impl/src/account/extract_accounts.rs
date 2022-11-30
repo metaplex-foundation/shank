@@ -235,27 +235,6 @@ mod tests {
     // Seeds
     // -----------------
 
-    #[test]
-    fn extract_account_from_account_struct_experiment() {
-        let account_struct = parse_struct(quote! {
-            #[derive(ShankAccount)]
-            #[seeds(
-                /* literal    */ "lit:prefix",
-                /* program_id */ program_id,
-                /* pubkey     */ some_pubkey("description of some pubkey"),
-                /* byte       */ some_byte("description of byte", u8),
-            )]
-            struct AccountStructWithSeed {
-                count: u8,
-            }
-        });
-        let all_structs = vec![&account_struct].into_iter();
-
-        let res = extract_account_structs(all_structs);
-        // TODO(thlorenz): Need to assert on the result or remove this test
-        eprintln!("{:#?}", res);
-    }
-
     fn extract_seeds_attr(account_struct: &ItemStruct) -> StructAttr {
         let all_structs = vec![account_struct].into_iter();
         let res = extract_account_structs(all_structs)
