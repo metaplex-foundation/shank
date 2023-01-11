@@ -71,7 +71,7 @@ impl TryFrom<&Seed> for ProcessedSeed {
     type Error = ParseError;
     fn try_from(seed: &Seed) -> ParseResult<Self> {
         // NOTE: We include lifetimes as part of the render step to guarantee that they match
-        // NOTE: All seeds need to be passesd as references since we return an array containing
+        // NOTE: All seeds need to be passed as references since we return an array containing
         //       them and thus cannot take ownership.
         match seed {
             Seed::Literal(_) => Ok(ProcessedSeed::new(seed.clone(), None)),
