@@ -1,4 +1,4 @@
-use quote::quote;
+use quote::{quote, ToTokens};
 use std::str::FromStr;
 
 use proc_macro2::{Ident, Span, TokenStream};
@@ -47,8 +47,7 @@ pub fn try_render_seeds_fn(
                 {}"#,
                 args_comments.join("\n")
             )
-            .parse()
-            .unwrap(),
+            .to_token_stream(),
             format!(
                 r#"
                 /// Derives the seeds for this account allowing to provide a bump seed.
@@ -57,8 +56,7 @@ pub fn try_render_seeds_fn(
                 /// * **bump**: the bump seed to pass when deriving the PDA"#,
                 args_comments.join("\n")
             )
-            .parse()
-            .unwrap(),
+            .to_token_stream(),
         )
     } else {
         (TokenStream::new(), TokenStream::new())
@@ -125,6 +123,8 @@ fn render_seed_function_arg(
             let arg = seed
                 .arg
                 .as_ref()
+                // SAFETY: we can unwrap here since we control creation of this data
+                // and know that for `Seed::ProgramId` the type arg is always set
                 .unwrap()
                 .ty
                 .try_with_lifetime(lifetime)?

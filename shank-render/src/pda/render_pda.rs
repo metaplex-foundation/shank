@@ -1,5 +1,5 @@
 use proc_macro2::{Span, TokenStream};
-use quote::quote;
+use quote::{quote, ToTokens};
 use shank_macro_impl::{
     parsed_struct::{ProcessedSeed, Seed},
     syn::Ident,
@@ -43,8 +43,7 @@ pub fn render_pda_fn(
                 {}"#,
                 args_comments.join("\n")
             )
-            .parse()
-            .unwrap(),
+            .to_token_stream(),
             format!(
                 r#"
                 /// Derives the PDA for this account allowing to provide a bump seed.
@@ -54,8 +53,7 @@ pub fn render_pda_fn(
                 /// * **bump**: the bump seed to pass when deriving the PDA"#,
                 args_comments.join("\n")
             )
-            .parse()
-            .unwrap(),
+            .to_token_stream(),
         )
     } else {
         (TokenStream::new(), TokenStream::new())
