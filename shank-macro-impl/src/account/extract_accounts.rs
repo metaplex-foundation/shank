@@ -75,7 +75,7 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
 #[cfg(test)]
 mod tests {
 
-    use crate::parsed_struct::StructFieldAttr;
+    use crate::parsed_struct::{Seed, StructAttr, StructFieldAttr};
 
     use super::*;
     use assert_matches::assert_matches;
@@ -228,6 +228,377 @@ mod tests {
         let res = extract_account_structs(all_structs);
         assert_matches!(res, Err(err) => {
             assert!(err.to_string().contains("AccountStructWithTwoPaddedFields has more than one padded field"));
+        });
+    }
+
+    // -----------------
+    // Seeds
+    // -----------------
+
+    fn extract_seeds_attr(account_struct: &ItemStruct) -> StructAttr {
+        let all_structs = vec![account_struct].into_iter();
+        let res = extract_account_structs(all_structs)
+            .expect("Should parse struct without error");
+
+        let struct_attrs = res.into_iter().next().unwrap().struct_attrs;
+        assert_eq!(struct_attrs.len(), 1, "Extracts one attr");
+
+        struct_attrs
+            .items()
+            .into_iter()
+            .next()
+            .expect("Should extract one struct attr")
+    }
+
+    #[test]
+    fn account_with_literal_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds("lit:prefix")]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["lit:prefix".to_string()]);
+        });
+    }
+
+    #[test]
+    fn account_with_program_id_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(program_id)]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+        });
+    }
+
+    #[test]
+    fn account_with_pubkey_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(mypubkey("desc of my pubkey"))]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param("mypubkey".to_string(), "desc of my pubkey".to_string(), None)]
+            );
+        });
+    }
+
+    #[test]
+    fn account_with_byte_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(mybyte("desc of my byte", u8))]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param(
+                    "mybyte".to_string(),
+                    "desc of my byte".to_string(),
+                    Some("u8".to_string())
+                )]
+            );
+        });
+    }
+
+    #[test]
+    fn account_with_u32_seed() {
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(myu32("desc of my u32", u32))]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+         StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![Seed::Param(
+                    "myu32".to_string(),
+                    "desc of my u32".to_string(),
+                    Some("u32".to_string())
+                )]
+            );
+        });
+    }
+
+    // -----------------
+    // Seeds: Candy Guard
+    // -----------------
+    #[test]
+    fn candy_guard_seeds_mint_limit() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/30481839256f192840da609d0d2c26c28a1051f4/program/src/guards/mint_limit.rs#L51
+        /*
+        let seeds = [
+            &[self.id],                 // self.id: u8
+            user.as_ref(),              // Pubkey
+            candy_guard_key.as_ref(),   // &Pubkey
+            candy_machine_key.as_ref(), // &Pubkey
+        ];
+        */
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                id("MintLimit id", u8),
+                user("User key"),
+                candy_guard_key("Candy Guard key"),
+                candy_machine_key("Candy Machine key"),
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "id".to_string(),
+                        "MintLimit id".to_string(),
+                        Some("u8".to_string())
+                    ),
+                    Seed::Param(
+                        "user".to_string(),
+                        "User key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_key".to_string(),
+                        "Candy Guard key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_machine_key".to_string(),
+                        "Candy Machine key".to_string(),
+                        None,
+                    ),
+                ]
+            );
+        });
+    }
+
+    #[test]
+    fn candy_guard_seeds_wrap() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/wrap.rs#L12
+        // pub const SEED: &[u8] = b"candy_guard";
+        // let seeds = [
+        //   SEED,                          // &[u8] (passing as literal)
+        //   &candy_guard.base.to_bytes(),  // candy_guard: Account .base: Pubkey
+        //   &[candy_guard.bump]            // candy_guard.bump: u8
+        // ];
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "candy_guard",
+                user("User key"),
+                candy_guard_base("Candy Guard base"),
+                candy_guard_bump("Determined bump", u8),
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["candy_guard".to_string()]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "user".to_string(),
+                        "User key".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_base".to_string(),
+                        "Candy Guard base".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_bump".to_string(),
+                        "Determined bump".to_string(),
+                        Some(
+                            "u8".to_string(),
+                        ),
+                    ),
+                ],
+            );
+        });
+    }
+
+    #[test]
+    fn candy_guard_seeds_update() {
+        // https://github.com/metaplex-foundation/candy-guard/blob/abdde4308b44857576154d6930a04c13e9c8cfda/program/src/instructions/update.rs#L83
+        // #[account(
+        //   seeds = [
+        //       SEED,                           // same as candy_guard_seeds_wrap
+        //       candy_guard.base.key().as_ref() // candy_guard: Account, base: Pubkey
+        //   ];
+        //   bump = candy_guard.bump             // u8
+        // )]
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "candy_guard",
+                candy_guard_base("Candy Guard base"),
+                candy_guard_bump("Determined bump", u8),
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["candy_guard".to_string()]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "candy_guard_base".to_string(),
+                        "Candy Guard base".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "candy_guard_bump".to_string(),
+                        "Determined bump".to_string(),
+                        Some(
+                            "u8".to_string(),
+                        ),
+                    ),
+                ],
+            );
+        });
+    }
+
+    // -----------------
+    // Seeds: token-metadata
+    // -----------------
+    #[test]
+    fn token_metadata_seeds_update() {
+        // // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/utils.rs#L411
+        // pub const PREFIX: &str = "metadata";
+        // pub const EDITION: &str = "edition";
+        // let edition_seeds: &[&[u8]; 4] = &[
+        //     PREFIX.as_bytes(),   // &str
+        //     program_id.as_ref(), // &Pubkey
+        //     mint.as_ref(),       // &Pubkey
+        //     EDITION.as_bytes(),  // &str
+        // ];
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "metadata",
+                program_id,
+                mint("The mint"),
+                "edition"
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["metadata".to_string(), "edition".to_string()]);
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "mint".to_string(),
+                        "The mint".to_string(),
+                        None,
+                    ),
+                ],
+            );
+        });
+    }
+
+    #[test]
+    fn token_metadata_seeds_burn_edition_nft() {
+        // // https://github.com/metaplex-foundation/metaplex-program-library/blob/master/token-metadata/program/src/processor.rs#L1959
+        // let edition_marker_number = print_edition
+        //     .edition
+        //     .checked_div(EDITION_MARKER_BIT_SIZE)
+        //     .ok_or(MetadataError::NumericalOverflowError)?;
+        // let edition_marker_number_str = edition_marker_number.to_string();
+
+        // // Ensure we were passed the correct edition marker PDA.
+        // let edition_marker_info_path = Vec::from([
+        //     PREFIX.as_bytes(),                      // &str
+        //     program_id.as_ref(),                    // program_id
+        //     master_edition_mint_info.key.as_ref(),  // AccountInfo .key: &Pubkey
+        //     EDITION.as_bytes(),                     // &str
+        //     edition_marker_number_str.as_bytes(),   // String
+        // ]);
+        let account_struct = parse_struct(quote! {
+            #[derive(ShankAccount)]
+            #[seeds(
+                "metadata",
+                program_id,
+                master_edition_mint("The master edition mint"),
+                "edition",
+                edition_marker_number_str("Stringified edition marker number", String)
+            )]
+            struct AccountStructWithSeed {
+                count: u8,
+            }
+        });
+        let attr = extract_seeds_attr(&account_struct);
+        assert_matches!(attr,
+          StructAttr::Seeds(seeds) => {
+            assert_eq!(seeds.get_literals(), vec!["metadata".to_string(), "edition".to_string()]);
+            assert_eq!(seeds.get_program_ids(), vec![Seed::ProgramId]);
+            assert_eq!(
+                seeds.get_params(),
+                vec![
+                    Seed::Param(
+                        "master_edition_mint".to_string(),
+                        "The master edition mint".to_string(),
+                        None,
+                    ),
+                    Seed::Param(
+                        "edition_marker_number_str".to_string(),
+                        "Stringified edition marker number".to_string(),
+                        Some("String".to_string())
+                    ),
+                ],
+            );
         });
     }
 }

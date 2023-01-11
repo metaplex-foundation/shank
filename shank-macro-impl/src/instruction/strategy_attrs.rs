@@ -28,7 +28,7 @@ impl InstructionStrategy {
 impl From<&[Attribute]> for InstructionStrategies {
     fn from(attrs: &[Attribute]) -> Self {
         let strategies = attrs
-            .into_iter()
+            .iter()
             .filter_map(InstructionStrategy::from_account_attr)
             .collect::<HashSet<InstructionStrategy>>();
 

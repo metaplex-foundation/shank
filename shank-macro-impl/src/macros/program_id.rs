@@ -23,15 +23,13 @@ impl TryFrom<&[ItemMacro]> for ProgramId {
                      literal,
                      path_idents,
                  }| {
-                    literal
-                        .map(|lit| {
-                            if path.ends_with("declare_id") {
-                                Some((path_idents[0].clone(), lit.clone()))
-                            } else {
-                                None
-                            }
-                        })
-                        .flatten()
+                    literal.and_then(|lit| {
+                        if path.ends_with("declare_id") {
+                            Some((path_idents[0].clone(), lit))
+                        } else {
+                            None
+                        }
+                    })
                 },
             )
             .collect();

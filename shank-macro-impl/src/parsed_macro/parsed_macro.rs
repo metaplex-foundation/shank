@@ -23,7 +23,7 @@ impl From<&ItemMacro> for ParsedMacro {
             .iter()
             .map(|ident| ident.to_string())
             .reduce(|acc, ident| format!("{}::{}", acc, ident))
-            .unwrap_or("".to_string());
+            .unwrap_or_else(|| "".to_string());
 
         let literal = syn::parse2::<Literal>(item_macro.mac.tokens.clone())
             .map_or(None, |lit| {

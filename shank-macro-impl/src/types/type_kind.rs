@@ -1,10 +1,10 @@
 use super::RustType;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 // -----------------
 // TypeKind
 // -----------------
-#[derive(Clone)]
+#[derive(Clone, Eq)]
 pub enum TypeKind {
     Primitive(Primitive),
     Value(Value),
@@ -48,11 +48,7 @@ impl Debug for TypeKind {
 
 impl TypeKind {
     pub fn is_primitive(&self) -> bool {
-        if let TypeKind::Primitive(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Primitive(_))
     }
 
     pub fn is_string(&self) -> bool {
@@ -88,43 +84,23 @@ impl TypeKind {
     }
 
     pub fn is_composite(&self) -> bool {
-        if let TypeKind::Composite(_, _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Composite(_, _))
     }
 
     pub fn is_custom(&self) -> bool {
-        if let TypeKind::Value(Value::Custom(_)) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Value(Value::Custom(_)))
     }
 
     pub fn is_vec(&self) -> bool {
-        if let TypeKind::Composite(Composite::Vec, _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Composite(Composite::Vec, _))
     }
 
     pub fn is_array(&self) -> bool {
-        if let TypeKind::Composite(Composite::Array(_), _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Composite(Composite::Array(_), _))
     }
 
     pub fn is_option(&self) -> bool {
-        if let TypeKind::Composite(Composite::Option, _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, TypeKind::Composite(Composite::Option, _))
     }
 
     pub fn inner_composite_rust_type(&self) -> Option<RustType> {
@@ -195,7 +171,7 @@ impl TypeKind {
 // --------------
 // Primitive
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Primitive {
     U8,
     I8,
@@ -231,10 +207,30 @@ impl Debug for Primitive {
     }
 }
 
+impl Display for Primitive {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let ty = match self {
+            Primitive::U8 => "u8",
+            Primitive::I8 => "i8",
+            Primitive::U16 => "u16",
+            Primitive::I16 => "i16",
+            Primitive::U32 => "u32",
+            Primitive::I32 => "i32",
+            Primitive::U64 => "u64",
+            Primitive::I64 => "i64",
+            Primitive::U128 => "u128",
+            Primitive::I128 => "i128",
+            Primitive::USize => "usize",
+            Primitive::Bool => "bool",
+        };
+        write!(f, "{}", ty)
+    }
+}
+
 // --------------
 // Value
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Value {
     CString,
     String,
@@ -258,41 +254,26 @@ impl Debug for Value {
 impl Value {
     fn is_string_like(&self) -> bool {
         use Value::*;
-        match self {
-            CString | String | Str => true,
-            _ => false,
-        }
+        matches!(self, CString | String | Str)
     }
 
     fn is_string(&self) -> bool {
-        use Value::*;
-        match self {
-            String => true,
-            _ => false,
-        }
+        matches!(self, Value::String)
     }
 
     fn is_cstring(&self) -> bool {
-        use Value::*;
-        match self {
-            CString => true,
-            _ => false,
-        }
+        matches!(self, Value::CString)
     }
 
     fn is_str(&self) -> bool {
-        use Value::*;
-        match self {
-            Str => true,
-            _ => false,
-        }
+        matches!(self, Value::Str)
     }
 }
 
 // --------------
 // Composite
 // --------------
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Composite {
     Vec,
     Array(usize),

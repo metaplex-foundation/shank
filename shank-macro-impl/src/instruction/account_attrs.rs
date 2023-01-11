@@ -8,7 +8,7 @@ use syn::{
 
 const IX_ACCOUNT: &str = "account";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccount {
     pub ident: Ident,
     pub index: Option<u32>,
@@ -19,7 +19,7 @@ pub struct InstructionAccount {
     pub optional: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccounts(pub Vec<InstructionAccount>);
 
 impl InstructionAccount {
@@ -45,7 +45,7 @@ impl InstructionAccount {
                     || Ident::new("attr_ident", Span::call_site()),
                     |x| x.clone(),
                 );
-                Self::parse_account_attr_args(ident, &nested)
+                Self::parse_account_attr_args(ident, nested)
             }
             Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
                 attr,
@@ -145,7 +145,7 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
 
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
         let accounts = attrs
-            .into_iter()
+            .iter()
             .filter_map(InstructionAccount::is_account_attr)
             .map(InstructionAccount::from_account_attr)
             .collect::<ParseResult<Vec<InstructionAccount>>>()?;

@@ -10,7 +10,7 @@ use syn::{
 use super::{Composite, ParsedReference, Primitive, TypeKind, Value};
 use syn::{Error as ParseError, Result as ParseResult};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RustType {
     pub ident: Ident,
 
@@ -30,6 +30,15 @@ impl TryFrom<&Type> for RustType {
     }
 }
 
+impl TryFrom<&str> for RustType {
+    type Error = ParseError;
+
+    fn try_from(s: &str) -> ParseResult<Self> {
+        let ty: Type = syn::parse_str(s)?;
+        resolve_rust_ty(&ty, super::RustTypeContext::Default)
+    }
+}
+
 pub struct IdentWrap(Ident);
 impl From<&str> for IdentWrap {
     fn from(s: &str) -> Self {
@@ -42,6 +51,9 @@ impl From<&str> for IdentWrap {
 // RustType creation helper methods
 // -----------------
 impl RustType {
+    // -----------------
+    // Owned
+    // -----------------
     pub fn owned<T: Into<IdentWrap>>(ident: T, kind: TypeKind) -> Self {
         let ident_wrap: IdentWrap = ident.into();
         RustType {
@@ -108,9 +120,151 @@ impl RustType {
             ),
         )
     }
+
+    // -----------------
+    // References
+    // -----------------
+    pub fn reference<T: Into<IdentWrap>>(
+        ident: T,
+        kind: TypeKind,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        let ident_wrap: IdentWrap = ident.into();
+        RustType {
+            ident: ident_wrap.0,
+            kind,
+            reference: ParsedReference::Ref(lifetime),
+            context: RustTypeContext::Default,
+        }
+    }
+    pub fn reference_mut<T: Into<IdentWrap>>(
+        ident: T,
+        kind: TypeKind,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        let ident_wrap: IdentWrap = ident.into();
+        RustType {
+            ident: ident_wrap.0,
+            kind,
+            reference: ParsedReference::RefMut(lifetime),
+            context: RustTypeContext::Default,
+        }
+    }
+    pub fn ref_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference(ident, TypeKind::Primitive(primitive), lifetime)
+    }
+    pub fn refmut_primitive<T: Into<IdentWrap>>(
+        ident: T,
+        primitive: Primitive,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference_mut(ident, TypeKind::Primitive(primitive), lifetime)
+    }
+
+    pub fn ref_str<T: Into<IdentWrap>>(
+        ident: T,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference(ident, TypeKind::Value(Value::Str), lifetime)
+    }
+
+    pub fn ref_string_mut<T: Into<IdentWrap>>(
+        ident: T,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference_mut(ident, TypeKind::Value(Value::String), lifetime)
+    }
+
+    pub fn ref_custom_value<T: Into<IdentWrap>>(
+        ident: T,
+        value: &str,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference(
+            ident,
+            TypeKind::Value(Value::Custom(value.to_string())),
+            lifetime,
+        )
+    }
+
+    pub fn ref_mut_custom_value<T: Into<IdentWrap>>(
+        ident: T,
+        value: &str,
+        lifetime: Option<Ident>,
+    ) -> Self {
+        RustType::reference_mut(
+            ident,
+            TypeKind::Value(Value::Custom(value.to_string())),
+            lifetime,
+        )
+    }
+
+    // -----------------
+    // Modifications
+    // -----------------
+    /// Sets the lifetime of this type.
+    /// This returns successfull if the for any Ref and RefMut.
+    /// If a lifetime already exists it is replaced, otherwise it is added.
+    ///
+    /// When the type is owned it returns an error.
+    pub fn try_with_lifetime(&self, lifetime: &str) -> ParseResult<Self> {
+        use ParsedReference::*;
+        let reference = match self.reference {
+            Owned => {
+                return Err(ParseError::new(
+                    self.ident.span(),
+                    "Cannot add lifetime to owned type",
+                ))
+            }
+            Ref(_) => Ref(Some(Ident::new(lifetime, self.ident.span()))),
+            RefMut(_) => RefMut(Some(Ident::new(lifetime, self.ident.span()))),
+        };
+
+        Ok(Self {
+            ident: self.ident.clone(),
+            kind: self.kind.clone(),
+            reference,
+            context: self.context.clone(),
+        })
+    }
+
+    pub fn as_reference(self, lifetime: Option<Ident>) -> Self {
+        Self {
+            ident: self.ident.clone(),
+            kind: self.kind.clone(),
+            reference: ParsedReference::Ref(lifetime),
+            context: self.context,
+        }
+    }
+
+    pub fn as_owned(self) -> Self {
+        Self {
+            ident: self.ident.clone(),
+            kind: self.kind.clone(),
+            reference: ParsedReference::Owned,
+            context: self.context,
+        }
+    }
+
+    // -----------------
+    // Queries
+    // -----------------
+    pub fn is_primitive(&self) -> bool {
+        matches!(self.kind, TypeKind::Primitive(_))
+    }
+    pub fn get_primitive(&self) -> Option<&Primitive> {
+        match &self.kind {
+            TypeKind::Primitive(primitive) => Some(primitive),
+            _ => None,
+        }
+    }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RustTypeContext {
     Default,
     CollectionItem,
@@ -123,7 +277,7 @@ fn ident_and_kind_from_path(path: &Path) -> (Ident, TypeKind) {
     let PathSegment {
         ident, arguments, ..
     } = path.segments.first().unwrap();
-    (ident.clone(), ident_to_kind(&ident, &arguments))
+    (ident.clone(), ident_to_kind(ident, arguments))
 }
 
 fn len_from_expr(expr: &Expr) -> ParseResult<usize> {
@@ -189,8 +343,8 @@ pub fn resolve_rust_ty(
             };
             let len = len_from_expr(len)?;
             let inner_ty = RustType {
-                kind: inner_kind.clone(),
-                ident: inner_ident.clone(),
+                kind: inner_kind,
+                ident: inner_ident,
                 reference: ParsedReference::Owned,
                 context: RustTypeContext::CollectionItem,
             };
@@ -239,7 +393,7 @@ pub fn resolve_rust_ty(
     };
 
     Ok(RustType {
-        ident: ident.clone(),
+        ident,
         kind,
         reference,
         context,
@@ -277,7 +431,7 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 _ => {}
             }
 
-            return TypeKind::Value(Value::Custom(ident_str.clone()));
+            TypeKind::Value(Value::Custom(ident_str))
         }
 
         // Composite Types

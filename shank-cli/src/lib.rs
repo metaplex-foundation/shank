@@ -64,12 +64,21 @@ pub fn try_resolve_path(p: Option<String>, label: &str) -> Result<PathBuf> {
     Ok(p)
 }
 
-pub fn idl(out_dir: String, crate_root: Option<String>, program_id: Option<String>) -> Result<()> {
+pub fn idl(
+    out_dir: String,
+    crate_root: Option<String>,
+    program_id: Option<String>,
+) -> Result<()> {
     // Resolve input and output directories
     let crate_root = try_resolve_path(crate_root, "crate_root")?;
     let out_dir = try_resolve_path(Some(out_dir), "out_dir")?;
-    fs::create_dir_all(&out_dir)
-        .map_err(|err| format_err!("Unable to create out_dir ({}), {}", &out_dir.display(), err))?;
+    fs::create_dir_all(&out_dir).map_err(|err| {
+        format_err!(
+            "Unable to create out_dir ({}), {}",
+            &out_dir.display(),
+            err
+        )
+    })?;
 
     // Resolve info about lib for which we generate IDL
     let cargo_toml = crate_root.join("Cargo.toml");
@@ -85,12 +94,14 @@ pub fn idl(out_dir: String, crate_root: Option<String>, program_id: Option<Strin
         .ok_or(anyhow!("Program needs to be a lib"))?;
 
     let lib_full_path_str = crate_root.join(lib_rel_path);
-    let lib_full_path = lib_full_path_str.to_str().ok_or(anyhow!("Invalid Path"))?;
+    let lib_full_path =
+        lib_full_path_str.to_str().ok_or(anyhow!("Invalid Path"))?;
 
     // Extract IDL and convert to JSON
     let mut opts = ParseIdlOpts::default();
     opts.program_address_override = program_id;
-    let idl = extract_idl(lib_full_path, opts)?.ok_or(anyhow!("No IDL could be extracted"))?;
+    let idl = extract_idl(lib_full_path, opts)?
+        .ok_or(anyhow!("No IDL could be extracted"))?;
     let idl_json = idl.try_into_json()?;
 
     // Write to JSON file
