@@ -1,10 +1,14 @@
 use account::derive_account;
+use builder::derive_builder;
+use context::derive_context;
 use instruction::derive_instruction;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Error as ParseError};
 
 mod account;
+mod builder;
+mod context;
 mod instruction;
 
 // -----------------
@@ -80,7 +84,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 }
 
 // -----------------
-// #[derive(ShankInstructions)]
+// #[derive(ShankInstruction)]
 // -----------------
 
 /// Annotates the program _Instruction_ `Enum` in order to include `#[account]` attributes.
@@ -179,6 +183,41 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_instruction(input)
+        .unwrap_or_else(to_compile_error)
+        .into()
+}
+
+// -----------------
+// #[derive(ShankBuilder)]
+// -----------------
+
+/// Generates instruction builders for each annotated instruction.
+///
+/// An instruction builder automates the creation of `Instruction` objects.
+/// ```
+#[proc_macro_derive(ShankBuilder, attributes(account, args))]
+pub fn shank_builder(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_builder(input)
+        .unwrap_or_else(to_compile_error)
+        .into()
+}
+
+// -----------------
+// #[derive(ShankContext)]
+// -----------------
+
+/// Generates a context _struct_ for each instruction.
+///
+/// The _struct_ will contain all shank annotated accounts and the _impl_ block
+/// will initialize them using the accounts iterator. It support the use of
+/// optional accounts, which would generate an account field with an
+/// `Option<AccountInfo<'a>>` type.
+/// ```
+#[proc_macro_derive(ShankContext, attributes(account))]
+pub fn shank_context(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_context(input)
         .unwrap_or_else(to_compile_error)
         .into()
 }
