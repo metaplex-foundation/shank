@@ -9,10 +9,10 @@ pub fn derive_builder(input: DeriveInput) -> ParseResult<TokenStream> {
     let item = Item::from(input);
     match item {
         Item::Enum(enum_item) => {
-            if let Some(context) =
+            if let Some(builder_item) =
                 Builder::try_from_item_enum(&enum_item, true)?
             {
-                shank_render::builder::render_builders_impl(&context)
+                shank_render::builder::render_builders_impl(&builder_item)
             } else {
                 Err(ParseError::new_spanned(
                     &attr,
