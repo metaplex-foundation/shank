@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use shank_macro_impl::{
-    builder::Builder, instruction::InstructionVariantFields,
+    builder::Builder, instruction::InstructionVariantFields, syn,
 };
 use std::collections::HashMap;
 

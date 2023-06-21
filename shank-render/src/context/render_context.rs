@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use shank_macro_impl::instruction::InstructionVariant;
+use shank_macro_impl::{instruction::InstructionVariant, syn};
 
 pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
     // accounts names
