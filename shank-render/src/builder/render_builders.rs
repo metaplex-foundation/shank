@@ -1,121 +1,131 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 use shank_macro_impl::{
-    builder::Builder, instruction::InstructionVariantFields, syn,
+    builder::BuilderVariant,
+    instruction::InstructionVariantFields,
+    syn::{parse_str, Expr, ExprPath, Ident},
 };
 use std::collections::HashMap;
 
-pub(crate) fn generate_builders(context: &Builder) -> TokenStream {
-    let mut default_pubkeys = HashMap::new();
-    default_pubkeys.insert(
-        "system_program".to_string(),
-        syn::parse_str::<syn::ExprPath>("solana_program::system_program::ID")
-            .unwrap(),
-    );
-    default_pubkeys.insert(
-        "spl_token_program".to_string(),
-        syn::parse_str::<syn::ExprPath>("spl_token::ID").unwrap(),
-    );
-    default_pubkeys.insert(
-        "spl_ata_program".to_string(),
-        syn::parse_str::<syn::ExprPath>("spl_associated_token_account::ID")
-            .unwrap(),
-    );
-    default_pubkeys.insert(
-        "sysvar_instructions".to_string(),
-        syn::parse_str::<syn::ExprPath>(
-            "solana_program::sysvar::instructions::ID",
-        )
-        .unwrap(),
-    );
-    default_pubkeys.insert(
-        "authorization_rules_program".to_string(),
-        syn::parse_str::<syn::ExprPath>("mpl_token_auth_rules::ID").unwrap(),
-    );
+const DEFAULT_PUBKEYS: [(&str, &str); 6] = [
+    ("system_program", "solana_program::system_program::ID"),
+    ("spl_token_program", "spl_token::ID"),
+    ("spl_ata_program", "spl_associated_token_account::ID"),
+    (
+        "sysvar_instructions",
+        "solana_program::sysvar::instructions::ID",
+    ),
+    ("token_metadata_program", "mpl_token_metadata::ID"),
+    ("authorization_rules_program", "mpl_token_auth_rules::ID"),
+];
 
-    let variant_structs = context.variants.iter().map(|variant| {
-        // struct block for the builder: this will contain both accounts and
-        // args for the builder
+pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
+    let default_pubkeys = DEFAULT_PUBKEYS
+        .iter()
+        .map(|(name, pubkey)| {
+            (name.to_string(), parse_str::<ExprPath>(pubkey).unwrap())
+        })
+        .collect::<HashMap<String, ExprPath>>();
 
-        // accounts
-        let struct_accounts = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
-            if account.optional {
-                quote! {
-                    pub #account_name: Option<solana_program::pubkey::Pubkey>
-                }
-            } else {
-                quote! {
-                    pub #account_name: solana_program::pubkey::Pubkey
-                }
-            }
-        });
+    let field_names: Vec<Ident> = match &variant.field_tys {
+        InstructionVariantFields::Named(field_tys) => field_tys
+            .iter()
+            .map(|(name, _)| parse_str::<Ident>(name).unwrap())
+            .collect(),
+        InstructionVariantFields::Unnamed(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                parse_str::<Ident>(&format!(
+                    "args{}",
+                    if idx == 0 {
+                        String::new()
+                    } else {
+                        idx.to_string()
+                    }
+                ))
+                .unwrap()
+            })
+            .collect(),
+    };
 
-        // args
-        let struct_args = variant.arguments.iter().map(|argument| {
-            let ident_ty = syn::parse_str::<syn::Ident>(&argument.ty).unwrap();
-            let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
-                let arg_generic_ty =
-                    syn::parse_str::<syn::Ident>(genetic_ty).unwrap();
-                quote! { #ident_ty<#arg_generic_ty> }
-            } else {
-                quote! { #ident_ty }
-            };
-            let arg_name = syn::parse_str::<syn::Ident>(&argument.name).unwrap();
+    // instruction struct
 
-            quote! {
-                pub #arg_name: #arg_ty
-            }
-        });
-
-        // builder block: this will have all accounts and args as optional fields
-        // that need to be set before the build method is called
-
-        // accounts
-        let builder_accounts = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
+    // accounts
+    let struct_accounts = variant.accounts.iter().map(|account| {
+        let account_name = parse_str::<Ident>(&account.name).unwrap();
+        if account.optional {
             quote! {
                 pub #account_name: Option<solana_program::pubkey::Pubkey>
             }
-        });
-
-        // accounts initialization
-        let builder_initialize_accounts = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
+        } else {
             quote! {
-                #account_name: None
+                pub #account_name: solana_program::pubkey::Pubkey
             }
-        });
+        }
+    });
 
-        // args
-        let builder_args = variant.arguments.iter().map(|argument| {
-            let ident_ty = syn::parse_str::<syn::Ident>(&argument.ty).unwrap();
-            let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
-                let arg_generic_ty =
-                    syn::parse_str::<syn::Ident>(genetic_ty).unwrap();
-                quote! { #ident_ty<#arg_generic_ty> }
-            } else {
-                quote! { #ident_ty }
-            };
-            let arg_name = syn::parse_str::<syn::Ident>(&argument.name).unwrap();
+    // args (builder)
+    let struct_builder_args = variant.arguments.iter().map(|argument| {
+        let ident_ty = parse_str::<Ident>(&argument.ty).unwrap();
+        let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
+            let arg_generic_ty = parse_str::<Ident>(genetic_ty).unwrap();
+            quote! { #ident_ty<#arg_generic_ty> }
+        } else {
+            quote! { #ident_ty }
+        };
+        let arg_name = parse_str::<Ident>(&argument.name).unwrap();
 
-            quote! {
-                pub #arg_name: Option<#arg_ty>
-            }
-        });
+        quote! {
+            pub #arg_name: #arg_ty
+        }
+    });
 
-        // args initialization
-        let builder_initialize_args =
-        variant.arguments.iter().map(|argument| {
-            let arg_name = syn::parse_str::<syn::Ident>(&argument.name).unwrap();
-            quote! {
-                #arg_name: None
-            }
-        });
+    // builder struct
 
-        // account setter methods
-        let builder_accounts_methods = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
+    // accounts
+    let builder_accounts = variant.accounts.iter().map(|account| {
+        let account_name = parse_str::<Ident>(&account.name).unwrap();
+        quote! {
+            pub #account_name: Option<solana_program::pubkey::Pubkey>
+        }
+    });
+
+    // accounts initialization
+    let builder_initialize_accounts = variant.accounts.iter().map(|account| {
+        let account_name = parse_str::<Ident>(&account.name).unwrap();
+        quote! {
+            #account_name: None
+        }
+    });
+
+    // args (builder)
+    let builder_args = variant.arguments.iter().map(|argument| {
+        let ident_ty = parse_str::<Ident>(&argument.ty).unwrap();
+        let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
+            let arg_generic_ty = parse_str::<Ident>(genetic_ty).unwrap();
+            quote! { #ident_ty<#arg_generic_ty> }
+        } else {
+            quote! { #ident_ty }
+        };
+        let arg_name = parse_str::<Ident>(&argument.name).unwrap();
+
+        quote! {
+            pub #arg_name: Option<#arg_ty>
+        }
+    });
+
+    // args initialization
+    let builder_initialize_args = variant.arguments.iter().map(|argument| {
+        let arg_name = parse_str::<Ident>(&argument.name).unwrap();
+        quote! {
+            #arg_name: None
+        }
+    });
+
+    // account setter methods
+    let builder_accounts_methods = variant.accounts.iter().map(|account| {
+            let account_name = parse_str::<Ident>(&account.name).unwrap();
             quote! {
                 pub fn #account_name(&mut self, #account_name: solana_program::pubkey::Pubkey) -> &mut Self {
                     self.#account_name = Some(#account_name);
@@ -124,30 +134,28 @@ pub(crate) fn generate_builders(context: &Builder) -> TokenStream {
             }
         });
 
-        // args setter methods
-        let builder_args_methods =
-            variant.arguments.iter().map(|argument| {
-                let ident_ty = syn::parse_str::<syn::Ident>(&argument.ty).unwrap();
-                let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
-                    let arg_generic_ty =
-                        syn::parse_str::<syn::Ident>(genetic_ty).unwrap();
-                    quote! { #ident_ty<#arg_generic_ty> }
-                } else {
-                    quote! { #ident_ty }
-                };
-                let arg_name = syn::parse_str::<syn::Ident>(&argument.name).unwrap();
+    // args (builder) setter methods
+    let builder_args_methods = variant.arguments.iter().map(|argument| {
+        let ident_ty = parse_str::<Ident>(&argument.ty).unwrap();
+        let arg_ty = if let Some(genetic_ty) = &argument.generic_ty {
+            let arg_generic_ty = parse_str::<Ident>(genetic_ty).unwrap();
+            quote! { #ident_ty<#arg_generic_ty> }
+        } else {
+            quote! { #ident_ty }
+        };
+        let arg_name = parse_str::<Ident>(&argument.name).unwrap();
 
-                quote! {
-                    pub fn #arg_name(&mut self, #arg_name: #arg_ty) -> &mut Self {
-                        self.#arg_name = Some(#arg_name);
-                        self
-                    }
-                }
-            });
+        quote! {
+            pub fn #arg_name(&mut self, #arg_name: #arg_ty) -> &mut Self {
+                self.#arg_name = Some(#arg_name);
+                self
+            }
+        }
+    });
 
-        // required accounts
-        let required_accounts = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
+    // required accounts
+    let required_accounts = variant.accounts.iter().map(|account| {
+            let account_name = parse_str::<Ident>(&account.name).unwrap();
 
             if account.optional {
                 quote! {
@@ -171,130 +179,196 @@ pub(crate) fn generate_builders(context: &Builder) -> TokenStream {
             }
         });
 
-        // required args
-        let required_args = variant.arguments.iter().map(|argument| {
-            let arg_name = syn::parse_str::<syn::Ident>(&argument.name).unwrap();
+    // required args (builder)
+    let required_args = variant.arguments.iter().map(|argument| {
+            let arg_name = parse_str::<Ident>(&argument.name).unwrap();
             quote! {
                 #arg_name: self.#arg_name.clone().ok_or(concat!(stringify!(#arg_name), " is not set"))?
             }
         });
 
-        // args parameter list
-        let args: Vec<TokenStream> = match &variant.field_tys {
-            InstructionVariantFields::Named(field_tys) => {
-                field_tys.iter().map(|(name, ty)| {
-                    let name = syn::parse_str::<syn::Ident>(name).unwrap();
-                    let ty = &ty.ident;
+    // required args (builder) list
+    let args: Vec<TokenStream> = match &variant.field_tys {
+        InstructionVariantFields::Named(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, (_, ty))| {
+                let name = field_names.get(idx).unwrap();
+                let ty = &ty.ident;
 
-                    quote! { #name: #ty }
-                }).collect()
-            }
-            InstructionVariantFields::Unnamed(field_tys) => {
-                field_tys.iter().enumerate().map(|(idx, ty)| {
-                    let name = syn::parse_str::<syn::Ident>(&format!("arg{idx}")).unwrap();
-                    let ty = &ty.ident;
+                quote! { #name: #ty }
+            })
+            .collect(),
+        InstructionVariantFields::Unnamed(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, ty)| {
+                let name = field_names.get(idx).unwrap();
+                let ty = &ty.ident;
 
-                    quote! { #name: #ty }
-                }).collect()
-            }
-        };
+                quote! { #name: #ty }
+            })
+            .collect(),
+    };
 
-        // instruction args
-        let instruction_args: Vec<TokenStream> = match &variant.field_tys {
-            InstructionVariantFields::Named(field_tys) => {
-                field_tys.iter().map(|(name, ty)| {
-                    let name = syn::parse_str::<syn::Ident>(name).unwrap();
-                    let ty = &ty.ident;
+    // instruction args
+    let instruction_args: Vec<TokenStream> = match &variant.field_tys {
+        InstructionVariantFields::Named(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, (_, ty))| {
+                let name = field_names.get(idx).unwrap();
+                let ty = &ty.ident;
 
-                    quote! { pub #name: #ty }
-                }).collect()
-            }
-            InstructionVariantFields::Unnamed(field_tys) => {
-                field_tys.iter().enumerate().map(|(idx, ty)| {
-                    let name = syn::parse_str::<syn::Ident>(&format!("arg{idx}")).unwrap();
-                    let ty = &ty.ident;
+                quote! { pub #name: #ty }
+            })
+            .collect(),
+        InstructionVariantFields::Unnamed(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, ty)| {
+                let name = field_names.get(idx).unwrap();
+                let ty = &ty.ident;
 
-                    quote! { pub #name: #ty }
-                }).collect()
-            }
-        };
+                quote! { pub #name: #ty }
+            })
+            .collect(),
+    };
 
-        // required instruction args
-        let required_instruction_args: Vec<TokenStream> = match &variant.field_tys {
-            InstructionVariantFields::Named(field_tys) => {
-                field_tys.iter().map(|(name, _)| {
-                    let name = syn::parse_str::<syn::Ident>(name).unwrap();
-                    quote! { #name }
-                }).collect()
-            }
-            InstructionVariantFields::Unnamed(field_tys) => {
-                field_tys.iter().enumerate().map(|(idx, _)| {
-                    let name = syn::parse_str::<syn::Ident>(&format!("arg{idx}")).unwrap();
-                    quote! { #name }
-                }).collect()
-            }
-        };
+    // required instruction args
+    let required_instruction_args: Vec<TokenStream> = match &variant.field_tys {
+        InstructionVariantFields::Named(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let name = field_names.get(idx).unwrap();
+                quote! { #name }
+            })
+            .collect(),
+        InstructionVariantFields::Unnamed(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let name = field_names.get(idx).unwrap();
+                quote! { #name }
+            })
+            .collect(),
+    };
 
-        /*
-        // instruction args
-        let instruction_args = if let Some(args) = &variant.tuple {
-            let arg_ty = syn::parse_str::<syn::Ident>(args).unwrap();
-            quote! { pub args: #arg_ty, }
-        } else {
-            quote! { }
-        };
+    // account metas
+    let account_metas: Vec<TokenStream> = variant.accounts.iter().map(|account| {
+        let account_name = parse_str::<Ident>(&account.name).unwrap();
+        let signer = parse_str::<Expr>(&format!("{}", account.writable)).unwrap();
 
-        // required instruction args
-        let required_instruction_args = if variant.tuple.is_some() {
-            quote! { args, }
-        } else {
-            quote! { }
-        };
-        */
-
-        // builder name
-        let name = &variant.ident;
-        let builder_name = syn::parse_str::<syn::Ident>(&format!("{}Builder", name)).unwrap();
-
-        quote! {
-            pub struct #name {
-                #(#struct_accounts,)*
-                #(#struct_args,)*
-                #(#instruction_args,)*
-            }
-
-            pub struct #builder_name {
-                #(#builder_accounts,)*
-                #(#builder_args,)*
-            }
-
-            impl #builder_name {
-                pub fn new() -> Box<#builder_name> {
-                    Box::new(#builder_name {
-                        #(#builder_initialize_accounts,)*
-                        #(#builder_initialize_args,)*
-                    })
+        if account.optional {
+            if account.writable {
+                quote! {
+                    if let Some(#account_name) = self.#account_name {
+                        AccountMeta::new(#account_name, #signer)
+                    } else {
+                        AccountMeta::new_readonly(crate::ID, false)
+                    }
                 }
+            } else if account.signer {
+                quote! {
+                    if let Some(#account_name) = self.#account_name {
+                        AccountMeta::new_readonly(#account_name, #signer)
+                    } else {
+                        AccountMeta::new_readonly(crate::ID, false)
+                    }
+                }
+            } else {
+                quote!{
+                    AccountMeta::new_readonly(self.#account_name.unwrap_or(crate::ID), false)
+                }
+            }
+        } else if account.writable {
+            quote! {
+                AccountMeta::new(self.#account_name, #signer)
+            }
+        } else {
+            quote!{
+                AccountMeta::new_readonly(self.#account_name, #signer)
+            }
+        }
+    }).collect();
 
-                #(#builder_accounts_methods)*
-                #(#builder_args_methods)*
+    // builder name
+    let name = &variant.ident;
+    let builder_name = parse_str::<Ident>(&format!("{}Builder", name)).unwrap();
 
-                pub fn build(&mut self, #(#args,)*) -> Result<Box<#name>, Box<dyn std::error::Error>> {
-                    Ok(Box::new(#name {
-                        #(#required_accounts,)*
-                        #(#required_args,)*
-                        #(#required_instruction_args,)*
-                    }))
+    // instruction args list
+    let struct_instruction_args: Vec<TokenStream> = match &variant.field_tys {
+        InstructionVariantFields::Named(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let name = field_names.get(idx).unwrap();
+                quote! { self.#name }
+            })
+            .collect(),
+        InstructionVariantFields::Unnamed(field_tys) => field_tys
+            .iter()
+            .enumerate()
+            .map(|(idx, _)| {
+                let name = field_names.get(idx).unwrap();
+                quote! { self.#name }
+            })
+            .collect(),
+    };
+
+    let instruction_data = if struct_instruction_args.is_empty() {
+        quote! {
+            Instruction::#name.try_to_vec().unwrap()
+        }
+    } else {
+        quote! {
+            Instruction::#name(#(#struct_instruction_args,)*).try_to_vec().unwrap()
+        }
+    };
+
+    quote! {
+        pub struct #name {
+            #(#struct_accounts,)*
+            #(#instruction_args,)*
+            #(#struct_builder_args,)*
+        }
+
+        impl DefaultInstructionBuilder for #name {
+            fn default_instruction(&self) -> solana_program::instruction::Instruction {
+                solana_program::instruction::Instruction {
+                    program_id: crate::ID,
+                    accounts: [
+                        #(#account_metas,)*
+                    ],
+                    data: #instruction_data,
                 }
             }
         }
-    });
 
-    quote! {
-        pub mod builders {
-            use super::*;
+        pub struct #builder_name {
+            #(#builder_accounts,)*
+            #(#builder_args,)*
+        }
 
-            #(#variant_structs)*
+        impl #builder_name {
+            pub fn new() -> Box<#builder_name> {
+                Box::new(#builder_name {
+                    #(#builder_initialize_accounts,)*
+                    #(#builder_initialize_args,)*
+                })
+            }
+
+            #(#builder_accounts_methods)*
+            #(#builder_args_methods)*
+
+            pub fn build(&mut self, #(#args,)*) -> Result<Box<#name>, Box<dyn std::error::Error>> {
+                Ok(Box::new(#name {
+                    #(#required_accounts,)*
+                    #(#required_instruction_args,)*
+                    #(#required_args,)*
+                }))
+            }
         }
     }
 }
