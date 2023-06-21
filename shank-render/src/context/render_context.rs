@@ -5,16 +5,13 @@ use shank_macro_impl::{instruction::InstructionVariant, syn};
 pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
     // accounts names
     let fields = variant.accounts.iter().map(|account| {
-        let account_name = syn::parse_str::<syn::Ident>(
-            format!("{}_info", &account.name).as_str(),
-        )
-        .unwrap();
+        let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
         quote! { #account_name }
     });
 
     // accounts fields
     let struct_fields = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(format!("{}_info", &account.name).as_str()).unwrap();
+            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
                     pub #account_name: Option<&'a solana_program::account_info::AccountInfo<'a>>
@@ -28,7 +25,7 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
 
     // accounts initialization for the impl block
     let impl_fields = variant.accounts.iter().map(|account| {
-            let account_name = syn::parse_str::<syn::Ident>(format!("{}_info", &account.name).as_str()).unwrap();
+            let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
                     let #account_name = Self::next_optional_account_info(account_info_iter)?;
