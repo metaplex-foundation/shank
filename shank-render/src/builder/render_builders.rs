@@ -19,7 +19,10 @@ const DEFAULT_PUBKEYS: [(&str, &str); 6] = [
     ("authorization_rules_program", "mpl_token_auth_rules::ID"),
 ];
 
-pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
+pub(crate) fn generate_builders(
+    item: &Ident,
+    variant: &BuilderVariant,
+) -> TokenStream {
     let default_pubkeys = DEFAULT_PUBKEYS
         .iter()
         .map(|(name, pubkey)| {
@@ -264,31 +267,31 @@ pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
             if account.writable {
                 quote! {
                     if let Some(#account_name) = self.#account_name {
-                        AccountMeta::new(#account_name, #signer)
+                        solana_program::instruction::AccountMeta::new(#account_name, #signer)
                     } else {
-                        AccountMeta::new_readonly(crate::ID, false)
+                        solana_program::instruction::AccountMeta::new_readonly(crate::ID, false)
                     }
                 }
             } else if account.signer {
                 quote! {
                     if let Some(#account_name) = self.#account_name {
-                        AccountMeta::new_readonly(#account_name, #signer)
+                        solana_program::instruction::AccountMeta::new_readonly(#account_name, #signer)
                     } else {
-                        AccountMeta::new_readonly(crate::ID, false)
+                        solana_program::instruction::AccountMeta::new_readonly(crate::ID, false)
                     }
                 }
             } else {
                 quote!{
-                    AccountMeta::new_readonly(self.#account_name.unwrap_or(crate::ID), false)
+                    solana_program::instruction::AccountMeta::new_readonly(self.#account_name.unwrap_or(crate::ID), false)
                 }
             }
         } else if account.writable {
             quote! {
-                AccountMeta::new(self.#account_name, #signer)
+                solana_program::instruction::AccountMeta::new(self.#account_name, #signer)
             }
         } else {
             quote!{
-                AccountMeta::new_readonly(self.#account_name, #signer)
+                solana_program::instruction::AccountMeta::new_readonly(self.#account_name, #signer)
             }
         }
     }).collect();
@@ -304,7 +307,7 @@ pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
             .enumerate()
             .map(|(idx, _)| {
                 let name = field_names.get(idx).unwrap();
-                quote! { self.#name }
+                quote! { self.#name.clone() }
             })
             .collect(),
         InstructionVariantFields::Unnamed(field_tys) => field_tys
@@ -312,18 +315,18 @@ pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
             .enumerate()
             .map(|(idx, _)| {
                 let name = field_names.get(idx).unwrap();
-                quote! { self.#name }
+                quote! { self.#name.clone() }
             })
             .collect(),
     };
 
     let instruction_data = if struct_instruction_args.is_empty() {
         quote! {
-            Instruction::#name.try_to_vec().unwrap()
+            #item::#name.try_to_vec().unwrap()
         }
     } else {
         quote! {
-            Instruction::#name(#(#struct_instruction_args,)*).try_to_vec().unwrap()
+            #item::#name(#(#struct_instruction_args,)*).try_to_vec().unwrap()
         }
     };
 
@@ -338,7 +341,7 @@ pub(crate) fn generate_builders(variant: &BuilderVariant) -> TokenStream {
             fn default_instruction(&self) -> solana_program::instruction::Instruction {
                 solana_program::instruction::Instruction {
                     program_id: crate::ID,
-                    accounts: [
+                    accounts: vec![
                         #(#account_metas,)*
                     ],
                     data: #instruction_data,

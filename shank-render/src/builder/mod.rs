@@ -6,11 +6,13 @@ use shank_macro_impl::syn::Result as ParseResult;
 mod render_builders;
 use self::render_builders::generate_builders;
 
-pub fn render_builders_impl(instruction: &Builder) -> ParseResult<TokenStream> {
-    let builders = instruction
+pub fn render_builders_impl(
+    builder_item: &Builder,
+) -> ParseResult<TokenStream> {
+    let builders = builder_item
         .variants
         .iter()
-        .map(generate_builders)
+        .map(|variant| generate_builders(&builder_item.ident, variant))
         .collect::<Vec<TokenStream>>();
 
     Ok(quote! {
