@@ -28,7 +28,7 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
             let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
-                    let #account_name = Self::next_optional_account_info(account_info_iter)?;
+                    let #account_name = next_optional_account_info(account_info_iter)?;
                 }
             } else {
                 quote! {

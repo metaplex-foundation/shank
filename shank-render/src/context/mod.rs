@@ -16,12 +16,6 @@ pub fn render_contexts_impl(
         .collect::<Vec<TokenStream>>();
 
     Ok(quote! {
-    pub struct Context<'a, T> {
-        pub accounts: T,
-        pub remaining_accounts: Vec<&'a solana_program::account_info::AccountInfo<'a>>,
-    }
-
-    impl<'a, T> Context<'a, T> {
         /// Convenience function for accessing the next item in an [`AccountInfo`]
         /// iterator and validating whether the account is present or not.
         ///
@@ -39,7 +33,12 @@ pub fn render_contexts_impl(
                 Some(account_info)
             })
         }
-    }
 
-    #(#contexts)* })
+        pub struct Context<'a, T> {
+            pub accounts: T,
+            pub remaining_accounts: Vec<&'a solana_program::account_info::AccountInfo<'a>>,
+        }
+
+        #(#contexts)*
+    })
 }
