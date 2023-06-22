@@ -1,10 +1,14 @@
 use account::derive_account;
+use builder::derive_builder;
+use context::derive_context;
 use instruction::derive_instruction;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Error as ParseError};
 
 mod account;
+mod builder;
+mod context;
 mod instruction;
 
 // -----------------
@@ -80,7 +84,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 }
 
 // -----------------
-// #[derive(ShankInstructions)]
+// #[derive(ShankInstruction)]
 // -----------------
 
 /// Annotates the program _Instruction_ `Enum` in order to include `#[account]` attributes.
@@ -179,6 +183,111 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_instruction(input)
+        .unwrap_or_else(to_compile_error)
+        .into()
+}
+
+// -----------------
+// #[derive(ShankBuilder)]
+// -----------------
+
+/// Generates instruction builders for each annotated instruction.
+///
+/// An instruction builder is an _struct_ that contains all the accounts for an instruction. You can
+/// also include `#[args]` attributes to specify additional arguments that are passed to the builder.
+///
+///
+/// # Example
+///
+/// When you annotate your instruction with `#[derive(ShankBuilder)]`:
+///
+/// ```
+/// use borsh::{BorshDeserialize, BorshSerialize};
+/// use shank::ShankBuilder;
+/// #[derive(Debug, Clone, ShankBuilder, BorshSerialize, BorshDeserialize)]
+/// #[rustfmt::skip]
+/// pub enum Instruction {
+///     /// This instruction stores an amout in the vault.
+///     #[account(0, writable, name="vault", desc="Vault account")]
+///     #[account(1, signer, name="authority", desc = "Authority of the vault")]
+///     #[account(2, signer, writable, name = "payer", desc = "Payer")]
+///     #[account(3, name = "system_program", desc = "System program")]
+///     #[args(additional_accounts: Vec<AccountMeta>)]
+///     Create(CreateArgs)
+/// }
+/// ```
+///
+/// Shank will generate a `CreateBuilder` _struct_ in a submodule called `builders`. The builder can be used
+/// to define the accounts and arguments for the instruction:
+///
+/// ```
+/// let create_ix = CreateBuilder::new()
+///    .vault(vault_pubkey)
+///    .authority(authority_pubkey)
+///    .payer(payer_pubkey)
+///    .build(additional_accounts)
+///    .instruction();
+/// ```
+#[proc_macro_derive(ShankBuilder, attributes(account, args))]
+pub fn shank_builder(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_builder(input)
+        .unwrap_or_else(to_compile_error)
+        .into()
+}
+
+// -----------------
+// #[derive(ShankContext)]
+// -----------------
+
+/// Generates a context _struct_ for each instruction.
+///
+/// The _struct_ will contain all shank annotated accounts and the _impl_ block
+/// will initialize them using the accounts iterator. It support the use of
+/// optional accounts, which would generate an account field with an
+/// `Option<AccountInfo<'a>>` type.
+///
+/// # Example
+///
+/// When you annotate your instruction with `#[derive(ShankContext)]`:
+///
+/// ```
+/// use borsh::{BorshDeserialize, BorshSerialize};
+/// use shank::ShankContext;
+/// #[derive(Debug, Clone, ShankContext, BorshSerialize, BorshDeserialize)]
+/// #[rustfmt::skip]
+/// pub enum Instruction {
+///     /// This instruction stores an amout in the vault.
+///     #[account(0, writable, name="vault", desc="Vault account")]
+///     #[account(1, signer, name="authority", desc = "Authority of the vault")]
+///     #[account(2, signer, writable, name = "payer", desc = "Payer")]
+///     #[account(3, name = "system_program", desc = "System program")]
+///     #[args(amount: u64)]
+///     Create(CreateOrUpdateArgs)
+/// }
+/// ```
+///
+/// A generic `Context` _struct_ will be generated, which can be used to access each account in
+/// your processor implementation:
+///
+/// ```
+/// pub fn process_create<'a>(
+///     program_id: &Pubkey,
+///     accounts: &'a [AccountInfo<'a>],
+///     instruction_data: &[u8],
+/// ) -> ProgramResult {
+///     let context = Create::to_context(accounts)?;
+///
+///     msg!("{}", context.accounts.vault.key);
+///     msg!("{}", context.accounts.authority.key);
+///     msg!("{}", context.accounts.payer.key);
+///     ...
+/// }
+/// ```
+#[proc_macro_derive(ShankContext, attributes(account))]
+pub fn shank_context(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_context(input)
         .unwrap_or_else(to_compile_error)
         .into()
 }
