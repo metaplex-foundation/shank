@@ -261,7 +261,7 @@ pub(crate) fn generate_builders(
     // account metas
     let account_metas: Vec<TokenStream> = variant.accounts.iter().map(|account| {
         let account_name = parse_str::<Ident>(&account.name).unwrap();
-        let signer = parse_str::<Expr>(&format!("{}", account.writable)).unwrap();
+        let signer = parse_str::<Expr>(&format!("{}", account.signer)).unwrap();
 
         if account.optional {
             if account.writable {
