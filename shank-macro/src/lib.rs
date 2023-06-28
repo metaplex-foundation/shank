@@ -111,6 +111,10 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// - `name`: (required) provides the name for the account
 /// - `desc` | `description`: allows to provide a description of the account
 ///
+/// When the `optional` attribute is added to an account, shank will mark it such that its value should default
+/// to the `progam_id` if it is not provided by the client. Thus the position of optional accounts is static and
+/// optional accounts that are set can follow ones that are not.
+///
 /// # Known Accounts
 ///
 /// If an account `name` matches either of the a _known_ accounts indicated below then
@@ -124,19 +128,16 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///
 /// # Strategies
 ///
-/// ## Defaulting Optional Accounts
+/// ## Legacy Optional Accounts Strategy
 ///
-/// When the `#[default_optional_accounts]` attribute is added to an Instruction enum, shank will mark it
-/// such that optional accounts should default to the `progam_id` if they are not provided by the client.
-/// Thus their position is static and optional accounts that are set can follow ones that are not.
-///
-/// The default strategy (without `#[default_optional_accounts]`) is to just omit unset optional
-/// accounts from the accounts array.
+/// The default strategy (without `#[legacy_optional_accounts_strategy]`) is to set the `program_id` in place
+/// of an optional account not set by the client. When the `#[legacy_optional_accounts_strategy]` is added,
+/// shank will instead omit unset optional accounts from the accounts array.
 ///
 /// **NOTE**: shank doesn't do anything different here aside from setting a flag for the
 /// particular instruction. Thus adding that strategy to an instruction enum is merely advisory and
 /// will is expected to be properly respected by code generator tools like
-/// [solita](https://github.com/metaplex-foundation/solita).
+/// [kinobi](https://github.com/metaplex-foundation/kinobi) and [solita](https://github.com/metaplex-foundation/solita).
 ///
 /// # Examples
 ///
@@ -178,7 +179,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(
     ShankInstruction,
-    attributes(account, default_optional_accounts)
+    attributes(account, legacy_optional_accounts_strategy)
 )]
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
