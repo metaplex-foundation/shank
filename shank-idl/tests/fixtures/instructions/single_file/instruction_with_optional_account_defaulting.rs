@@ -1,6 +1,6 @@
 #[derive(ShankInstruction)]
 pub enum Instruction {
-    #[default_optional_accounts]
+    #[legacy_optional_accounts_strategy]
     #[account(0, name = "creator", sig)]
     #[account(1, name = "thing", mut, optional)]
     CreateThing(SomeArgs),
