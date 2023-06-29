@@ -99,12 +99,13 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// They take the following general form:
 ///
 /// ```
-/// #[account(index?, (writable|signer)?, optional?, name="<account_name>", desc?="optional description")]
+/// #[account(index?, writable?, (signer|optional_signer)?, optional?, name="<account_name>", desc?="optional description")]
 /// ```
 ///
 /// - `index`: optionally provides the account index in the provided accounts array which needs to
 ///   match its position of `#[account]` attributes
 /// - `signer` | `sign` | `sig`: indicates that the account is _signer_
+/// - `optional_signer`: indicates that the account is _optional_signer_
 /// - `writable` | `write` | `writ` | `mut`: indicates that the account is _writable_ which means it may be
 ///   mutated as part of processing the particular instruction
 /// - `optional | option | opt`: indicates that this account is optional
@@ -156,7 +157,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///             desc = "Initialized fraction treasury token account with 0 tokens in supply, owner of account must be pda of program like above")]
 ///     #[account(3, writable, name="vault",
 ///             desc = "Uninitialized vault account")]
-///     #[account(4, name="authority",
+///     #[account(4, optional_signer, name="authority",
 ///             desc = "Authority on the vault")]
 ///     #[account(5, name="pricing_lookup_address",
 ///             desc = "Pricing Lookup Address")]
