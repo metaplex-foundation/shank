@@ -110,7 +110,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///   mutated as part of processing the particular instruction
 /// - `optional | option | opt`: indicates that this account is optional
 /// - `name`: (required) provides the name for the account
-/// - `desc` | `description`: allows to provide a description of the account
+/// - `desc` | `description` | `docs`: allows to provide a description of the account
 ///
 /// When the `optional` attribute is added to an account, shank will mark it such that its value should default
 /// to the `progam_id` if it is not provided by the client. Thus the position of optional accounts is static and

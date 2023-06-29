@@ -1,0 +1,47 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "CreateThing",
+      "accounts": [
+        {
+          "name": "creator",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The creator of the thing"
+          ]
+        },
+        {
+          "name": "thing",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The thing to create"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": { "type": "u8", "value": 0 }
+    },
+    {
+      "name": "CloseThing",
+      "accounts": [
+        {
+          "name": "originalCreator",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The original creator of the thing"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": { "type": "u8", "value": 1 }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

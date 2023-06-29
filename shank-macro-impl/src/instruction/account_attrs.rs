@@ -80,7 +80,7 @@ impl InstructionAccount {
             {
                 // name/desc
                 match name.as_str() {
-                    "desc" | "description" => desc = Some(value),
+                    "desc" | "description" | "docs" => desc = Some(value),
                     "name" if value.trim().is_empty() => {
                         return Err(ParseError::new_spanned(
                             ident,
