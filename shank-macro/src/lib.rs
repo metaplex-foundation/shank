@@ -99,17 +99,22 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// They take the following general form:
 ///
 /// ```
-/// #[account(index?, (writable|signer)?, optional?, name="<account_name>", desc?="optional description")]
+/// #[account(index?, writable?, (signer|optional_signer)?, optional?, name="<account_name>", desc?="optional description")]
 /// ```
 ///
 /// - `index`: optionally provides the account index in the provided accounts array which needs to
 ///   match its position of `#[account]` attributes
 /// - `signer` | `sign` | `sig`: indicates that the account is _signer_
+/// - `optional_signer`: indicates that the account is _optional_signer_
 /// - `writable` | `write` | `writ` | `mut`: indicates that the account is _writable_ which means it may be
 ///   mutated as part of processing the particular instruction
 /// - `optional | option | opt`: indicates that this account is optional
 /// - `name`: (required) provides the name for the account
-/// - `desc` | `description`: allows to provide a description of the account
+/// - `desc` | `description` | `docs`: allows to provide a description of the account
+///
+/// When the `optional` attribute is added to an account, shank will mark it such that its value should default
+/// to the `progam_id` if it is not provided by the client. Thus the position of optional accounts is static and
+/// optional accounts that are set can follow ones that are not.
 ///
 /// # Known Accounts
 ///
@@ -124,19 +129,16 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///
 /// # Strategies
 ///
-/// ## Defaulting Optional Accounts
+/// ## Legacy Optional Accounts Strategy
 ///
-/// When the `#[default_optional_accounts]` attribute is added to an Instruction enum, shank will mark it
-/// such that optional accounts should default to the `progam_id` if they are not provided by the client.
-/// Thus their position is static and optional accounts that are set can follow ones that are not.
-///
-/// The default strategy (without `#[default_optional_accounts]`) is to just omit unset optional
-/// accounts from the accounts array.
+/// The default strategy (without `#[legacy_optional_accounts_strategy]`) is to set the `program_id` in place
+/// of an optional account not set by the client. When the `#[legacy_optional_accounts_strategy]` is added,
+/// shank will instead omit unset optional accounts from the accounts array.
 ///
 /// **NOTE**: shank doesn't do anything different here aside from setting a flag for the
 /// particular instruction. Thus adding that strategy to an instruction enum is merely advisory and
 /// will is expected to be properly respected by code generator tools like
-/// [solita](https://github.com/metaplex-foundation/solita).
+/// [kinobi](https://github.com/metaplex-foundation/kinobi) and [solita](https://github.com/metaplex-foundation/solita).
 ///
 /// # Examples
 ///
@@ -155,7 +157,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 ///             desc = "Initialized fraction treasury token account with 0 tokens in supply, owner of account must be pda of program like above")]
 ///     #[account(3, writable, name="vault",
 ///             desc = "Uninitialized vault account")]
-///     #[account(4, name="authority",
+///     #[account(4, optional_signer, name="authority",
 ///             desc = "Authority on the vault")]
 ///     #[account(5, name="pricing_lookup_address",
 ///             desc = "Pricing Lookup Address")]
@@ -178,7 +180,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(
     ShankInstruction,
-    attributes(account, default_optional_accounts)
+    attributes(account, legacy_optional_accounts_strategy)
 )]
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

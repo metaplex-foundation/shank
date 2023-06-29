@@ -13,8 +13,7 @@
         {
           "name": "thing",
           "isMut": true,
-          "isSigner": false,
-          "isOptional": true
+          "isSigner": false
         }
       ],
       "args": [
@@ -36,7 +35,8 @@
         {
           "name": "creator",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false,
+          "isOptionalSigner": true
         }
       ],
       "args": [],

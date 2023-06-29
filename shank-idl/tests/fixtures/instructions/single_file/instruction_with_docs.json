@@ -8,42 +8,37 @@
         {
           "name": "creator",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The creator of the thing"
+          ]
         },
         {
           "name": "thing",
           "isMut": true,
           "isSigner": false,
-          "isOptional": true
+          "docs": [
+            "The thing to create"
+          ]
         }
       ],
-      "args": [
-        {
-          "name": "someArgs",
-          "type": {
-            "defined": "SomeArgs"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 0
-      }
+      "args": [],
+      "discriminant": { "type": "u8", "value": 0 }
     },
     {
       "name": "CloseThing",
       "accounts": [
         {
-          "name": "creator",
+          "name": "originalCreator",
           "isMut": false,
-          "isSigner": true
+          "isSigner": true,
+          "docs": [
+            "The original creator of the thing"
+          ]
         }
       ],
       "args": [],
-      "discriminant": {
-        "type": "u8",
-        "value": 1
-      }
+      "discriminant": { "type": "u8", "value": 1 }
     }
   ],
   "metadata": {
