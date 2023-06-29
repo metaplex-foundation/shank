@@ -178,10 +178,12 @@ pub struct IdlAccount {
     pub name: String,
     pub is_mut: bool,
     pub is_signer: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub docs: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "is_false", default)]
+    pub is_optional_signer: bool,
     #[serde(skip_serializing_if = "is_false", default)]
     pub is_optional: bool,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub docs: Option<Vec<String>>,
 }
 
 impl From<InstructionAccount> for IdlAccount {
@@ -192,6 +194,7 @@ impl From<InstructionAccount> for IdlAccount {
             signer,
             desc,
             optional,
+            optional_signer,
             ..
         } = acc;
         Self {
@@ -200,6 +203,7 @@ impl From<InstructionAccount> for IdlAccount {
             is_signer: signer,
             docs: desc.map(|desc| vec![desc]),
             is_optional: optional,
+            is_optional_signer: optional_signer,
         }
     }
 }
