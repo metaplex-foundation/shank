@@ -22,7 +22,7 @@ pub fn render_contexts_impl(
         /// This relies on the client setting the `crate::ID` as the pubkey for
         /// accounts that are not set, which effectively allows us to use positional
         /// optional accounts.
-        pub fn next_optional_account_info<'b, 'c, I: Iterator<Item = &'b solana_program::account_info::AccountInfo<'c>>>(
+        fn next_optional_account_info<'b, 'c, I: Iterator<Item = &'b solana_program::account_info::AccountInfo<'c>>>(
             iter: &mut I,
         ) -> Result<Option<I::Item>, solana_program::program_error::ProgramError> {
             let account_info = iter.next().ok_or(solana_program::program_error::ProgramError::NotEnoughAccountKeys)?;
