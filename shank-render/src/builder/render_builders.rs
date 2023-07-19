@@ -330,6 +330,26 @@ pub(crate) fn generate_builders(
         }
     };
 
+    // default instruction builder (only generated if the instruction builder does
+    // not have custom arguments)
+    let default_instruction_builder = if variant.arguments.is_empty() {
+        quote! {
+            impl InstructionBuilder for #name {
+                fn instruction(&self) -> solana_program::instruction::Instruction {
+                    solana_program::instruction::Instruction {
+                        program_id: crate::ID,
+                        accounts: vec![
+                            #(#account_metas,)*
+                        ],
+                        data: #instruction_data,
+                    }
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     quote! {
         pub struct #name {
             #(#struct_accounts,)*
@@ -337,17 +357,7 @@ pub(crate) fn generate_builders(
             #(#struct_builder_args,)*
         }
 
-        impl DefaultInstructionBuilder for #name {
-            fn default_instruction(&self) -> solana_program::instruction::Instruction {
-                solana_program::instruction::Instruction {
-                    program_id: crate::ID,
-                    accounts: vec![
-                        #(#account_metas,)*
-                    ],
-                    data: #instruction_data,
-                }
-            }
-        }
+        #default_instruction_builder
 
         pub struct #builder_name {
             #(#builder_accounts,)*
