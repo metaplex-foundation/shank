@@ -1,0 +1,22 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "MyType",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
