@@ -96,4 +96,25 @@ mod tests {
             struct MyStruct {}
         });
     }
+
+    #[test]
+    fn is_custom_struct_including_borsh_derive_and_shank_type() {
+        assert_is_custom(quote! {
+            #[derive(BorshSerialize, ShankType)]
+            struct MyStruct {}
+        });
+        assert_is_custom(quote! {
+            #[derive(BorshSerialize)]
+            #[derive(ShankType)]
+            struct MyStruct {}
+        });
+    }
+
+    #[test]
+    fn is_custom_struct_including_shank_type() {
+        assert_is_custom(quote! {
+            #[derive(ShankType)]
+            struct MyStruct {}
+        });
+    }
 }

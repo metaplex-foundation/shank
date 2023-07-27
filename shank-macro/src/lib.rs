@@ -74,7 +74,7 @@ mod instruction;
 ///# Note
 ///
 /// The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
-/// with `BorshSerialize` or `BorshDeserialize`.
+/// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
 #[proc_macro_derive(ShankAccount, attributes(padding, seeds))]
 pub fn shank_account(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -127,9 +127,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// - `system_program` uses `SystemProgram.programId`
 /// - `rent` uses `SYSVAR_RENT_PUBKEY`
 ///
-/// # Strategies
-///
-/// ## Legacy Optional Accounts Strategy
+/// # Optional Accounts Strategies
 ///
 /// The default strategy (without `#[legacy_optional_accounts_strategy]`) is to set the `program_id` in place
 /// of an optional account not set by the client. When the `#[legacy_optional_accounts_strategy]` is added,
@@ -292,6 +290,39 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
     derive_context(input)
         .unwrap_or_else(to_compile_error)
         .into()
+}
+
+// -----------------
+// #[derive(ShankType)]
+// -----------------
+
+/// Annotates a _struct_ or _enum_ that shank will consider a type containing de/serializable data.
+///
+/// The macro does not generate any code. The annotation is used to indicate to shank-idl that the
+/// the type should be included in the program's IDL.
+///
+/// # Example
+///
+/// ```
+/// use shank::ShankType;
+///
+/// #[derive(ShankType)]
+/// pub struct Metadata {
+///     pub update_authority: Pubkey,
+///     pub mint: Pubkey,
+///     pub primary_sale_happened: bool,
+/// }
+/// ```
+///
+///# Note
+///
+/// The fields of a _ShankType_ struct or enum can reference other types as long as they are annotated
+/// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
+#[proc_macro_derive(ShankType)]
+pub fn shank_type(input: TokenStream) -> TokenStream {
+    // returns the token stream that was passed in (the macro is only an annotation for shank-idl
+    // to export the type in the program's IDL)
+    input
 }
 
 fn to_compile_error(error: ParseError) -> proc_macro2::TokenStream {

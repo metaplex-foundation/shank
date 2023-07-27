@@ -123,3 +123,35 @@ fn type_valid_tuples() {
 
     assert_eq!(idl, expected_idl);
 }
+
+#[test]
+fn type_valid_single_struct_shank_type() {
+    let file = fixtures_dir().join("valid_single_struct_shank_type.rs");
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_struct_shank_type.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn type_valid_single_enum_shank_type() {
+    let file = fixtures_dir().join("valid_single_enum_shank_type.rs");
+    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_enum_shank_type.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}

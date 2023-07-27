@@ -19,7 +19,7 @@ impl Default for DetectCustomTypeConfig {
     fn default() -> Self {
         Self {
             include_derives: HashSet::from_iter(
-                vec!["BorshSerialize", "BorshDeserialize"]
+                vec!["BorshSerialize", "BorshDeserialize", "ShankType"]
                     .into_iter()
                     .map(String::from),
             ),
