@@ -17,10 +17,10 @@ jobs:
       matrix:
         os: [ubuntu-latest-16-cores, windows-latest-8-cores, macos-latest]
         include:
-          - os: ubuntu-latest-16-cores
+          - os: ubuntu-latest
             RUST: stable
 
-          - os: windows-latest-8-cores
+          - os: windows-latest
             RUST: stable
 
           - os: macos-latest
