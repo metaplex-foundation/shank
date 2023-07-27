@@ -7,9 +7,10 @@ use shank_macro_impl::{
 };
 use std::collections::HashMap;
 
-const DEFAULT_PUBKEYS: [(&str, &str); 6] = [
+const DEFAULT_PUBKEYS: [(&str, &str); 7] = [
     ("system_program", "solana_program::system_program::ID"),
     ("spl_token_program", "spl_token::ID"),
+    ("spl_token_2022_program", "spl_token_2022::ID"),
     ("spl_ata_program", "spl_associated_token_account::ID"),
     (
         "sysvar_instructions",
@@ -68,6 +69,20 @@ pub(crate) fn generate_builders(
         }
     });
 
+    // optional signers
+    let struct_optional_signers = variant
+        .accounts
+        .iter()
+        .filter(|account| account.optional_signer)
+        .map(|account| {
+            let optional_signer =
+                parse_str::<Ident>(&format!("{}_signer", account.name))
+                    .unwrap();
+            quote! {
+                pub #optional_signer: bool
+            }
+        });
+
     // args (builder)
     let struct_builder_args = variant.arguments.iter().map(|argument| {
         let ident_ty = parse_str::<Ident>(&argument.ty).unwrap();
@@ -94,6 +109,20 @@ pub(crate) fn generate_builders(
         }
     });
 
+    // optional signers
+    let builder_optional_signers = variant
+        .accounts
+        .iter()
+        .filter(|account| account.optional_signer)
+        .map(|account| {
+            let optional_signer =
+                parse_str::<Ident>(&format!("{}_signer", account.name))
+                    .unwrap();
+            quote! {
+                pub #optional_signer: bool
+            }
+        });
+
     // accounts initialization
     let builder_initialize_accounts = variant.accounts.iter().map(|account| {
         let account_name = parse_str::<Ident>(&account.name).unwrap();
@@ -101,6 +130,20 @@ pub(crate) fn generate_builders(
             #account_name: None
         }
     });
+
+    // optional signers initialization
+    let builder_initialize_optional_signers = variant
+        .accounts
+        .iter()
+        .filter(|account| account.optional_signer)
+        .map(|account| {
+            let optional_signer =
+                parse_str::<Ident>(&format!("{}_signer", account.name))
+                    .unwrap();
+            quote! {
+                #optional_signer: false
+            }
+        });
 
     // args (builder)
     let builder_args = variant.arguments.iter().map(|argument| {
@@ -129,13 +172,25 @@ pub(crate) fn generate_builders(
     // account setter methods
     let builder_accounts_methods = variant.accounts.iter().map(|account| {
             let account_name = parse_str::<Ident>(&account.name).unwrap();
+
+            if account.optional_signer {
+                let optional_signer = parse_str::<Ident>(&format!("{}_signer", account.name)).unwrap();
+                quote! {
+                    pub fn #account_name(&mut self, #account_name: solana_program::pubkey::Pubkey, signer: bool) -> &mut Self {
+                        self.#account_name = Some(#account_name);
+                        self.#optional_signer = signer;
+                        self
+                    }
+                }
+            } else {
             quote! {
                 pub fn #account_name(&mut self, #account_name: solana_program::pubkey::Pubkey) -> &mut Self {
                     self.#account_name = Some(#account_name);
                     self
                 }
             }
-        });
+        }
+});
 
     // args (builder) setter methods
     let builder_args_methods = variant.arguments.iter().map(|argument| {
@@ -179,6 +234,20 @@ pub(crate) fn generate_builders(
                         #account_name: self.#account_name.ok_or(concat!(stringify!(#account_name), " is not set"))?
                     }
                 }
+            }
+        });
+
+    // required optional signers
+    let required_optional_signers = variant
+        .accounts
+        .iter()
+        .filter(|account| account.optional_signer)
+        .map(|account| {
+            let optional_signer =
+                parse_str::<Ident>(&format!("{}_signer", account.name))
+                    .unwrap();
+            quote! {
+                #optional_signer: self.#optional_signer
             }
         });
 
@@ -261,7 +330,11 @@ pub(crate) fn generate_builders(
     // account metas
     let account_metas: Vec<TokenStream> = variant.accounts.iter().map(|account| {
         let account_name = parse_str::<Ident>(&account.name).unwrap();
-        let signer = parse_str::<Expr>(&format!("{}", account.signer)).unwrap();
+        let signer = if account.optional_signer {
+            parse_str::<Expr>(&format!("self.{}_signer", account.name)).unwrap()
+        } else {
+            parse_str::<Expr>(&format!("{}", account.signer)).unwrap()
+        };
 
         if account.optional {
             if account.writable {
@@ -330,27 +403,39 @@ pub(crate) fn generate_builders(
         }
     };
 
+    // default instruction builder (only generated if the instruction builder does
+    // not have custom arguments)
+    let default_instruction_builder = if variant.arguments.is_empty() {
+        quote! {
+            impl InstructionBuilder for #name {
+                fn instruction(&self) -> solana_program::instruction::Instruction {
+                    solana_program::instruction::Instruction {
+                        program_id: crate::ID,
+                        accounts: vec![
+                            #(#account_metas,)*
+                        ],
+                        data: #instruction_data,
+                    }
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     quote! {
         pub struct #name {
             #(#struct_accounts,)*
+            #(#struct_optional_signers,)*
             #(#instruction_args,)*
             #(#struct_builder_args,)*
         }
 
-        impl DefaultInstructionBuilder for #name {
-            fn default_instruction(&self) -> solana_program::instruction::Instruction {
-                solana_program::instruction::Instruction {
-                    program_id: crate::ID,
-                    accounts: vec![
-                        #(#account_metas,)*
-                    ],
-                    data: #instruction_data,
-                }
-            }
-        }
+        #default_instruction_builder
 
         pub struct #builder_name {
             #(#builder_accounts,)*
+            #(#builder_optional_signers,)*
             #(#builder_args,)*
         }
 
@@ -358,6 +443,7 @@ pub(crate) fn generate_builders(
             pub fn new() -> Box<#builder_name> {
                 Box::new(#builder_name {
                     #(#builder_initialize_accounts,)*
+                    #(#builder_initialize_optional_signers,)*
                     #(#builder_initialize_args,)*
                 })
             }
@@ -368,6 +454,7 @@ pub(crate) fn generate_builders(
             pub fn build(&mut self, #(#args,)*) -> Result<Box<#name>, Box<dyn std::error::Error>> {
                 Ok(Box::new(#name {
                     #(#required_accounts,)*
+                    #(#required_optional_signers,)*
                     #(#required_instruction_args,)*
                     #(#required_args,)*
                 }))
