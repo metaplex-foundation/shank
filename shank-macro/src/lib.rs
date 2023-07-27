@@ -240,11 +240,12 @@ pub fn shank_builder(input: TokenStream) -> TokenStream {
 // #[derive(ShankContext)]
 // -----------------
 
-/// Generates a context _struct_ for each instruction.
+/// Generates an accounts _struct_ for each instruction.
 ///
 /// The _struct_ will contain all shank annotated accounts and the _impl_ block
-/// will initialize them using the accounts iterator. It support the use of
-/// optional accounts, which would generate an account field with an
+/// will initialize them from the accounts array. This struct can be used in combination
+/// with a `Context` to provide access to accounts by name. The accounts _strct_ supports
+///  the use of optional accounts, which would generate an account field with an
 /// `Option<AccountInfo<'a>>` type.
 ///
 /// # Example
@@ -267,8 +268,8 @@ pub fn shank_builder(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// A generic `Context` _struct_ will be generated, which can be used to access each account in
-/// your processor implementation:
+/// A `CreateAccounts` and a generic `Context` _structs_ will be generated, which can be used to
+/// access each account by name in your processor implementation:
 ///
 /// ```
 /// pub fn process_create<'a>(
@@ -276,7 +277,7 @@ pub fn shank_builder(input: TokenStream) -> TokenStream {
 ///     accounts: &'a [AccountInfo<'a>],
 ///     instruction_data: &[u8],
 /// ) -> ProgramResult {
-///     let context = Create::to_context(accounts)?;
+///     let context = CreateAccounts::context(accounts)?;
 ///
 ///     msg!("{}", context.accounts.vault.key);
 ///     msg!("{}", context.accounts.authority.key);
