@@ -3,12 +3,6 @@ use quote::quote;
 use shank_macro_impl::{instruction::InstructionVariant, syn};
 
 pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
-    // accounts names
-    let fields = variant.accounts.iter().map(|account| {
-        let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
-        quote! { #account_name }
-    });
-
     // accounts fields
     let struct_fields = variant.accounts.iter().map(|account| {
             let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
@@ -23,41 +17,40 @@ pub(crate) fn generate_context(variant: &InstructionVariant) -> TokenStream {
             }
         });
 
-    // accounts initialization for the impl block
-    let impl_fields = variant.accounts.iter().map(|account| {
+    // accounts initialization
+    let account_fields = variant.accounts.iter().enumerate().map(|(index, account)| {
             let account_name = syn::parse_str::<syn::Ident>(&account.name).unwrap();
             if account.optional {
                 quote! {
-                    let #account_name = next_optional_account_info(account_info_iter)?;
+                    #account_name: if accounts[#index].key == &crate::ID { None } else { Some(&accounts[#index]) }
                 }
             } else {
                 quote! {
-                    let #account_name = solana_program::account_info::next_account_info(account_info_iter)?;
+                    #account_name: &accounts[#index]
                 }
             }
         });
 
-    let name = &variant.ident;
+    let expected = variant.accounts.len(); // number of expected accounts
+    let name =
+        syn::parse_str::<syn::Ident>(&format!("{}Accounts", variant.ident))
+            .unwrap();
 
     quote! {
         pub struct #name<'a> {
             #(#struct_fields,)*
         }
         impl<'a> #name<'a> {
-            pub fn to_context(
+            pub fn context(
                 accounts: &'a [solana_program::account_info::AccountInfo<'a>]
             ) -> Result<Context<'a, Self>, solana_program::sysvar::slot_history::ProgramError> {
-                let account_info_iter = &mut accounts.iter();
-
-                #(#impl_fields)*
-
-                let accounts = Self {
-                    #(#fields,)*
-                };
+                if accounts.len() < #expected {
+                    return Err(solana_program::sysvar::slot_history::ProgramError::NotEnoughAccountKeys);
+                }
 
                 Ok(Context {
-                    accounts,
-                    remaining_accounts: Vec::<&'a solana_program::account_info::AccountInfo<'a>>::from_iter(account_info_iter),
+                    accounts: Self { #(#account_fields,)* },
+                    remaining_accounts: &accounts[#expected..],
                 })
             }
         }
