@@ -320,10 +320,10 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
 /// The fields of a _ShankType_ struct or enum can reference other types as long as they are annotated
 /// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
 #[proc_macro_derive(ShankType)]
-pub fn shank_type(input: TokenStream) -> TokenStream {
+pub fn shank_type(_input: TokenStream) -> TokenStream {
     // returns the token stream that was passed in (the macro is only an annotation for shank-idl
     // to export the type in the program's IDL)
-    input
+    quote! {}.into()
 }
 
 fn to_compile_error(error: ParseError) -> proc_macro2::TokenStream {
