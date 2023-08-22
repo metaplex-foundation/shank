@@ -21,6 +21,7 @@ fn render_pda(code: TokenStream, include_comments: bool) -> TokenStream {
         include_comments,
     )
     .unwrap()
+    .unwrap()
 }
 
 #[allow(unused)]

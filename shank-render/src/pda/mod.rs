@@ -43,7 +43,7 @@ pub fn render_pda_and_seeds_impl(
         &pda_fn_ident,
         &pda_fn_with_bump_ident,
         include_comments,
-    );
+    )?;
 
     if let (Some(pub_seeds_fn), Some(pub_pda_fn)) = (pub_seeds_fn, pub_pda_fn) {
         Ok(quote! {
