@@ -1,6 +1,6 @@
 [package]
 name = "shank_macro"
-version = "0.2.1"
+version = "0.3.0"
 description = "Provides macros used to annotate Solana Rust programs in order to extract an IDL with the shank CLI"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/shank"
