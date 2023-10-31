@@ -10,7 +10,7 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn macro_valid_program_id() {
     let file = fixtures_dir().join("program_id_valid.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::default())
+    let idl = parse_file(file, &ParseIdlConfig::default())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -25,7 +25,7 @@ fn macro_valid_program_id() {
 #[test]
 fn macro_missing_program_id() {
     let file = fixtures_dir().join("program_id_missing.rs");
-    let err = parse_file(&file, &ParseIdlConfig::default())
+    let err = parse_file(file, &ParseIdlConfig::default())
         .expect_err("Should fail")
         .to_string();
     assert!(err.contains("Could not find"));
@@ -35,7 +35,7 @@ fn macro_missing_program_id() {
 #[test]
 fn macro_missing_program_id_not_required() {
     let file = fixtures_dir().join("program_id_missing.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 

@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use idl::Idl;
 use manifest::Manifest;
 use shank_macro_impl::custom_type::DetectCustomTypeConfig;
-use shellexpand;
 
 use std::path::PathBuf;
 

@@ -10,7 +10,7 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn errors_this_error() {
     let file = fixtures_dir().join("this_error.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -26,7 +26,7 @@ fn errors_this_error() {
 #[test]
 fn errors_this_error_custom_codes() {
     let file = fixtures_dir().join("this_error_custom_codes.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 

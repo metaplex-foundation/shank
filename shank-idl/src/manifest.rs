@@ -65,11 +65,7 @@ impl Manifest {
     }
 
     pub fn lib_rel_path(&self) -> Option<String> {
-        self.lib
-            .as_ref()
-            .map(|x| x.path.clone())
-            .flatten()
-            .to_owned()
+        self.lib.as_ref().and_then(|x| x.path.clone())
     }
 
     pub fn lib_name(&self) -> Result<String> {
@@ -96,7 +92,7 @@ impl Manifest {
 
     pub fn version(&self) -> String {
         match &self.package {
-            Some(package) => package.version.to_string(),
+            Some(package) => package.version.get().unwrap().clone(),
             _ => "0.0.0".to_string(),
         }
     }

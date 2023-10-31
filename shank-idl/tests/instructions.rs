@@ -12,7 +12,7 @@ fn instruction_from_single_file_no_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_no_args.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -31,7 +31,7 @@ fn instruction_from_single_file_with_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_args.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -48,7 +48,7 @@ fn instruction_from_single_file_with_struct_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_struct_args.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -65,7 +65,7 @@ fn instruction_from_single_file_with_multiple_args() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_multiple_args.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -82,7 +82,7 @@ fn instruction_from_single_file_with_optional_account() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_optional_account.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -99,7 +99,7 @@ fn instruction_from_single_file_with_optional_account_defaulting() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_optional_account_defaulting.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -116,7 +116,7 @@ fn instruction_from_single_file_invalid_attr() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_invalid_attr.rs");
-    let res = parse_file(&file, &ParseIdlConfig::optional_program_address());
+    let res = parse_file(file, &ParseIdlConfig::optional_program_address());
 
     let err = res.unwrap_err();
     let source_string = err.source().unwrap().to_string();
@@ -129,7 +129,7 @@ fn instruction_from_single_file_invalid_discriminant() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_invalid_discriminant.rs");
-    let res = parse_file(&file, &ParseIdlConfig::optional_program_address());
+    let res = parse_file(file, &ParseIdlConfig::optional_program_address());
 
     let err = res.unwrap_err().to_string();
     assert!(err.contains("discriminants have to be <= u8::MAX"));
@@ -141,7 +141,7 @@ fn instruction_from_single_file_with_optional_signer_account() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_optional_signer_account.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -158,7 +158,7 @@ fn instruction_from_single_file_with_docs() {
     let file = fixtures_dir()
         .join("single_file")
         .join("instruction_with_docs.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
