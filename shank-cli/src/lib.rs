@@ -55,7 +55,7 @@ pub fn try_resolve_path(p: Option<String>, label: &str) -> Result<PathBuf> {
     }?;
 
     let p = if p.is_absolute() {
-        Ok(p.to_path_buf())
+        Ok(p)
     } else {
         debug!("{} is relative, resolving from current dir", label);
         std::env::current_dir().map(|x| x.join(p))
@@ -98,8 +98,10 @@ pub fn idl(
         lib_full_path_str.to_str().ok_or(anyhow!("Invalid Path"))?;
 
     // Extract IDL and convert to JSON
-    let mut opts = ParseIdlOpts::default();
-    opts.program_address_override = program_id;
+    let opts = ParseIdlOpts {
+        program_address_override: program_id,
+        ..ParseIdlOpts::default()
+    };
     let idl = extract_idl(lib_full_path, opts)?
         .ok_or(anyhow!("No IDL could be extracted"))?;
     let idl_json = idl.try_into_json()?;

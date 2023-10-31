@@ -71,9 +71,9 @@ pub fn attr_is_derive(attr: &&Attribute, derive: &str) -> bool {
     }
 }
 
-pub fn get_derive_attr<'a, 'b>(
+pub fn get_derive_attr<'a>(
     attrs: &'a [Attribute],
-    derive: &'b str,
+    derive: &str,
 ) -> Option<&'a Attribute> {
     attrs.iter().find(|attr| attr_is_derive(attr, derive))
 }

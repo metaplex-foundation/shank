@@ -167,7 +167,7 @@ impl From<InstructionAccount> for IdlAccountItem {
 }
 
 fn is_false(x: &bool) -> bool {
-    return !x;
+    !x
 }
 // -----------------
 // IdlAccount
