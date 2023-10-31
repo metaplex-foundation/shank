@@ -17,4 +17,4 @@ anyhow = "1.0.48"
 clap = { version = "3.0.14", features = ["derive"] }
 fern = { version = "0.6.0", features = ["colored"] }
 log = "0.4.14"
-shank_idl = { version= "0.2.1", path = "../shank-idl" }
+shank_idl = { version= "0.3.0", path = "../shank-idl" }
