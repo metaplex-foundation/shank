@@ -13,5 +13,5 @@ cargo_toml = "0.17"
 heck = "0.3.3"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.72"
-shank_macro_impl = { version = "0.2.1", path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.3.0", path = "../shank-macro-impl" }
 shellexpand = "2.1.0"

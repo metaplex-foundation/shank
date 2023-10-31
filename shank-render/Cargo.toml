@@ -10,7 +10,7 @@ edition = "2018"
 [dependencies]
 proc-macro2 = "1.0.46"
 quote = "1.0.21"
-shank_macro_impl = { version = "0.2.1", path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.3.0", path = "../shank-macro-impl" }
 
 [dev-dependencies]
 prettyplease = "0.1.21"
