@@ -18,6 +18,8 @@ For _usage_ and _installation_ see the [shank-cli Readme](./shank-cli/README.md)
 - [shank-macro-impl](./shank-macro-impl) implements and tests the _derive_ macros
 - [shank-idl](./shank-idl) processes files of a crate in order to discover _shank_ macros
   annotations and convert annotated types into an [solita](https://github.com/metaplex-foundation/solita) compatible IDL
+- [shank-render](./shank-render) generates Rust `impl` blocks from specific annotations like
+  account `seeds` 
 
 ## Development
 

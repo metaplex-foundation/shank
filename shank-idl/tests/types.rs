@@ -10,7 +10,7 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn type_valid_single_struct() {
     let file = fixtures_dir().join("valid_single_struct.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -25,7 +25,7 @@ fn type_valid_single_struct() {
 #[test]
 fn type_valid_single_emum() {
     let file = fixtures_dir().join("valid_single_enum.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -40,7 +40,7 @@ fn type_valid_single_emum() {
 #[test]
 fn type_valid_single_data_emum() {
     let file = fixtures_dir().join("valid_single_data_enum.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -55,7 +55,7 @@ fn type_valid_single_data_emum() {
 #[test]
 fn type_valid_multiple() {
     let file = fixtures_dir().join("valid_multiple.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
@@ -72,14 +72,14 @@ fn type_valid_multiple() {
 fn type_invalid_single() {
     let file = fixtures_dir().join("invalid_single.rs");
     assert!(
-        parse_file(&file, &ParseIdlConfig::optional_program_address()).is_err()
+        parse_file(file, &ParseIdlConfig::optional_program_address()).is_err()
     )
 }
 
 #[test]
 fn type_valid_maps() {
     let file = fixtures_dir().join("valid_multiple_maps.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
@@ -95,7 +95,7 @@ fn type_valid_maps() {
 #[test]
 fn type_valid_sets() {
     let file = fixtures_dir().join("valid_multiple_sets.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
@@ -111,13 +111,45 @@ fn type_valid_sets() {
 #[test]
 fn type_valid_tuples() {
     let file = fixtures_dir().join("valid_multiple_tuples.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
     // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
 
     let expected_idl: Idl = serde_json::from_str(include_str!(
         "./fixtures/types/valid_multiple_tuples.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn type_valid_single_struct_shank_type() {
+    let file = fixtures_dir().join("valid_single_struct_shank_type.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_struct_shank_type.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn type_valid_single_enum_shank_type() {
+    let file = fixtures_dir().join("valid_single_enum_shank_type.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+    // eprintln!("{}", serde_json::to_string_pretty(&idl).unwrap());
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/valid_single_enum_shank_type.json"
     ))
     .unwrap();
 

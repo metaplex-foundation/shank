@@ -11,7 +11,12 @@ pub fn derive_account(input: DeriveInput) -> ParseResult<TokenStream> {
     let item = Item::from(input);
     match item {
         Item::Struct(struct_item) => {
-            ParsedStruct::try_from(&struct_item).map(|_| TokenStream::new())
+            let parsed_struct = ParsedStruct::try_from(&struct_item)?;
+            shank_render::pda::render_pda_and_seeds_impl(
+                &parsed_struct.struct_attrs,
+                &parsed_struct.ident,
+                true,
+            )
         }
         _ => Err(ParseError::new_spanned(
             &attr,

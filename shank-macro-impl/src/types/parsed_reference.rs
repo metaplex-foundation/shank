@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use syn::{Lifetime, TypeReference};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum ParsedReference {
     Owned,
     Ref(Option<syn::Ident>),
@@ -32,7 +32,9 @@ impl From<&TypeReference> for ParsedReference {
             ..
         } = r;
 
-        let lifetime_ident = lifetime.as_ref().map(|Lifetime { ident, .. }| ident.clone());
+        let lifetime_ident = lifetime
+            .as_ref()
+            .map(|Lifetime { ident, .. }| ident.clone());
 
         match mutability.is_some() {
             true => ParsedReference::RefMut(lifetime_ident),

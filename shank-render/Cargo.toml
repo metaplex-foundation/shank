@@ -1,0 +1,16 @@
+[package]
+name = "shank_render"
+version = "0.3.0"
+description = "Renders implementaions derived from shank macros"
+authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
+repository = "https://github.com/metaplex-foundation/shank"
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+proc-macro2 = "1.0.46"
+quote = "1.0.21"
+shank_macro_impl = { version = "0.3.0", path = "../shank-macro-impl" }
+
+[dev-dependencies]
+prettyplease = "0.1.21"

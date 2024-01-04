@@ -1,11 +1,10 @@
 [workspace]
-members=[
+members = [
   "shank",
   "shank-cli",
   "shank-idl",
   "shank-macro",
-  "shank-macro-impl"
+  "shank-macro-impl",
+  "shank-render",
 ]
-exclude=[
-  "./shank-idl/tests/fixtures/"
-]
+exclude = ["./shank-idl/tests/fixtures/"]

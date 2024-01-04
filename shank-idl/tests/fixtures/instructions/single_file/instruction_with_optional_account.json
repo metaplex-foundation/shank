@@ -14,7 +14,7 @@
           "name": "thing",
           "isMut": true,
           "isSigner": false,
-          "optional": true
+          "isOptional": true
         }
       ],
       "args": [

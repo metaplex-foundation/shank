@@ -44,7 +44,8 @@ pub fn extract_this_errors<'a>(
         .iter()
         .map(ProgramErrors::try_from)
         .collect::<ParseResult<Vec<ProgramErrors>>>()?
-        .into_iter().flat_map(|x| x.0)
+        .into_iter()
+        .flat_map(|x| x.0)
         .collect::<Vec<ProgramError>>();
     Ok(program_errors)
 }

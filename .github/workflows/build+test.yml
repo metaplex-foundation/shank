@@ -15,16 +15,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest-16-cores, windows-latest-8-cores, macos-latest]
         include:
           - os: ubuntu-latest
-            RUST: nightly
+            RUST: stable
 
           - os: windows-latest
-            RUST: nightly
+            RUST: stable
 
           - os: macos-latest
-            RUST: nightly
+            RUST: stable
 
     steps:
       - uses: hecrj/setup-rust-action@v1

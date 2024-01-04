@@ -14,7 +14,7 @@
           "name": "thing",
           "isMut": true,
           "isSigner": false,
-          "optional": true
+          "isOptional": true
         }
       ],
       "args": [
@@ -25,7 +25,7 @@
           }
         }
       ],
-      "defaultOptionalAccounts": true,
+      "legacyOptionalAccountsStrategy": true,
       "discriminant": {
         "type": "u8",
         "value": 0

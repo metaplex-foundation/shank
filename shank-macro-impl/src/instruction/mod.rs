@@ -1,6 +1,7 @@
 mod account_attrs;
 mod extract_instructions;
 mod idl_instruction_attrs;
+#[allow(clippy::module_inception)]
 mod instruction;
 mod strategy_attrs;
 

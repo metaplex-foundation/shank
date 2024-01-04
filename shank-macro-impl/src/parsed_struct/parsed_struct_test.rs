@@ -85,7 +85,7 @@ fn assert_tuple(
                 assert_eq!(inner.ident.to_string(), inner_tys[idx]);
             }
         }
-        _ => assert!(false, "expected composite to represent tuple"),
+        _ => panic!("expected composite to represent tuple"),
     };
 }
 

@@ -69,7 +69,6 @@ impl ParsedModule {
 
         while let Some(to_parse) = unparsed.pop() {
             let path = format!("{}::{}", to_parse.path, to_parse.name);
-            let name = to_parse.name;
             let module =
                 Self::from_item_mod(&to_parse.file, &path, to_parse.item)?;
 
@@ -79,7 +78,7 @@ impl ParsedModule {
                 path: module.path.clone(),
                 name: item.ident.to_string(),
             }));
-            modules.insert(name.clone(), module);
+            modules.insert(path, module);
         }
 
         modules.insert(root_mod.name.clone(), root_mod);

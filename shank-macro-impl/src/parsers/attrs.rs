@@ -7,7 +7,8 @@ fn flattened_idents_from_nested_meta(
     nested: &Punctuated<NestedMeta, Token![,]>,
 ) -> Vec<Ident> {
     nested
-        .iter().flat_map(|nested| match nested {
+        .iter()
+        .flat_map(|nested| match nested {
             NestedMeta::Meta(Meta::Path(path)) => {
                 path.segments.iter().map(|x| x.ident.clone()).collect()
             }
@@ -21,7 +22,8 @@ fn flattened_idents_from_nested_meta(
 
 pub fn get_derive_names(attrs: &[Attribute]) -> Vec<String> {
     attrs
-        .iter().flat_map(|attr| {
+        .iter()
+        .flat_map(|attr| {
             let meta = &attr.parse_meta();
             match meta {
                 Ok(Meta::List(MetaList { path, nested, .. })) => {
@@ -57,19 +59,21 @@ pub fn attr_is_derive(attr: &&Attribute, derive: &str) -> bool {
             match found_derive {
                 Some(_) => flattened_idents_from_nested_meta(nested)
                     .into_iter()
-                    .find(|ident| ident == derive)
-                    .is_some(),
+                    .any(|ident| ident == derive),
                 None => false,
             }
         }
         Ok(_) => false,
-        Err(_) => false,
+        Err(err) => {
+            eprintln!("{:#?}", err);
+            false
+        }
     }
 }
 
-pub fn get_derive_attr<'a, 'b>(
+pub fn get_derive_attr<'a>(
     attrs: &'a [Attribute],
-    derive: &'b str,
+    derive: &str,
 ) -> Option<&'a Attribute> {
     attrs.iter().find(|attr| attr_is_derive(attr, derive))
 }

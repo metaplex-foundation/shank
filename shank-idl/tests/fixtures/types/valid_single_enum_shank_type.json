@@ -1,0 +1,33 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "types": [
+    {
+      "name": "Color",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Red",
+            "fields": ["u8"]
+          },
+          {
+            "name": "Green",
+            "fields": ["u8"]
+          },
+          {
+            "name": "Blue",
+            "fields": ["u8"]
+          },
+          {
+            "name": "White"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

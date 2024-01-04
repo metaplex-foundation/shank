@@ -9,7 +9,7 @@ use syn::{
 
 use crate::parsed_enum::{ParsedEnum, ParsedEnumVariant};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProgramError {
     pub variant_ident: Ident,
     pub attr_ident: Ident,
@@ -88,7 +88,7 @@ impl ProgramError {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ProgramErrors(pub Vec<ProgramError>);
 impl TryFrom<&ParsedEnum> for ProgramErrors {
     type Error = ParseError;

@@ -38,7 +38,7 @@ pub fn check_or_update_idl(idl: &Idl, json_path: &str) {
 #[test]
 fn account_from_single_file() {
     let file = fixtures_dir().join("single_file").join("account.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -48,7 +48,7 @@ fn account_from_single_file() {
 #[test]
 fn account_from_single_file_complex_types() {
     let file = fixtures_dir().join("single_file").join("complex_types.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
@@ -59,7 +59,7 @@ fn account_from_single_file_complex_types() {
 #[test]
 fn account_from_single_file_padding() {
     let file = fixtures_dir().join("single_file").join("padding.rs");
-    let idl = parse_file(&file, &ParseIdlConfig::optional_program_address())
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 

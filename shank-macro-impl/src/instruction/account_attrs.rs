@@ -8,18 +8,19 @@ use syn::{
 
 const IX_ACCOUNT: &str = "account";
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccount {
     pub ident: Ident,
     pub index: Option<u32>,
     pub name: String,
     pub writable: bool,
     pub signer: bool,
+    pub optional_signer: bool,
     pub desc: Option<String>,
     pub optional: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccounts(pub Vec<InstructionAccount>);
 
 impl InstructionAccount {
@@ -66,6 +67,7 @@ impl InstructionAccount {
         let mut index: Option<u32> = None;
         let mut writable = false;
         let mut signer = false;
+        let mut optional_signer = false;
         let mut desc = None;
         let mut account_name = None;
         let mut optional = false;
@@ -74,7 +76,7 @@ impl InstructionAccount {
             if let Some((ident, name, value)) = string_assign_from_nested_meta(meta)? {
                 // name/desc
                 match name.as_str() {
-                    "desc" | "description" => desc = Some(value),
+                    "desc" | "description" | "docs" => desc = Some(value),
                     "name" if value.trim().is_empty() => {
                         return Err(ParseError::new_spanned(
                             ident,
@@ -97,6 +99,7 @@ impl InstructionAccount {
                         writable = true;
                     }
                     "optional" | "option" | "opt" => optional = true,
+                    "optional_signer" => optional_signer = true,
                     _ => {
                         return Err(ParseError::new_spanned(
                             ident,
@@ -119,6 +122,12 @@ impl InstructionAccount {
                 }
             }
         }
+        if signer && optional_signer {
+            return Err(ParseError::new_spanned(
+                ident,
+                "Account cannot be both signer and optional_signer",
+            ));
+        }
         match account_name {
             Some(name) => Ok(Self {
                 ident,
@@ -126,6 +135,7 @@ impl InstructionAccount {
                 name,
                 writable,
                 signer,
+                optional_signer,
                 desc,
                 optional,
             }),

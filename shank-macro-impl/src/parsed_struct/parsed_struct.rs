@@ -10,7 +10,7 @@ use syn::{
     Result as ParseResult,
 };
 
-use crate::types::RustType;
+use crate::{parsed_struct::struct_attr::StructAttrs, types::RustType};
 
 use super::struct_field_attr::{StructFieldAttr, StructFieldAttrs};
 
@@ -59,6 +59,7 @@ pub struct ParsedStruct {
     pub ident: Ident,
     pub fields: Vec<StructField>,
     pub attrs: Vec<Attribute>,
+    pub struct_attrs: StructAttrs,
 }
 
 impl Parse for ParsedStruct {
@@ -85,10 +86,12 @@ impl TryFrom<&ItemStruct> for ParsedStruct {
                 ))
             }
         };
+        let struct_attrs = StructAttrs::try_from(item.attrs.as_slice())?;
         Ok(ParsedStruct {
             ident: item.ident.clone(),
             fields,
             attrs: item.attrs.clone(),
+            struct_attrs,
         })
     }
 }

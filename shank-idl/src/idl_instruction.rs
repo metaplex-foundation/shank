@@ -43,7 +43,7 @@ pub struct IdlInstruction {
     pub accounts: Vec<IdlAccountItem>,
     pub args: Vec<IdlField>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub default_optional_accounts: Option<bool>,
+    pub legacy_optional_accounts_strategy: Option<bool>,
     pub discriminant: IdlInstructionDiscriminant,
 }
 
@@ -98,8 +98,8 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
         let args: Vec<IdlField> = parsed_idl_fields?;
 
         let accounts = accounts.into_iter().map(IdlAccountItem::from).collect();
-        let default_optional_accounts = if strategies
-            .contains(&InstructionStrategy::DefaultOptionalAccounts)
+        let legacy_optional_accounts_strategy = if strategies
+            .contains(&InstructionStrategy::LegacyOptionalAccounts)
         {
             Some(true)
         } else {
@@ -121,7 +121,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             name,
             accounts,
             args,
-            default_optional_accounts,
+            legacy_optional_accounts_strategy,
             discriminant: (discriminant as u8).into(),
         })
     }
@@ -167,7 +167,7 @@ impl From<InstructionAccount> for IdlAccountItem {
 }
 
 fn is_false(x: &bool) -> bool {
-    return !x;
+    !x
 }
 // -----------------
 // IdlAccount
@@ -178,10 +178,12 @@ pub struct IdlAccount {
     pub name: String,
     pub is_mut: bool,
     pub is_signer: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub desc: Option<String>,
     #[serde(skip_serializing_if = "is_false", default)]
-    pub optional: bool,
+    pub is_optional_signer: bool,
+    #[serde(skip_serializing_if = "is_false", default)]
+    pub is_optional: bool,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub docs: Option<Vec<String>>,
 }
 
 impl From<InstructionAccount> for IdlAccount {
@@ -192,14 +194,16 @@ impl From<InstructionAccount> for IdlAccount {
             signer,
             desc,
             optional,
+            optional_signer,
             ..
         } = acc;
         Self {
             name: name.to_mixed_case(),
             is_mut: writable,
             is_signer: signer,
-            desc,
-            optional,
+            docs: desc.map(|desc| vec![desc]),
+            is_optional: optional,
+            is_optional_signer: optional_signer,
         }
     }
 }

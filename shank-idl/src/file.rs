@@ -113,7 +113,7 @@ fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
     let mut instructions: Vec<IdlInstruction> = Vec::new();
     // TODO(thlorenz): Should we enforce only one Instruction Enum Arg?
     // TODO(thlorenz): Should unfold that only arg?
-    // TODO(thlorenz): Better way to combine those if we don't to the above.
+    // TODO(thlorenz): Better way to combine those if we don't do the above.
 
     for ix in instruction_enums {
         let idl_instructions: IdlInstructions = ix.try_into()?;

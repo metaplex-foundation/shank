@@ -27,11 +27,11 @@ fn parse_first_enum_variant_attrs(
 }
 
 #[test]
-fn instruction_with_default_optional_accounts() {
+fn instruction_with_legacy_optional_accounts_strategy() {
     let (accounts, strategies) = parse_first_enum_variant_attrs(quote! {
         #[derive(ShankInstruction)]
         pub enum Instructions {
-            #[default_optional_accounts]
+            #[legacy_optional_accounts_strategy]
             #[account(name="authority")]
             NonIndexed
         }
@@ -54,13 +54,13 @@ fn instruction_with_default_optional_accounts() {
     assert!(
         strategies
             .0
-            .contains(&InstructionStrategy::DefaultOptionalAccounts),
-        "to default optional accounts"
+            .contains(&InstructionStrategy::LegacyOptionalAccounts),
+        "to legacy optional accounts strategy"
     );
 }
 
 #[test]
-fn instruction_without_default_optional_accounts() {
+fn instruction_without_legacy_optional_accounts_strategy() {
     let (accounts, strategies) = parse_first_enum_variant_attrs(quote! {
         #[derive(ShankInstruction)]
         pub enum Instructions {

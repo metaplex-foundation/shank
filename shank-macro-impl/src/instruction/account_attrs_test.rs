@@ -20,7 +20,7 @@ fn parse_first_enum_variant_attrs(
     attrs.try_into()
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionAccountWithoutIdent {
     pub index: Option<u32>,
     pub name: String,
