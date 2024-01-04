@@ -95,6 +95,7 @@ impl IdlInstruction {
                 name: "from".to_string(),
                 desc: Some("Payer of the transaction".to_string()),
                 signer: true,
+                optional_signer: false,
                 writable: true,
                 optional: false,
             }, InstructionAccount {
@@ -103,6 +104,7 @@ impl IdlInstruction {
                 name: "to".to_string(),
                 desc: Some("The deterministically defined 'state' account being created via `create_account_with_seed`".to_string()),
                 signer: false,
+                optional_signer: false,
                 writable: true,
                 optional: false,
             }, InstructionAccount {
@@ -111,6 +113,7 @@ impl IdlInstruction {
                 name: "base".to_string(),
                 desc: Some("The program-derived-address signing off on the account creation. Seeds = &[] + bump seed.".to_string()),
                 signer: false,
+                optional_signer: false,
                 writable: false,
                 optional: false,
             }, InstructionAccount {
@@ -119,6 +122,7 @@ impl IdlInstruction {
                 name: "system_program".to_string(),
                 desc: Some("The system program".to_string()),
                 signer: false,
+                optional_signer: false,
                 writable: false,
                 optional: false,
             }, InstructionAccount {
@@ -127,6 +131,7 @@ impl IdlInstruction {
                 name: "program".to_string(),
                 desc: Some("The program whose state is being constructed".to_string()),
                 signer: false,
+                optional_signer: false,
                 writable: false,
                 optional: false,
             }]),
@@ -137,6 +142,7 @@ impl IdlInstruction {
                         name: "buffer".to_string(),
                         desc: None,
                         signer: false,
+                        optional_signer: false,
                         writable: true,
                         optional: false,
                     }, InstructionAccount {
@@ -145,6 +151,7 @@ impl IdlInstruction {
                         name: "authority".to_string(),
                         desc: None,
                         signer: true,
+                        optional_signer: false,
                         writable: false,
                         optional: false,
                     }]),
@@ -155,6 +162,7 @@ impl IdlInstruction {
                         name: "buffer".to_string(),
                         desc: Some("The buffer with the new idl data.".to_string()),
                         signer: false,
+                        optional_signer: false,
                         writable: true,
                         optional: false,
                     }, InstructionAccount {
@@ -163,6 +171,7 @@ impl IdlInstruction {
                         name: "idl".to_string(),
                         desc: Some("The idl account to be updated with the buffer's data.".to_string()),
                         signer: false,
+                        optional_signer: false,
                         writable: true,
                         optional: false,
                     }, InstructionAccount {
@@ -171,6 +180,7 @@ impl IdlInstruction {
                         name: "authority".to_string(),
                         desc: None,
                         signer: true,
+                        optional_signer: false,
                         writable: false,
                         optional: false,
                     }]),
@@ -181,6 +191,7 @@ impl IdlInstruction {
                         name: "idl".to_string(),
                         desc: None,
                         signer: false,
+                        optional_signer: false,
                         writable: true,
                         optional: false,
                     }, InstructionAccount {
@@ -189,6 +200,7 @@ impl IdlInstruction {
                         name: "authority".to_string(),
                         desc: None,
                         signer: true,
+                        optional_signer: false,
                         writable: false,
                         optional: false,
                     }]),
@@ -201,7 +213,7 @@ impl IdlInstruction {
                 vec![(
                     "data_len".to_string(), 
                     RustType {
-                        ident: ident.clone(),
+                        ident,
                         kind: TypeKind::Primitive(Primitive::U64),
                         context: RustTypeContext::Default,
                         reference: crate::types::ParsedReference::Owned,
@@ -212,7 +224,7 @@ impl IdlInstruction {
                 vec![(
                     "new_authority".to_string(),
                     RustType {
-                        ident: ident.clone(),
+                        ident,
                         kind: TypeKind::Value(Value::Custom("Pubkey".to_string())),
                         context: RustTypeContext::Default,
                         reference: crate::types::ParsedReference::Owned
@@ -226,7 +238,7 @@ impl IdlInstruction {
                         ident: ident.clone(),
                         kind: TypeKind::Composite(Composite::Vec, vec![
                             RustType {
-                                ident: ident.clone(),
+                                ident,
                                 kind: TypeKind::Primitive(Primitive::U8),
                                 context: RustTypeContext::CollectionItem,
                                 reference: crate::types::ParsedReference::Owned

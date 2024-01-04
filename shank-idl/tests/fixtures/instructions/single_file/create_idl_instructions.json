@@ -9,31 +9,41 @@
           "name": "from",
           "isMut": true,
           "isSigner": true,
-          "desc": "Payer of the transaction"
+          "docs": [
+            "Payer of the transaction"
+          ]
         },
         {
           "name": "to",
           "isMut": true,
           "isSigner": false,
-          "desc": "The deterministically defined 'state' account being created via `create_account_with_seed`"
+          "docs": [
+            "The deterministically defined 'state' account being created via `create_account_with_seed`"
+          ]
         },
         {
           "name": "base",
           "isMut": false,
           "isSigner": false,
-          "desc": "The program-derived-address signing off on the account creation. Seeds = &[] + bump seed."
+          "docs": [
+            "The program-derived-address signing off on the account creation. Seeds = &[] + bump seed."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "desc": "The system program"
+          "docs": [
+            "The system program"
+          ]
         },
         {
           "name": "program",
           "isMut": false,
           "isSigner": false,
-          "desc": "The program whose state is being constructed"
+          "docs": [
+            "The program whose state is being constructed"
+          ]
         }
       ],
       "args": [
@@ -74,13 +84,17 @@
           "name": "buffer",
           "isMut": true,
           "isSigner": false,
-          "desc": "The buffer with the new idl data."
+          "docs": [
+            "The buffer with the new idl data."
+          ]
         },
         {
           "name": "idl",
           "isMut": true,
           "isSigner": false,
-          "desc": "The idl account to be updated with the buffer's data."
+          "docs": [
+            "The idl account to be updated with the buffer's data."
+          ]
         },
         {
           "name": "authority",

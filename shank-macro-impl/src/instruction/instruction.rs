@@ -33,7 +33,8 @@ impl Instruction {
         skip_derive_attr_check: bool,
     ) -> ParseResult<Option<Instruction>> {
         if skip_derive_attr_check
-            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR).is_some()
+            || get_derive_attr(&item_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+                .is_some()
         {
             let parsed_enum = ParsedEnum::try_from(item_enum)?;
             Instruction::try_from(&parsed_enum).map(Some)
@@ -47,7 +48,9 @@ impl TryFrom<&ParsedEnum> for Option<Instruction> {
     type Error = ParseError;
 
     fn try_from(parsed_enum: &ParsedEnum) -> ParseResult<Self> {
-        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR).map(|_| parsed_enum) {
+        match get_derive_attr(&parsed_enum.attrs, DERIVE_INSTRUCTION_ATTR)
+            .map(|_| parsed_enum)
+        {
             Some(ix_enum) => ix_enum.try_into().map(Some),
             None => Ok(None),
         }
@@ -110,7 +113,12 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
                 Some(_) => InstructionVariantFields::Named(
                     fields
                         .iter()
-                        .map(|x| (x.ident.as_ref().unwrap().to_string(), x.rust_type.clone()))
+                        .map(|x| {
+                            (
+                                x.ident.as_ref().unwrap().to_string(),
+                                x.rust_type.clone(),
+                            )
+                        })
                         .collect(),
                 ),
                 None => InstructionVariantFields::Unnamed(
@@ -126,16 +134,19 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
         let strategies: InstructionStrategies;
 
         let idl_instruction = IdlInstruction::try_from(attrs);
-        if idl_instruction.is_ok() {
-            let idl_ix = idl_instruction.unwrap();
-            accounts = idl_ix.to_accounts(ident.clone());
-            field_tys = idl_ix.to_instruction_fields(ident.clone());
-            strategies = InstructionStrategies(HashSet::<InstructionStrategy>::new());
-        } else {
-            let err = idl_instruction.unwrap_err();
-            println!("{}", err);
-            accounts = attrs.try_into()?;
-            strategies = attrs.into();
+        match idl_instruction {
+            Ok(idl_ix) => {
+                accounts = idl_ix.to_accounts(ident.clone());
+                field_tys = idl_ix.to_instruction_fields(ident.clone());
+                strategies = InstructionStrategies(HashSet::<
+                    InstructionStrategy,
+                >::new());
+            }
+            Err(err) => {
+                println!("{}", err);
+                accounts = attrs.try_into()?;
+                strategies = attrs.into();
+            }
         }
 
         Ok(Self {
