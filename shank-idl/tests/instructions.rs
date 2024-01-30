@@ -78,6 +78,27 @@ fn instruction_from_single_file_with_multiple_args() {
 }
 
 #[test]
+fn instruction_from_single_file_with_idl_instructions() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("create_idl_instructions.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/create_idl_instructions.json"
+    ))
+    .unwrap();
+
+    println!("IDL: {}", idl.try_into_json().unwrap());
+
+    println!("Expected: {}", expected_idl.try_into_json().unwrap());
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
 fn instruction_from_single_file_with_optional_account() {
     let file = fixtures_dir()
         .join("single_file")

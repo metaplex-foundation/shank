@@ -1,0 +1,165 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "Create",
+      "accounts": [
+        {
+          "name": "from",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Payer of the transaction"
+          ]
+        },
+        {
+          "name": "to",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The deterministically defined 'state' account being created via `create_account_with_seed`"
+          ]
+        },
+        {
+          "name": "base",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The program-derived-address signing off on the account creation. Seeds = &[] + bump seed."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        },
+        {
+          "name": "program",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The program whose state is being constructed"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "dataLen",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "CreateBuffer",
+      "accounts": [
+        {
+          "name": "buffer",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "SetBuffer",
+      "accounts": [
+        {
+          "name": "buffer",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The buffer with the new idl data."
+          ]
+        },
+        {
+          "name": "idl",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The idl account to be updated with the buffer's data."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "SetAuthority",
+      "accounts": [
+        {
+          "name": "idl",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "publicKey"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
+    },
+    {
+      "name": "Write",
+      "accounts": [
+        {
+          "name": "idl",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "idlData",
+          "type": "bytes"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
