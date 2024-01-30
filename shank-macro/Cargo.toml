@@ -1,6 +1,6 @@
 [package]
 name = "shank_macro"
-version = "0.3.1-alpha.4"
+version = "0.3.1-alpha.5"
 description = "Provides macros used to annotate Solana Rust programs in order to extract an IDL with the shank CLI"
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/shank"
@@ -14,6 +14,6 @@ doctest = false
 [dependencies]
 proc-macro2 = "1.0.32"
 quote = "1.0.10"
-shank_macro_impl = { version = "0.3.1-alpha.4", path = "../shank-macro-impl" }
-shank_render = { version = "0.3.1-alpha.4", path = "../shank-render" }
+shank_macro_impl = { version = "0.3.1-alpha.5", path = "../shank-macro-impl" }
+shank_render = { version = "0.3.1-alpha.5", path = "../shank-render" }
 syn = "1.0.82"
