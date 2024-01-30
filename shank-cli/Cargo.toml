@@ -4,7 +4,7 @@ description = "Shank CLI that extracts solita compatible IDL from your Rust Sola
 authors = ["Metaplex Maintainers <maintainers@metaplex.com>"]
 repository = "https://github.com/metaplex-foundation/shank"
 license = "Apache-2.0"
-version = "0.3.0"
+version = "0.3.1-alpha.1"
 edition = "2018"
 
 [[bin]]
@@ -17,4 +17,4 @@ anyhow = "1.0.48"
 clap = { version = "3.0.14", features = ["derive"] }
 fern = { version = "0.6.0", features = ["colored"] }
 log = "0.4.14"
-shank_idl = { version= "0.3.0", path = "../shank-idl" }
+shank_idl = { version= "0.3.1-alpha.1", path = "../shank-idl" }
