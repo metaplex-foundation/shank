@@ -14,6 +14,6 @@ doctest = false
 [dependencies]
 proc-macro2 = "1.0.32"
 quote = "1.0.10"
-shank_macro_impl = { version = "0.3.1-alpha.5", path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.4.0", path = "../shank-macro-impl" }
 shank_render = { version = "0.3.1-alpha.5", path = "../shank-render" }
 syn = "1.0.82"
