@@ -9,4 +9,4 @@ edition = "2018"
 
 
 [dependencies]
-shank_macro = { version = "0.3.1-alpha.5", path = "../shank-macro" }
+shank_macro = { version = "0.4.0", path = "../shank-macro" }
