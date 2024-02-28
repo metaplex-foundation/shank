@@ -25,6 +25,11 @@ pub enum Command {
         #[clap(short, long, default_value = "idl")]
         out_dir: String,
 
+        /// Output filename for the IDL JSON [default: <program crate name>.json,
+        /// e.g. "my_program.json"]
+        #[clap(long)]
+        out_filename: Option<String>,
+
         /// Directory of program crate for which to generate the IDL.
         #[clap(short = 'r', long)]
         crate_root: Option<String>,
@@ -39,9 +44,10 @@ pub fn entry(opts: Opts) -> Result<()> {
     match opts.command {
         Command::Idl {
             out_dir,
+            out_filename,
             crate_root,
             program_id,
-        } => idl(out_dir, crate_root, program_id),
+        } => idl(out_dir, out_filename, crate_root, program_id),
     }
 }
 
@@ -66,6 +72,7 @@ pub fn try_resolve_path(p: Option<String>, label: &str) -> Result<PathBuf> {
 
 pub fn idl(
     out_dir: String,
+    out_filename: Option<String>,
     crate_root: Option<String>,
     program_id: Option<String>,
 ) -> Result<()> {
@@ -107,8 +114,12 @@ pub fn idl(
     let idl_json = idl.try_into_json()?;
 
     // Write to JSON file
-    let name = manifest.lib_name()?;
-    let idl_json_path = out_dir.join(format!("{}.json", name));
+    let out_filename = if let Some(out_filename) = out_filename {
+        out_filename
+    } else {
+        format!("{}.json", manifest.lib_name()?)
+    };
+    let idl_json_path = out_dir.join(out_filename);
     let mut idl_json_file = File::create(&idl_json_path)?;
     info!("Writing IDL to {}", &idl_json_path.display());
 
