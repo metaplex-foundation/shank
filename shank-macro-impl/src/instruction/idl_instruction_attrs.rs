@@ -293,14 +293,14 @@ impl TryFrom<&[Attribute]> for IdlInstruction {
         if idl_instructions.len() > 1 {
             Err(IdlInstructionError::TooManyIdlInstructions(
                 ParseError::new_spanned(
-                    attrs.get(0),
+                    attrs.first(),
                     "Only one #[idl_instruction] attr is allowed per instruction",
                 ),
             ))
         } else if idl_instructions.is_empty() {
             Err(IdlInstructionError::NotEnoughIdlInstructions)
         } else {
-            let ix = *idl_instructions.get(0).unwrap();
+            let ix = *idl_instructions.first().unwrap();
             Ok(ix)
         }
     }

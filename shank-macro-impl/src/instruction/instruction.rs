@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    account_attrs::{InstructionAccount, InstructionAccounts},
-    IdlInstruction, InstructionStrategies, InstructionStrategy,
+    account_attrs::InstructionAccount, IdlInstruction, InstructionStrategies,
+    InstructionStrategy,
 };
 
 // -----------------
@@ -108,7 +108,7 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
 
         let mut field_tys: InstructionVariantFields = if !fields.is_empty() {
             // Determine if the InstructionType is tuple or struct variant
-            let field = fields.get(0).unwrap();
+            let field = fields.first().unwrap();
             match &field.ident {
                 Some(_) => InstructionVariantFields::Named(
                     fields

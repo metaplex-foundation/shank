@@ -66,7 +66,7 @@ impl TryFrom<RustType> for IdlType {
                 }
             },
             TypeKind::Composite(kind, inners) => match kind {
-                Composite::Vec => match inners.get(0).cloned() {
+                Composite::Vec => match inners.first().cloned() {
                     Some(inner) => {
                         let inner_idl: IdlType = inner.try_into()?;
                         if inner_idl == IdlType::U8 {
@@ -80,7 +80,7 @@ impl TryFrom<RustType> for IdlType {
                         anyhow::bail!("Rust Vec Composite needs inner type")
                     }
                 },
-                Composite::Array(size) => match inners.get(0).cloned() {
+                Composite::Array(size) => match inners.first().cloned() {
                     Some(inner) => {
                         let inner_idl: IdlType = inner.try_into()?;
                         IdlType::Array(Box::new(inner_idl), size)
@@ -90,7 +90,7 @@ impl TryFrom<RustType> for IdlType {
                     }
                 },
 
-                Composite::Option => match inners.get(0).cloned() {
+                Composite::Option => match inners.first().cloned() {
                     Some(inner) => {
                         let inner_idl: IdlType = inner.try_into()?;
                         IdlType::Option(Box::new(inner_idl))
@@ -109,7 +109,7 @@ impl TryFrom<RustType> for IdlType {
                     }
                 }
                 Composite::HashMap => {
-                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                    match (inners.first().cloned(), inners.get(1).cloned()) {
                         (Some(inner1), Some(inner2)) => {
                             let inner1_idl: IdlType = inner1.try_into()?;
                             let inner2_idl: IdlType = inner2.try_into()?;
@@ -126,7 +126,7 @@ impl TryFrom<RustType> for IdlType {
                     }
                 }
                 Composite::BTreeMap => {
-                    match (inners.get(0).cloned(), inners.get(1).cloned()) {
+                    match (inners.first().cloned(), inners.get(1).cloned()) {
                         (Some(inner1), Some(inner2)) => {
                             let inner1_idl: IdlType = inner1.try_into()?;
                             let inner2_idl: IdlType = inner2.try_into()?;
@@ -142,7 +142,7 @@ impl TryFrom<RustType> for IdlType {
                         }
                     }
                 }
-                Composite::HashSet => match inners.get(0).cloned() {
+                Composite::HashSet => match inners.first().cloned() {
                     Some(inner) => {
                         let inner_idl: IdlType = inner.try_into()?;
                         IdlType::HashSet(Box::new(inner_idl))
@@ -153,7 +153,7 @@ impl TryFrom<RustType> for IdlType {
                         )
                     }
                 },
-                Composite::BTreeSet => match inners.get(0).cloned() {
+                Composite::BTreeSet => match inners.first().cloned() {
                     Some(inner) => {
                         let inner_idl: IdlType = inner.try_into()?;
                         IdlType::BTreeSet(Box::new(inner_idl))
@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn idl_from_rust_type_primivives() {
-        for (rust_prim, idl_expected) in vec![
+        for (rust_prim, idl_expected) in [
             (Primitive::U8, IdlType::U8),
             (Primitive::U16, IdlType::U16),
             (Primitive::I128, IdlType::I128),

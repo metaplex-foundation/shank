@@ -97,7 +97,7 @@ impl TryFrom<&ParsedEnumVariant> for BuilderVariant {
 
         let field_tys: InstructionVariantFields = if !fields.is_empty() {
             // Determine if the InstructionType is tuple or struct variant
-            let field = fields.get(0).unwrap();
+            let field = fields.first().unwrap();
             match &field.ident {
                 Some(_) => InstructionVariantFields::Named(
                     fields

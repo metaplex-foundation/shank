@@ -42,7 +42,7 @@ fn match_array_field(
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
         assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
-            let inner_rust_ty = inner.get(0).expect("array should have inner type");
+            let inner_rust_ty = inner.first().expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
@@ -60,7 +60,7 @@ fn match_array_field_with_attrs(
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, "Array");
         assert_matches!(&rust_type.kind, TypeKind::Composite(Composite::Array(array_size), inner)  => {
-            let inner_rust_ty = inner.get(0).expect("array should have inner type");
+            let inner_rust_ty = inner.first().expect("array should have inner type");
             assert_eq!(inner_rust_ty.ident, inner_ty, "inner array type");
             assert_eq!(*array_size, size, "array size");
         });
