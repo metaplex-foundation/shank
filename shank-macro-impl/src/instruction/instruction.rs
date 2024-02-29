@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    account_attrs::{InstructionAccount, InstructionAccounts},
-    IdlInstruction, InstructionStrategies, InstructionStrategy,
+    account_attrs::InstructionAccount, IdlInstruction, InstructionStrategies,
+    InstructionStrategy,
 };
 
 // -----------------
@@ -108,7 +108,7 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
 
         let mut field_tys: InstructionVariantFields = if !fields.is_empty() {
             // Determine if the InstructionType is tuple or struct variant
-            let field = fields.get(0).unwrap();
+            let field = fields.first().unwrap();
             match &field.ident {
                 Some(_) => InstructionVariantFields::Named(
                     fields
@@ -130,24 +130,16 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
         };
 
         let attrs: &[Attribute] = attrs.as_ref();
-        let accounts: InstructionAccounts;
-        let strategies: InstructionStrategies;
-
-        let idl_instruction = IdlInstruction::try_from(attrs);
-        match idl_instruction {
+        let (accounts, strategies) = match IdlInstruction::try_from(attrs) {
             Ok(idl_ix) => {
-                accounts = idl_ix.to_accounts(ident.clone());
                 field_tys = idl_ix.to_instruction_fields(ident.clone());
-                strategies = InstructionStrategies(HashSet::<
-                    InstructionStrategy,
-                >::new());
+                (
+                    idl_ix.to_accounts(ident.clone()),
+                    InstructionStrategies(HashSet::<InstructionStrategy>::new()),
+                )
             }
-            Err(err) => {
-                println!("{}", err);
-                accounts = attrs.try_into()?;
-                strategies = attrs.into();
-            }
-        }
+            Err(_) => (attrs.try_into()?, attrs.into()),
+        };
 
         Ok(Self {
             ident: ident.clone(),

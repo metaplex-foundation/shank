@@ -111,7 +111,7 @@ impl TypeKind {
             | TypeKind::Composite(Composite::Array(_), inners)
             | TypeKind::Composite(Composite::HashSet, inners)
             | TypeKind::Composite(Composite::BTreeSet, inners) => {
-                inners.get(0).cloned()
+                inners.first().cloned()
             }
             TypeKind::Composite(_, _) => None,
             TypeKind::Unit => None,
@@ -127,7 +127,7 @@ impl TypeKind {
             TypeKind::Value(_) => (None, None),
             TypeKind::Composite(Composite::HashMap, inners)
             | TypeKind::Composite(Composite::BTreeMap, inners) => {
-                (inners.get(0).cloned(), inners.get(1).cloned())
+                (inners.first().cloned(), inners.get(1).cloned())
             }
             TypeKind::Composite(_, _) => (None, None),
             TypeKind::Unit => (None, None),
@@ -144,7 +144,7 @@ impl TypeKind {
                     || composite == &Composite::BTreeMap =>
             {
                 let key = inners
-                    .get(0)
+                    .first()
                     .cloned()
                     .ok_or_else(|| {
                         format!("{:?} should have key type", composite)
