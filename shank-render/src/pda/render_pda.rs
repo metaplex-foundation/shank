@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use proc_macro2::{Span, TokenStream};
-use quote::{quote, ToTokens};
+use quote::quote;
 use shank_macro_impl::{
     parsed_struct::{ProcessedSeed, Seed},
-    syn::Ident,
+    syn::{Ident, Result as ParseResult},
 };
 
 use crate::consts::solana_program_pubkey;
@@ -16,14 +18,14 @@ pub fn render_pda_fn(
     pda_fn_name: &Ident,
     pda_fn_with_bump_name: &Ident,
     include_comments: bool,
-) -> Option<TokenStream> {
+) -> ParseResult<Option<TokenStream>> {
     let RenderedPdaParts {
         seed_param_assigns,
         seed_fn_args,
         pda_fn_args,
     } = render_pda_parts(processed_seeds);
     if pda_fn_args.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let pubkey = solana_program_pubkey();
@@ -35,16 +37,15 @@ pub fn render_pda_fn(
     let (pda_comments, pda_with_bump_comments) = if include_comments {
         let args_comments = render_args_comments(processed_seeds, true);
         (
-            format!(
+            TokenStream::from_str(&format!(
                 r#"
                 /// Derives the PDA for this account.
                 ///
                 /// * **program_id**: The id of the program
                 {}"#,
                 args_comments.join("\n")
-            )
-            .to_token_stream(),
-            format!(
+            ))?,
+            TokenStream::from_str(&format!(
                 r#"
                 /// Derives the PDA for this account allowing to provide a bump seed.
                 ///
@@ -52,14 +53,13 @@ pub fn render_pda_fn(
                 {}
                 /// * **bump**: the bump seed to pass when deriving the PDA"#,
                 args_comments.join("\n")
-            )
-            .to_token_stream(),
+            ))?,
         )
     } else {
         (TokenStream::new(), TokenStream::new())
     };
 
-    Some(quote! {
+    Ok(Some(quote! {
         #pda_comments
         #[allow(unused)]
         pub fn #pda_fn_name(#(#pda_fn_args),*) -> (#pubkey, u8)  {
@@ -75,7 +75,7 @@ pub fn render_pda_fn(
             let seeds = Self::#seeds_fn_with_bump_name(#(#seed_fn_args),* #seed_bump_arg);
             #pubkey::find_program_address(&seeds, program_id)
         }
-    })
+    }))
 }
 
 #[derive(Debug)]
