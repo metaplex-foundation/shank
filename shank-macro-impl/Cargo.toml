@@ -5,7 +5,7 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank_macro_impl"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.5.0"
+version = "0.4.2"
 
 [dependencies]
 anyhow = "1.0.48"

@@ -5,12 +5,12 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank_render"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.5.0"
+version = "0.4.2"
 
 [dependencies]
 proc-macro2 = "1.0.46"
 quote = "1.0.21"
-shank_macro_impl = { version = "0.5.0", path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.4.2", path = "../shank-macro-impl" }
 
 [dev-dependencies]
 prettyplease = "0.1.21"
