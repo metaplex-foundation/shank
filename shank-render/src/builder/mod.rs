@@ -15,13 +15,19 @@ pub fn render_builders_impl(
         .map(|variant| generate_builders(&builder_item.ident, variant))
         .collect::<Vec<TokenStream>>();
 
+    let instruction_type = if cfg!(feature = "pinocchio") {
+        quote! { pinocchio::instruction::Instruction }
+    } else {
+        quote! { solana_program::instruction::Instruction }
+    };
+
     Ok(quote! {
             pub mod builders {
                 use super::*;
 
                 /// Trait that defines the interface for creating an instruction.
                 pub trait InstructionBuilder {
-                    fn instruction(&self) -> solana_program::instruction::Instruction;
+                    fn instruction(&self) -> #instruction_type;
                 }
 
                 #(#builders)*

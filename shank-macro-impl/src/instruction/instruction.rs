@@ -25,6 +25,8 @@ use super::{
 pub struct Instruction {
     pub ident: Ident,
     pub variants: Vec<InstructionVariant>,
+    pub discriminator_size: Option<u8>,
+    pub discriminator_offset: Option<usize>,
 }
 
 impl Instruction {
@@ -62,16 +64,52 @@ impl TryFrom<&ParsedEnum> for Instruction {
 
     fn try_from(parsed_enum: &ParsedEnum) -> ParseResult<Self> {
         let ParsedEnum {
-            ident, variants, ..
+            ident,
+            variants,
+            attrs,
+            ..
         } = parsed_enum;
+
+        // Parse discriminator size from attributes
+        let discriminator_size = attrs
+            .iter()
+            .find(|attr| attr.path.is_ident("discriminator_size"))
+            .and_then(|attr| {
+                attr.parse_args::<syn::LitInt>()
+                    .ok()
+                    .and_then(|lit| lit.base10_parse::<u8>().ok())
+            });
+
+        // Parse discriminator offset from attributes
+        let discriminator_offset = attrs
+            .iter()
+            .find(|attr| attr.path.is_ident("discriminator_offset"))
+            .and_then(|attr| {
+                attr.parse_args::<syn::LitInt>()
+                    .ok()
+                    .and_then(|lit| lit.base10_parse::<usize>().ok())
+            });
 
         let variants = variants
             .iter()
-            .map(InstructionVariant::try_from)
+            .map(|variant| {
+                let mut variant = InstructionVariant::try_from(variant)?;
+                if let Some(offset) = discriminator_offset {
+                    variant.discriminant += offset;
+                }
+                Ok(variant)
+            })
             .collect::<ParseResult<Vec<InstructionVariant>>>()?;
+
+        println!("variants: {:?}", variants);
+        println!("discriminator_size: {:?}", discriminator_size);
+        println!("discriminator_offset: {:?}", discriminator_offset);
+
         Ok(Self {
             ident: ident.clone(),
             variants,
+            discriminator_size,
+            discriminator_offset,
         })
     }
 }
@@ -92,6 +130,7 @@ pub struct InstructionVariant {
     pub accounts: Vec<InstructionAccount>,
     pub strategies: HashSet<InstructionStrategy>,
     pub discriminant: usize,
+    pub discriminant_size: Option<u8>,
 }
 
 impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
@@ -141,12 +180,22 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             Err(_) => (attrs.try_into()?, attrs.into()),
         };
 
+        let discriminant_size = attrs
+            .iter()
+            .find(|attr| attr.path.is_ident("discriminator_size"))
+            .and_then(|attr| {
+                attr.parse_args::<syn::LitInt>()
+                    .ok()
+                    .and_then(|lit| lit.base10_parse::<u8>().ok())
+            });
+
         Ok(Self {
             ident: ident.clone(),
             field_tys,
             accounts: accounts.0,
             strategies: strategies.0,
             discriminant: *discriminant,
+            discriminant_size,
         })
     }
 }

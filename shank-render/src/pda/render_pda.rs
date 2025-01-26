@@ -5,7 +5,7 @@ use shank_macro_impl::{
     syn::Ident,
 };
 
-use crate::consts::solana_program_pubkey;
+use crate::consts::program_pubkey_type;
 
 use super::render_args_comments;
 
@@ -26,7 +26,7 @@ pub fn render_pda_fn(
         return None;
     }
 
-    let pubkey = solana_program_pubkey();
+    let pubkey = program_pubkey_type();
     let seed_bump_arg = if seed_fn_args.is_empty() {
         quote! { bump_arg }
     } else {
@@ -98,7 +98,7 @@ fn render_pda_parts(processed_seeds: &[ProcessedSeed]) -> RenderedPdaParts {
         .flatten()
         .collect::<Vec<TokenStream>>();
 
-    let pubkey_ty = solana_program_pubkey();
+    let pubkey_ty = program_pubkey_type();
     let program_id_arg = quote! { program_id : &#pubkey_ty };
     pda_fn_args.insert(0, program_id_arg);
 

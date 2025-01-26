@@ -138,6 +138,23 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// will is expected to be properly respected by code generator tools like
 /// [kinobi](https://github.com/metaplex-foundation/kinobi) and [solita](https://github.com/metaplex-foundation/solita).
 ///
+/// # Discriminator Size and Offset
+///
+/// You can specify the size of the instruction discriminator and its starting offset:
+///
+/// ```
+/// #[derive(ShankInstruction)]
+/// #[discriminator_size(8)]      // Use u64 for discriminator
+/// #[discriminator_offset(100)]  // Start counting from 100
+/// pub enum Instruction {
+///     // First variant will have discriminant 100
+///     First,
+///     // Second variant will have discriminant 101
+///     Second,
+///     // etc...
+/// }
+/// ```
+///
 /// # Examples
 ///
 /// ```
@@ -178,7 +195,12 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(
     ShankInstruction,
-    attributes(account, legacy_optional_accounts_strategy)
+    attributes(
+        account,
+        legacy_optional_accounts_strategy,
+        discriminator_size,
+        discriminator_offset
+    )
 )]
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

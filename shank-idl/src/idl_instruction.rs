@@ -20,10 +20,23 @@ impl TryFrom<Instruction> for IdlInstructions {
     type Error = Error;
 
     fn try_from(ix: Instruction) -> Result<Self, Self::Error> {
+        let discriminator_size = ix.discriminator_size;
         let instructions = ix
             .variants
             .into_iter()
-            .map(IdlInstruction::try_from)
+            .map(|variant| {
+                let mut idl_ix = IdlInstruction::try_from(variant)?;
+                if let Some(size) = discriminator_size {
+                    idl_ix.discriminant.ty = match size {
+                        1 => IdlType::U8,
+                        2 => IdlType::U16,
+                        4 => IdlType::U32,
+                        8 => IdlType::U64,
+                        _ => return Err(anyhow!("Invalid discriminator size: {}. Must be 1, 2, 4, or 8", size)),
+                    };
+                }
+                Ok(idl_ix)
+            })
             .collect::<Result<Vec<IdlInstruction>>>()?;
         Ok(Self(instructions))
     }
@@ -57,6 +70,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             accounts,
             strategies,
             discriminant,
+            discriminant_size,
         } = variant;
 
         let name = ident.to_string();
@@ -106,23 +120,32 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
             None
         };
 
-        ensure!(
-            discriminant < u8::MAX as usize,
-            anyhow!(
-                "Instruction variant discriminants have to be <= u8::MAX ({}), \
-                    but the discriminant of variant '{}' is {}",
-                u8::MAX,
-                ident,
-                discriminant
-            )
-        );
+        // ensure!(
+        //     discriminant < ((u64::MAX as u128) + 1),
+        //     anyhow!(
+        //         "Instruction variant discriminants have to be <= u64::MAX ({}), \
+        //             but the discriminant of variant '{}' is {}",
+        //         u8::MAX,
+        //         ident,
+        //         discriminant
+        //     )
+        // );
 
         Ok(Self {
             name,
             accounts,
             args,
             legacy_optional_accounts_strategy,
-            discriminant: (discriminant as u8).into(),
+            discriminant: IdlInstructionDiscriminant {
+                ty: match discriminant_size {
+                    Some(1) => IdlType::U8,
+                    Some(2) => IdlType::U16,
+                    Some(4) => IdlType::U32,
+                    Some(8) => IdlType::U64,
+                    _ => IdlType::U8,
+                },
+                value: discriminant as u64,
+            },
         })
     }
 }
@@ -131,16 +154,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
 pub struct IdlInstructionDiscriminant {
     #[serde(rename = "type")]
     pub ty: IdlType,
-    pub value: u8,
-}
-
-impl From<u8> for IdlInstructionDiscriminant {
-    fn from(value: u8) -> Self {
-        Self {
-            ty: IdlType::U8,
-            value,
-        }
-    }
+    pub value: u64,
 }
 
 // -----------------

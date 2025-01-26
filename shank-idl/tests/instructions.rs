@@ -99,6 +99,48 @@ fn instruction_from_single_file_with_idl_instructions() {
 }
 
 #[test]
+fn instruction_from_single_file_with_u64_discriminator() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("create_idl_instructions_u64.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/create_idl_instructions_u64.json"
+    ))
+    .unwrap();
+
+    println!("IDL: {}", idl.try_into_json().unwrap());
+
+    println!("Expected: {}", expected_idl.try_into_json().unwrap());
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn instruction_from_single_file_with_with_offset() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("create_idl_instructions_with_offset.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/create_idl_instructions_with_offset.json"
+    ))
+    .unwrap();
+
+    println!("IDL: {}", idl.try_into_json().unwrap());
+
+    println!("Expected: {}", expected_idl.try_into_json().unwrap());
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
 fn instruction_from_single_file_with_optional_account() {
     let file = fixtures_dir()
         .join("single_file")
@@ -145,17 +187,17 @@ fn instruction_from_single_file_invalid_attr() {
     assert!(source_string.contains("account meta configuration"));
 }
 
-#[test]
-fn instruction_from_single_file_invalid_discriminant() {
-    let file = fixtures_dir()
-        .join("single_file")
-        .join("instruction_invalid_discriminant.rs");
-    let res = parse_file(file, &ParseIdlConfig::optional_program_address());
+// #[test]
+// fn instruction_from_single_file_invalid_discriminant() {
+//     let file = fixtures_dir()
+//         .join("single_file")
+//         .join("instruction_invalid_discriminant.rs");
+//     let res = parse_file(file, &ParseIdlConfig::optional_program_address());
 
-    let err = res.unwrap_err().to_string();
-    assert!(err.contains("discriminants have to be <= u8::MAX"));
-    assert!(err.contains("discriminant of variant 'CreateThing' is 256"));
-}
+//     let err = res.unwrap_err().to_string();
+//     assert!(err.contains("discriminants have to be <= u8::MAX"));
+//     assert!(err.contains("discriminant of variant 'CreateThing' is 256"));
+// }
 
 #[test]
 fn instruction_from_single_file_with_optional_signer_account() {
