@@ -5,7 +5,7 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank_idl"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.4.2"
+version = "0.4.3-alpha.1"
 
 [dependencies]
 anyhow = "1.0.48"
@@ -13,5 +13,5 @@ cargo_toml = "0.17"
 heck = "0.3.3"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.72"
-shank_macro_impl = { version = "0.4.2", path = "../shank-macro-impl" }
+shank_macro_impl = { version = "0.4.3-alpha.1", path = "../shank-macro-impl" }
 shellexpand = "2.1.0"

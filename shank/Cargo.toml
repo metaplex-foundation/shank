@@ -5,7 +5,7 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.4.2"
+version = "0.4.3-alpha.1"
 
 [features]
 default = ["solana-program"]
@@ -13,4 +13,4 @@ pinocchio = ["shank_macro/pinocchio"]
 solana-program = ["shank_macro/solana-program"]
 
 [dependencies]
-shank_macro = { version = "0.4.2", path = "../shank-macro" }
+shank_macro = { version = "0.4.3-alpha.1", path = "../shank-macro" }

@@ -5,7 +5,7 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank-cli"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.4.2"
+version = "0.4.3-alpha.1"
 
 [[bin]]
 name = "shank"
@@ -17,4 +17,4 @@ anyhow = "1.0.48"
 clap = { version = "3.0.14", features = ["derive"] }
 fern = { version = "0.6.0", features = ["colored"] }
 log = "0.4.14"
-shank_idl = { version = "0.4.2", path = "../shank-idl" }
+shank_idl = { version = "0.4.3-alpha.1", path = "../shank-idl" }

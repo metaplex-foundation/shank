@@ -5,7 +5,7 @@ edition = "2018"
 license = "Apache-2.0"
 name = "shank_macro"
 repository = "https://github.com/metaplex-foundation/shank"
-version = "0.4.2"
+version = "0.4.3-alpha.1"
 
 [lib]
 doctest = false
@@ -14,8 +14,8 @@ proc-macro = true
 [dependencies]
 proc-macro2 = "1.0.32"
 quote = "1.0.10"
-shank_macro_impl = { version = "0.4.2", path = "../shank-macro-impl" }
-shank_render = { version = "0.4.2", path = "../shank-render" }
+shank_macro_impl = { version = "0.4.3-alpha.1", path = "../shank-macro-impl" }
+shank_render = { version = "0.4.3-alpha.1", path = "../shank-render" }
 syn = "1.0.82"
 
 [features]
