@@ -13,20 +13,28 @@
             "type": "u32"
           },
           {
-            "name": "enumAsByte",
+            "name": "enumAsByteStr",
             "type": {
               "defined": "TestEnum"
             },
-            "attrs": [
-              "shank-as"
-            ]
+            "attrs": ["shank-as"]
           },
           {
-            "name": "wrappedU64",
+            "name": "wrappedU64Str",
             "type": "u64",
-            "attrs": [
-              "shank-as"
-            ]
+            "attrs": ["shank-as"]
+          },
+          {
+            "name": "enumAsByteDirect",
+            "type": {
+              "defined": "TestEnum"
+            },
+            "attrs": ["shank-as"]
+          },
+          {
+            "name": "wrappedU32Direct",
+            "type": "u32",
+            "attrs": ["shank-as"]
           },
           {
             "name": "enumAsEnum",

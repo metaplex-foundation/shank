@@ -29,6 +29,11 @@ This attribute allows you to override how Shank interprets a field's type when g
 2. Fields storing enum values as primitives (like `u8`) that should be recognized as enums
 3. Fields with complex types that need simpler representations in the IDL
 
+The attribute supports two formats:
+
+1. **String literal format**: `#[shank(as = "TypeName")]`
+2. **Direct type format**: `#[shank(as = TypeName)]`
+
 ```rs
 use shank::ShankAccount;
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -38,13 +43,21 @@ pub struct MyAccount {
     // Regular field
     pub regular_field: u32,
 
-    // Field stored as u8 but representing an enum
+    // Field stored as u8 but representing an enum (string literal format)
     #[shank(as = "MyEnum")]
-    pub enum_as_byte: u8,
+    pub enum_as_byte_str: u8,
 
-    // Field with a wrapper type that should be treated as a simpler type
+    // Field with a wrapper type that should be treated as a simpler type (string literal format)
     #[shank(as = "u64")]
-    pub wrapped_u64: CustomU64Wrapper,
+    pub wrapped_u64_str: CustomU64Wrapper,
+
+    // Field stored as u8 but representing an enum (direct type format)
+    #[shank(as = MyEnum)]
+    pub enum_as_byte_direct: u8,
+
+    // Field with a wrapper type that should be treated as a simpler type (direct type format)
+    #[shank(as = u64)]
+    pub wrapped_u32_direct: CustomU32Wrapper,
 }
 ```
 
