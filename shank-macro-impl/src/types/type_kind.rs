@@ -1,5 +1,6 @@
 use super::RustType;
 use std::fmt::{Debug, Display};
+use std::hash::{Hash, Hasher};
 
 // -----------------
 // TypeKind
@@ -11,6 +12,35 @@ pub enum TypeKind {
     Composite(Composite, Vec<RustType>),
     Unit,
     Unknown,
+}
+
+impl Hash for TypeKind {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use discriminant to hash the enum variant
+        std::mem::discriminant(self).hash(state);
+
+        // Hash the inner values based on the variant
+        match self {
+            TypeKind::Primitive(p) => {
+                p.hash(state);
+            }
+            TypeKind::Value(v) => {
+                v.hash(state);
+            }
+            TypeKind::Composite(c, types) => {
+                c.hash(state);
+                for ty in types {
+                    ty.hash(state);
+                }
+            }
+            TypeKind::Unit => {
+                // Unit has no inner values to hash
+            }
+            TypeKind::Unknown => {
+                // Unknown has no inner values to hash
+            }
+        }
+    }
 }
 
 impl PartialEq for TypeKind {
@@ -227,6 +257,13 @@ impl Display for Primitive {
     }
 }
 
+impl Hash for Primitive {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use discriminant to hash the enum variant
+        std::mem::discriminant(self).hash(state);
+    }
+}
+
 // --------------
 // Value
 // --------------
@@ -270,6 +307,18 @@ impl Value {
     }
 }
 
+impl Hash for Value {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use discriminant to hash the enum variant
+        std::mem::discriminant(self).hash(state);
+
+        // Hash the inner string for Custom variant
+        if let Value::Custom(s) = self {
+            s.hash(state);
+        }
+    }
+}
+
 // --------------
 // Composite
 // --------------
@@ -299,6 +348,26 @@ impl Debug for Composite {
             Composite::BTreeSet => write!(f, "Composite::BTreeSet"),
             Composite::Custom(name) => {
                 write!(f, "Composite::Custom(\"{}\")", name)
+            }
+        }
+    }
+}
+
+impl Hash for Composite {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use discriminant to hash the enum variant
+        std::mem::discriminant(self).hash(state);
+
+        // Hash the inner values
+        match self {
+            Composite::Array(size) => {
+                size.hash(state);
+            }
+            Composite::Custom(s) => {
+                s.hash(state);
+            }
+            _ => {
+                // Other variants have no inner values to hash
             }
         }
     }

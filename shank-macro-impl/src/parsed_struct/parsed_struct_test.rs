@@ -343,3 +343,50 @@ mod account_tuples_examples {
         );
     }
 }
+
+mod account_with_shank_as_examples {
+    use super::*;
+
+    #[test]
+    fn account_with_shank_as() {
+        let input = quote! {
+            pub struct AccountWithShankAs {
+                pub regular_field: u32,
+                #[shank(as = "MyEnum")]
+                pub enum_as_byte: u8,
+                #[shank(as = "u64")]
+                pub wrapped_u64: CustomU64Wrapper,
+            }
+        };
+
+        let parsed = parse(input);
+        assert_eq!(parsed.fields.len(), 3);
+
+        // Regular field
+        match_field(&parsed.fields[0], "regular_field", "u32");
+
+        // Field with shank-as attribute for enum
+        assert_matches!(&parsed.fields[1], StructField { ident, rust_type, attrs: _ } => {
+            assert_eq!(ident, "enum_as_byte");
+            assert_eq!(rust_type.ident, "u8");
+
+            // Check if the attribute exists
+            let has_shank_as = parsed.fields[1].attrs.iter().any(|attr| {
+                matches!(attr, StructFieldAttr::ShankAs(_))
+            });
+            assert!(has_shank_as, "Field should have shank-as attribute");
+        });
+
+        // Field with shank-as attribute for wrapper type
+        assert_matches!(&parsed.fields[2], StructField { ident, rust_type, attrs: _ } => {
+            assert_eq!(ident, "wrapped_u64");
+            assert_eq!(rust_type.ident, "CustomU64Wrapper");
+
+            // Check if the attribute exists
+            let has_shank_as = parsed.fields[2].attrs.iter().any(|attr| {
+                matches!(attr, StructFieldAttr::ShankAs(_))
+            });
+            assert!(has_shank_as, "Field should have shank-as attribute");
+        });
+    }
+}

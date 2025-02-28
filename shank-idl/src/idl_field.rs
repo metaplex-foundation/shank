@@ -19,7 +19,12 @@ pub struct IdlField {
 impl TryFrom<StructField> for IdlField {
     type Error = Error;
     fn try_from(field: StructField) -> Result<Self> {
-        let ty: IdlType = field.rust_type.try_into()?;
+        let ty: IdlType = if let Some(override_type) = field.type_override() {
+            override_type.clone().try_into()?
+        } else {
+            field.rust_type.try_into()?
+        };
+
         let attrs = field
             .attrs
             .iter()

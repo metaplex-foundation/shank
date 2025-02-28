@@ -3,29 +3,63 @@
 Provides macros used to annotate Solana Rust programs in order to extract an IDL with the shank
 CLI.
 
-### ShankAccount 
+### ShankAccount
 
 Annotates a _struct_ that shank will consider an account containing de/serializable data.
 
- ```rs
- use shank::ShankAccount;
- use borsh::{BorshDeserialize, BorshSerialize};
+```rs
+use shank::ShankAccount;
+use borsh::{BorshDeserialize, BorshSerialize};
 
- #[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
- pub struct Metadata {
-     pub update_authority: Pubkey,
-     pub mint: Pubkey,
-     pub primary_sale_happened: bool,
- }
- ```
+#[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
+pub struct Metadata {
+    pub update_authority: Pubkey,
+    pub mint: Pubkey,
+    pub primary_sale_happened: bool,
+}
+```
+
+### Field Attributes
+
+#### `#[shank(as = "...")]` attribute
+
+This attribute allows you to override how Shank interprets a field's type when generating the IDL. This is useful for:
+
+1. Fields with wrapper types that should be treated as their inner types in the IDL
+2. Fields storing enum values as primitives (like `u8`) that should be recognized as enums
+3. Fields with complex types that need simpler representations in the IDL
+
+```rs
+use shank::ShankAccount;
+use borsh::{BorshDeserialize, BorshSerialize};
+
+#[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
+pub struct MyAccount {
+    // Regular field
+    pub regular_field: u32,
+
+    // Field stored as u8 but representing an enum
+    #[shank(as = "MyEnum")]
+    pub enum_as_byte: u8,
+
+    // Field with a wrapper type that should be treated as a simpler type
+    #[shank(as = "u64")]
+    pub wrapped_u64: CustomU64Wrapper,
+}
+```
+
+The type specified in the `as` parameter must be a valid Rust type that Shank can recognize. If the type is a custom type (like an enum), make sure it's defined in your codebase and is accessible to Shank during IDL generation.
+
+#### `#[padding]` attribute
+
+Indicates that a field is used for padding and should be marked as such in the IDL.
 
 ### Note
 
- The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
- with `BorshSerialize` or `BorshDeserialize`.
+The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
+with `BorshSerialize`, `BorshDeserialize`, or `ShankType`.
 
 ## ShankInstruction
-
 
 Annotates the program _Instruction_ `Enum` in order to include `#[account]` attributes.
 
