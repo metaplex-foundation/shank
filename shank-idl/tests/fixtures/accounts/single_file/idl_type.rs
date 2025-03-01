@@ -36,7 +36,4 @@ pub struct AccountWithIdlType {
     /// A field with a wrapper type that should be treated as a simpler type (using direct type format)
     #[idl_type(u32)]
     pub wrapped_u32_direct: CustomU32Wrapper,
-
-    /// A direct enum field for comparison
-    pub enum_as_enum: TestEnum,
 }

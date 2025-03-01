@@ -27,18 +27,16 @@
             "type": {
               "defined": "TestEnum"
             },
-            "attrs": ["idl-type"]
+            "attrs": [
+              "idl-type"
+            ]
           },
           {
             "name": "wrappedU32Direct",
             "type": "u32",
-            "attrs": ["idl-type"]
-          },
-          {
-            "name": "enumAsEnum",
-            "type": {
-              "defined": "TestEnum"
-            }
+            "attrs": [
+              "idl-type"
+            ]
           }
         ]
       }
