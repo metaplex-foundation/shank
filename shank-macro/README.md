@@ -59,7 +59,7 @@ pub struct MyAccount {
     pub enum_as_byte_direct: u8,
 
     // Field with a wrapper type that should be treated as a simpler type (direct type format)
-    #[idl_type(u64)]
+    #[idl_type(u32)]
     pub wrapped_u32_direct: CustomU32Wrapper,
 }
 ```
