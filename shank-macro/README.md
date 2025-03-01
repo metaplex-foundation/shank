@@ -21,7 +21,7 @@ pub struct Metadata {
 
 ### Field Attributes
 
-#### `#[shank(as = "...")]` attribute
+#### `#[idl_type(...)]` attribute
 
 This attribute allows you to override how Shank interprets a field's type when generating the IDL. This is useful for:
 
@@ -31,8 +31,10 @@ This attribute allows you to override how Shank interprets a field's type when g
 
 The attribute supports two formats:
 
-1. **String literal format**: `#[shank(as = "TypeName")]`
-2. **Direct type format**: `#[shank(as = TypeName)]`
+1. **String literal format**: `#idl_type("TypeName")]`
+2. **Direct type format**: `#[idl_type(TypeName)]`
+
+The difference between these is that the direct type format will error at runtime if the referenced type cannot be found in the Rust type system.
 
 ```rs
 use shank::ShankAccount;

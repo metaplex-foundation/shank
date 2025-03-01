@@ -34,10 +34,10 @@ impl Display for StructField {
 }
 
 impl StructField {
-    /// Get the overridden type from the ShankAs attribute if present
+    /// Get the overridden type from the IdlType attribute if present
     pub fn type_override(&self) -> Option<&RustType> {
         self.attrs.iter().find_map(|attr| {
-            if let StructFieldAttr::ShankAs(rust_type) = attr {
+            if let StructFieldAttr::IdlType(rust_type) = attr {
                 Some(rust_type)
             } else {
                 None

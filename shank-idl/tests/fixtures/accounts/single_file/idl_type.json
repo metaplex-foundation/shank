@@ -4,7 +4,7 @@
   "instructions": [],
   "accounts": [
     {
-      "name": "AccountWithShankAs",
+      "name": "AccountWithIdlType",
       "type": {
         "kind": "struct",
         "fields": [
@@ -14,27 +14,25 @@
           },
           {
             "name": "enumAsByteStr",
-            "type": {
-              "defined": "TestEnum"
-            },
-            "attrs": ["shank-as"]
+            "type": "u8"
           },
           {
             "name": "wrappedU64Str",
-            "type": "u64",
-            "attrs": ["shank-as"]
+            "type": {
+              "defined": "CustomU64Wrapper"
+            }
           },
           {
             "name": "enumAsByteDirect",
             "type": {
               "defined": "TestEnum"
             },
-            "attrs": ["shank-as"]
+            "attrs": ["idl-type"]
           },
           {
             "name": "wrappedU32Direct",
             "type": "u32",
-            "attrs": ["shank-as"]
+            "attrs": ["idl-type"]
           },
           {
             "name": "enumAsEnum",
