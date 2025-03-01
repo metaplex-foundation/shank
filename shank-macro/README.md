@@ -64,7 +64,7 @@ pub struct MyAccount {
 }
 ```
 
-The type specified in the `as` parameter must be a valid Rust type that Shank can recognize. If the type is a custom type (like an enum), make sure it's defined in your codebase and is accessible to Shank during IDL generation.
+The type specified must be a valid Rust type that Shank can recognize. If the type is a custom type (like an enum), make sure it's defined in your codebase and is accessible to Shank during IDL generation (for example, via the ShankType trait).
 
 #### `#[padding]` attribute
 
