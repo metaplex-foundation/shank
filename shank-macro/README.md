@@ -47,19 +47,19 @@ pub struct MyAccount {
     pub regular_field: u32,
 
     // Field stored as u8 but representing an enum (string literal format)
-    #[shank(as = "MyEnum")]
+    #[idl_type("MyEnum")]
     pub enum_as_byte_str: u8,
 
     // Field with a wrapper type that should be treated as a simpler type (string literal format)
-    #[shank(as = "u64")]
+    #[idl_type("u64")]
     pub wrapped_u64_str: CustomU64Wrapper,
 
     // Field stored as u8 but representing an enum (direct type format)
-    #[shank(as = MyEnum)]
+    #[idl_type(MyEnum)]
     pub enum_as_byte_direct: u8,
 
     // Field with a wrapper type that should be treated as a simpler type (direct type format)
-    #[shank(as = u64)]
+    #[idl_type(u64)]
     pub wrapped_u32_direct: CustomU32Wrapper,
 }
 ```
