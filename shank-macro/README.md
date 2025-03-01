@@ -35,6 +35,7 @@ The attribute supports two formats:
 2. **Direct type format**: `#[idl_type(TypeName)]`
 
 The difference between these is that the direct type format will error at runtime if the referenced type cannot be found in the Rust type system.
+In the future, ideally the direct type format would perform checks on the given type.
 
 ```rs
 use shank::ShankAccount;
