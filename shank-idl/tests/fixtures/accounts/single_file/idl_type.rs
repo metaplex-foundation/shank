@@ -37,3 +37,7 @@ pub struct AccountWithIdlType {
     #[idl_type(u32)]
     pub wrapped_u32_direct: CustomU32Wrapper,
 }
+
+// Notes: This test does not check:
+// - The ability to reference a path (like std::string::String)
+// - Parsing failure when the direct type is not found
