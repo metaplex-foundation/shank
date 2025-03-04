@@ -14,29 +14,27 @@
           },
           {
             "name": "enumAsByteStr",
-            "type": "u8"
+            "type": {
+              "defined": "TestEnum"
+            },
+            "attrs": ["idl-type"]
           },
           {
             "name": "wrappedU64Str",
-            "type": {
-              "defined": "CustomU64Wrapper"
-            }
+            "type": "u64",
+            "attrs": ["idl-type"]
           },
           {
             "name": "enumAsByteDirect",
             "type": {
               "defined": "TestEnum"
             },
-            "attrs": [
-              "idl-type"
-            ]
+            "attrs": ["idl-type"]
           },
           {
             "name": "wrappedU32Direct",
             "type": "u32",
-            "attrs": [
-              "idl-type"
-            ]
+            "attrs": ["idl-type"]
           }
         ]
       }
