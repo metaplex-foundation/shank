@@ -73,22 +73,7 @@ fn account_from_single_file_idl_type() {
         .expect("Parsing should not fail")
         .expect("File contains IDL");
 
-    // Print the IDL JSON for debugging
-    println!("{}", idl.try_into_json().unwrap());
-
-    // Create the JSON file if it doesn't exist
-    let json_path = "single_file/idl_type.json";
-    let expected_json_file = fixtures_dir().join(json_path);
-    if !expected_json_file.exists() {
-        let idl_json = idl.try_into_json().unwrap();
-        let mut idl_json_file = File::create(&expected_json_file)
-            .expect("Unable to create JSON file");
-        idl_json_file
-            .write_all(idl_json.as_bytes())
-            .expect("Unable to write file");
-    }
-
-    check_or_update_idl(&idl, json_path);
+    check_or_update_idl(&idl, "single_file/idl_type.json");
 }
 
 #[test]
