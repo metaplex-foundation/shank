@@ -51,7 +51,15 @@ impl TryFrom<&Field> for StructField {
 
     fn try_from(f: &Field) -> ParseResult<Self> {
         let ident = f.ident.as_ref().unwrap().clone();
-        let attrs = StructFieldAttrs::from(f.attrs.as_ref()).0;
+        let attrs = match StructFieldAttrs::try_from(f.attrs.as_ref()) {
+            Ok(field_attrs) => field_attrs.0,
+            Err(err) => {
+                return Err(ParseError::new_spanned(
+                    &f.ident,
+                    format!("Failed to parse field attributes: {}", err),
+                ));
+            }
+        };
         let rust_type: RustType = match (&f.ty).try_into() {
             Ok(ty) => ty,
             Err(err) => {
