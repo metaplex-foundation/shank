@@ -1,3 +1,4 @@
+use std::hash::{Hash, Hasher};
 use std::{convert::TryFrom, ops::Deref};
 
 use quote::format_ident;
@@ -20,6 +21,15 @@ pub struct RustType {
     /// The context of the type, i.e. is it an inner type of `Vec<ty>` and thus a
     /// CollectionInnerType
     pub context: RustTypeContext,
+}
+
+impl Hash for RustType {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ident.to_string().hash(state);
+        self.kind.hash(state);
+        self.reference.hash(state);
+        // Skip hashing context as it doesn't affect the type's identity
+    }
 }
 
 impl TryFrom<&Type> for RustType {

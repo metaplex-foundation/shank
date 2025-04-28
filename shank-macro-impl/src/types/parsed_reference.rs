@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::hash::{Hash, Hasher};
 
 use syn::{Lifetime, TypeReference};
 
@@ -7,6 +8,28 @@ pub enum ParsedReference {
     Owned,
     Ref(Option<syn::Ident>),
     RefMut(Option<syn::Ident>),
+}
+
+impl Hash for ParsedReference {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use discriminant to hash the enum variant
+        std::mem::discriminant(self).hash(state);
+
+        // Hash the inner lifetime if present
+        match self {
+            ParsedReference::Owned => {}
+            ParsedReference::Ref(lifetime) => {
+                if let Some(lt) = lifetime {
+                    lt.to_string().hash(state);
+                }
+            }
+            ParsedReference::RefMut(lifetime) => {
+                if let Some(lt) = lifetime {
+                    lt.to_string().hash(state);
+                }
+            }
+        }
+    }
 }
 
 impl Debug for ParsedReference {

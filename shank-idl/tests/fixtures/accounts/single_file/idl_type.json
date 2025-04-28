@@ -1,0 +1,65 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "AccountWithIdlType",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "regularField",
+            "type": "u32"
+          },
+          {
+            "name": "enumAsByteStr",
+            "type": {
+              "defined": "TestEnum"
+            },
+            "attrs": ["idl-type"]
+          },
+          {
+            "name": "wrappedU64Str",
+            "type": "u64",
+            "attrs": ["idl-type"]
+          },
+          {
+            "name": "enumAsByteDirect",
+            "type": {
+              "defined": "TestEnum"
+            },
+            "attrs": ["idl-type"]
+          },
+          {
+            "name": "wrappedU32Direct",
+            "type": "u32",
+            "attrs": ["idl-type"]
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "TestEnum",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "OptionA"
+          },
+          {
+            "name": "OptionB"
+          },
+          {
+            "name": "OptionC"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

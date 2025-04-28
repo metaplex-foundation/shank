@@ -17,6 +17,41 @@ mod instruction;
 
 /// Annotates a _struct_ that shank will consider an account containing de/serializable data.
 ///
+/// # Field Attributes
+///
+/// ## `#[idl_type(...)]` attribute
+///
+/// This attribute allows you to override how Shank interprets a field's type when generating the IDL.
+/// This is useful for:
+///
+/// 1. Fields with wrapper types that should be treated as their inner types in the IDL
+/// 2. Fields storing enum values as primitives (like `u8`) that should be recognized as enums
+/// 3. Fields with complex types that need simpler representations in the IDL
+///
+/// The attribute supports two formats:
+///
+/// 1. **String literal format**: `#[idl_type("TypeName")]`
+/// 2. **Direct type format**: `#[idl_type(TypeName)]`
+///
+/// ```
+/// use shank::ShankAccount;
+///
+/// #[derive(ShankAccount)]
+/// pub struct MyAccount {
+///     // Field stored as u8 but representing an enum
+///     #[idl_type("MyEnum")]
+///     pub enum_as_byte: u8,
+///
+///     // Field with a wrapper type that should be treated as a simpler type
+///     #[idl_type("u64")]
+///     pub wrapped_u64: CustomU64Wrapper,
+/// }
+/// ```
+///
+/// ## `#[padding]` attribute
+///
+/// Indicates that a field is used for padding and should be marked as such in the IDL.
+///
 /// # Example
 ///
 /// ```
@@ -75,7 +110,7 @@ mod instruction;
 ///
 /// The fields of a _ShankAccount_ struct can reference other types as long as they are annotated
 /// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
-#[proc_macro_derive(ShankAccount, attributes(padding, seeds))]
+#[proc_macro_derive(ShankAccount, attributes(padding, seeds, idl_type))]
 pub fn shank_account(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_account(input)

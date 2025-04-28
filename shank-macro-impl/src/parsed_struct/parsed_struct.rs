@@ -33,12 +33,33 @@ impl Display for StructField {
     }
 }
 
+impl StructField {
+    /// Get the overridden type from the IdlType attribute if present
+    pub fn type_override(&self) -> Option<&RustType> {
+        self.attrs.iter().find_map(|attr| {
+            if let StructFieldAttr::IdlType(rust_type) = attr {
+                Some(rust_type)
+            } else {
+                None
+            }
+        })
+    }
+}
+
 impl TryFrom<&Field> for StructField {
     type Error = ParseError;
 
     fn try_from(f: &Field) -> ParseResult<Self> {
         let ident = f.ident.as_ref().unwrap().clone();
-        let attrs = StructFieldAttrs::from(f.attrs.as_ref()).0;
+        let attrs = match StructFieldAttrs::try_from(f.attrs.as_ref()) {
+            Ok(field_attrs) => field_attrs.0,
+            Err(err) => {
+                return Err(ParseError::new_spanned(
+                    &f.ident,
+                    format!("Failed to parse field attributes: {}", err),
+                ));
+            }
+        };
         let rust_type: RustType = match (&f.ty).try_into() {
             Ok(ty) => ty,
             Err(err) => {

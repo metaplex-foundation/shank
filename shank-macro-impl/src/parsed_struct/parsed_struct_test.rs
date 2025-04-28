@@ -343,3 +343,50 @@ mod account_tuples_examples {
         );
     }
 }
+
+mod account_with_idl_type_examples {
+    use super::*;
+
+    #[test]
+    fn account_with_idl_type() {
+        let input = quote! {
+            pub struct AccountWithIdlType {
+                pub regular_field: u32,
+                #[idl_type("MyEnum")]
+                pub enum_as_byte: u8,
+                #[idl_type("u64")]
+                pub wrapped_u64: CustomU64Wrapper,
+            }
+        };
+
+        let parsed = parse(input);
+        assert_eq!(parsed.fields.len(), 3);
+
+        // Regular field
+        match_field(&parsed.fields[0], "regular_field", "u32");
+
+        // Field with idl_type attribute for enum
+        assert_matches!(&parsed.fields[1], StructField { ident, rust_type, attrs: _ } => {
+            assert_eq!(ident, "enum_as_byte");
+            assert_eq!(rust_type.ident, "u8");
+
+            // Check if the attribute exists
+            let has_idl_type = parsed.fields[1].attrs.iter().any(|attr| {
+                matches!(attr, StructFieldAttr::IdlType(_))
+            });
+            assert!(has_idl_type, "Field should have idl_type attribute");
+        });
+
+        // Field with idl_type attribute for wrapper type
+        assert_matches!(&parsed.fields[2], StructField { ident, rust_type, attrs: _ } => {
+            assert_eq!(ident, "wrapped_u64");
+            assert_eq!(rust_type.ident, "CustomU64Wrapper");
+
+            // Check if the attribute exists
+            let has_idl_type = parsed.fields[2].attrs.iter().any(|attr| {
+                matches!(attr, StructFieldAttr::IdlType(_))
+            });
+            assert!(has_idl_type, "Field should have idl_type attribute");
+        });
+    }
+}
