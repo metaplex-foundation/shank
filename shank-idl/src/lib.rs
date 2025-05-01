@@ -5,15 +5,15 @@ use shank_macro_impl::custom_type::DetectCustomTypeConfig;
 
 use std::path::PathBuf;
 
-mod file;
+pub mod file;
 pub mod idl;
-mod idl_error_code;
-mod idl_field;
-mod idl_instruction;
-mod idl_metadata;
-mod idl_type;
-mod idl_type_definition;
-mod idl_variant;
+pub mod idl_error_code;
+pub mod idl_field;
+pub mod idl_instruction;
+pub mod idl_metadata;
+pub mod idl_type;
+pub mod idl_type_definition;
+pub mod idl_variant;
 pub mod manifest;
 
 pub use file::*;
