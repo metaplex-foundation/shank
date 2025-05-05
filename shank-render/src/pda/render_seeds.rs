@@ -1,4 +1,4 @@
-use quote::{quote, ToTokens};
+use quote::quote;
 use std::str::FromStr;
 
 use proc_macro2::{Ident, Span, TokenStream};
@@ -40,23 +40,21 @@ pub fn try_render_seeds_fn(
     let (seeds_comments, seeds_with_bump_comments) = if include_comments {
         let args_comments = render_args_comments(processed_seeds, false);
         (
-            format!(
+            TokenStream::from_str(&format!(
                 r#"
                 /// Derives the seeds for this account.
                 ///
                 {}"#,
                 args_comments.join("\n")
-            )
-            .to_token_stream(),
-            format!(
+            ))?,
+            TokenStream::from_str(&format!(
                 r#"
                 /// Derives the seeds for this account allowing to provide a bump seed.
                 ///
                 {}
                 /// * **bump**: the bump seed to pass when deriving the PDA"#,
                 args_comments.join("\n")
-            )
-            .to_token_stream(),
+            ))?,
         )
     } else {
         (TokenStream::new(), TokenStream::new())
