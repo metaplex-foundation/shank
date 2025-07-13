@@ -44,6 +44,22 @@ impl StructField {
             }
         })
     }
+
+    /// Get the overridden name from the IdlName attribute if present
+    pub fn name_override(&self) -> Option<&String> {
+        self.attrs.iter().find_map(|attr| {
+            if let StructFieldAttr::IdlName(name) = attr {
+                Some(name)
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Check if this field should be skipped from the IDL
+    pub fn is_skipped(&self) -> bool {
+        self.attrs.iter().any(|attr| matches!(attr, StructFieldAttr::Skip))
+    }
 }
 
 impl TryFrom<&Field> for StructField {

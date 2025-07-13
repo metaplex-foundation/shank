@@ -19,6 +19,13 @@ pub struct IdlField {
 impl TryFrom<StructField> for IdlField {
     type Error = Error;
     fn try_from(field: StructField) -> Result<Self> {
+        // Use the overridden name if present, otherwise use the field name
+        let name = if let Some(override_name) = field.name_override() {
+            override_name.clone()
+        } else {
+            field.ident.to_string().to_mixed_case()
+        };
+
         let ty: IdlType = if let Some(override_type) = field.type_override() {
             override_type.clone().try_into()?
         } else {
@@ -32,10 +39,6 @@ impl TryFrom<StructField> for IdlField {
             .collect::<Vec<String>>();
 
         let attrs = if attrs.is_empty() { None } else { Some(attrs) };
-        Ok(Self {
-            name: field.ident.to_string().to_mixed_case(),
-            ty,
-            attrs,
-        })
+        Ok(Self { name, ty, attrs })
     }
 }

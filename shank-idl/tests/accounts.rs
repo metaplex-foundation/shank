@@ -77,6 +77,16 @@ fn account_from_single_file_idl_type() {
 }
 
 #[test]
+fn account_from_single_file_field_attributes() {
+    let file = fixtures_dir().join("single_file").join("field_attributes.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    check_or_update_idl(&idl, "single_file/field_attributes.json");
+}
+
+#[test]
 fn account_from_crate() {
     let file = fixtures_dir()
         .join("sample_crate")

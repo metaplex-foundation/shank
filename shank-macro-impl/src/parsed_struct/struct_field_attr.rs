@@ -11,6 +11,8 @@ use syn::{
 pub enum StructFieldAttr {
     Padding,
     IdlType(RustType),
+    IdlName(String),
+    Skip,
 }
 
 impl From<&StructFieldAttr> for String {
@@ -18,6 +20,8 @@ impl From<&StructFieldAttr> for String {
         match attr {
             StructFieldAttr::Padding => "padding".to_string(),
             StructFieldAttr::IdlType(_) => "idl-type".to_string(),
+            StructFieldAttr::IdlName(_) => "idl-name".to_string(),
+            StructFieldAttr::Skip => "skip".to_string(),
         }
     }
 }
@@ -33,6 +37,40 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
         for attr in attrs {
             if attr.path.is_ident("padding") {
                 result.insert(StructFieldAttr::Padding);
+            } else if attr.path.is_ident("skip") {
+                result.insert(StructFieldAttr::Skip);
+            } else if attr.path.is_ident("idl_name") {
+                match attr.parse_meta() {
+                    Ok(Meta::List(meta_list)) => {
+                        if meta_list.nested.len() != 1 {
+                            return Err(ParseError::new_spanned(
+                                attr,
+                                "idl_name attribute must have exactly one argument"
+                            ));
+                        }
+
+                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
+                            result.insert(StructFieldAttr::IdlName(lit_str.value()));
+                        } else {
+                            return Err(ParseError::new_spanned(
+                                attr,
+                                "idl_name attribute must be a string literal, e.g., #[idl_name(\"fieldName\")]"
+                            ));
+                        }
+                    }
+                    Ok(_) => {
+                        return Err(ParseError::new_spanned(
+                            attr,
+                            "idl_name attribute must be a list with a string literal, e.g., #[idl_name(\"fieldName\")]"
+                        ));
+                    }
+                    Err(err) => {
+                        return Err(ParseError::new_spanned(
+                            attr,
+                            format!("Failed to parse idl_name attribute: {}", err)
+                        ));
+                    }
+                }
             } else if attr.path.is_ident("idl_type") {
                 match attr.parse_meta() {
                     Ok(Meta::List(meta_list)) => {

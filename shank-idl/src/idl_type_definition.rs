@@ -27,6 +27,7 @@ impl TryFrom<ParsedStruct> for IdlTypeDefinitionTy {
         let fields = strct
             .fields
             .into_iter()
+            .filter(|field| !field.is_skipped()) // Filter out skipped fields
             .map(IdlField::try_from)
             .collect::<Result<Vec<IdlField>>>()?;
 
