@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     convert::{TryFrom, TryInto},
     fmt::Display,
 };
@@ -18,7 +17,7 @@ use super::struct_field_attr::{StructFieldAttr, StructFieldAttrs};
 pub struct StructField {
     pub ident: syn::Ident,
     pub rust_type: RustType,
-    pub attrs: HashSet<StructFieldAttr>,
+    pub attrs: Vec<StructFieldAttr>,
 }
 
 impl Display for StructField {

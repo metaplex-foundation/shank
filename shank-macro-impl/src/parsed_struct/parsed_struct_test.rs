@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
@@ -19,7 +17,7 @@ fn match_field(field: &StructField, field_ident: &str, type_ident: &str) {
     assert_matches!(field, StructField { ident, rust_type, attrs } => {
         assert_eq!(ident, field_ident);
         assert_eq!(rust_type.ident, type_ident);
-        assert_eq!(attrs, &HashSet::new());
+        assert_eq!(attrs, &Vec::new());
     });
 }
 
@@ -54,7 +52,7 @@ fn match_array_field_with_attrs(
     field_ident: &str,
     inner_ty: &str,
     size: usize,
-    field_attrs: &HashSet<StructFieldAttr>,
+    field_attrs: &Vec<StructFieldAttr>,
 ) {
     assert_matches!(field, StructField { ident, rust_type, attrs } => {
         assert_eq!(ident, field_ident);
@@ -230,10 +228,10 @@ mod account_collection_examples {
 
 mod account_with_padding_examples {
     use super::*;
-    fn padding_attrs() -> HashSet<StructFieldAttr> {
-        let mut set = HashSet::new();
-        set.insert(StructFieldAttr::Padding);
-        set
+    fn padding_attrs() -> Vec<StructFieldAttr> {
+        let mut attrs = Vec::new();
+        attrs.push(StructFieldAttr::Padding);
+        attrs
     }
 
     #[test]

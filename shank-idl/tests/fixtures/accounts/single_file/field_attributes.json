@@ -28,16 +28,16 @@
               ]
             },
             "attrs": [
-              "padding",
-              "idl-name"
+              "idl-name",
+              "padding"
             ]
           },
           {
             "name": "customTypedField",
             "type": "u32",
             "attrs": [
-              "idl-name",
-              "idl-type"
+              "idl-type",
+              "idl-name"
             ]
           }
         ]

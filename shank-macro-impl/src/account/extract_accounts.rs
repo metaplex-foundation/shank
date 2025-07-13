@@ -48,7 +48,7 @@ fn verify_account_struct(strct: &ParsedStruct) -> Result<()> {
     // TODO(thlorenz): Don't allow more than one padding field
     let mut padded_fields = HashSet::new();
     for f in &strct.fields {
-        if f.attrs.get(&StructFieldAttr::Padding).is_some() {
+        if f.attrs.contains(&StructFieldAttr::Padding) {
             if f.rust_type.ident != "Array" {
                 return Err(format_err!(
                     "Account struct {} field {} has padding attribute, but is not an Array, i.e. [u8; 36]",
@@ -205,7 +205,7 @@ mod tests {
             assert_eq!(fields.len(), 2);
             assert_eq!(fields[0].attrs.len(), 0, "first field not padded");
             assert_eq!(fields[1].attrs.len(), 1, "second field has one attribute");
-            assert_eq!(fields[1].attrs.get(&StructFieldAttr::Padding), Some(&StructFieldAttr::Padding), "second field has padding attribute");
+            assert_eq!(fields[1].attrs.contains(&StructFieldAttr::Padding), true, "second field has padding attribute");
         });
     }
 
