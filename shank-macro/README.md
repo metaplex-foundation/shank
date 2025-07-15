@@ -70,6 +70,70 @@ The type specified must be a valid Rust type that Shank can recognize. If the ty
 
 Indicates that a field is used for padding and should be marked as such in the IDL.
 
+#### `#[idl_name("name")]` attribute
+
+Allows you to override the field name that appears in the IDL while keeping the original Rust field name. This is useful when you need different naming conventions between your Rust code and the generated IDL.
+
+```rs
+use shank::ShankAccount;
+use borsh::{BorshDeserialize, BorshSerialize};
+
+#[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
+pub struct MyAccount {
+    // This field will appear as "displayName" in the IDL
+    #[idl_name("displayName")]
+    pub internal_name: String,
+    
+    // This field will appear as "userCount" in the IDL
+    #[idl_name("userCount")]
+    pub total_users: u32,
+}
+```
+
+#### `#[skip]` attribute
+
+Excludes the field from the IDL entirely. The field will not appear in the generated IDL. This is useful for internal-only fields that shouldn't be exposed in the interface definition.
+
+```rs
+use shank::ShankAccount;
+use borsh::{BorshDeserialize, BorshSerialize};
+
+#[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
+pub struct MyAccount {
+    // This field will appear in the IDL
+    pub public_field: u64,
+    
+    // This field will be excluded from the IDL
+    #[skip]
+    pub internal_only_field: String,
+    
+    // This field will also be excluded from the IDL
+    #[skip]
+    pub debug_info: Vec<u8>,
+}
+```
+
+#### Combining Attributes
+
+You can combine multiple field attributes on the same field:
+
+```rs
+use shank::ShankAccount;
+use borsh::{BorshDeserialize, BorshSerialize};
+
+#[derive(Clone, BorshSerialize, BorshDeserialize, ShankAccount)]
+pub struct MyAccount {
+    // Rename the field and override its type
+    #[idl_name("customField")]
+    #[idl_type("CustomType")]
+    pub internal_field: SomeWrapper<CustomType>,
+    
+    // Mark as padding and rename
+    #[padding]
+    #[idl_name("alignmentPadding")]
+    pub _padding: [u8; 8],
+}
+
 ### Note
 
 The fields of a _ShankAccount_ struct can reference other types as long as they are annotated

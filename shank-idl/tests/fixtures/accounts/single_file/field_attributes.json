@@ -1,0 +1,50 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "FieldAttributesExample",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "normalField",
+            "type": "u64"
+          },
+          {
+            "name": "customName",
+            "type": "string",
+            "attrs": [
+              "idl-name"
+            ]
+          },
+          {
+            "name": "renamedAndPadded",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            },
+            "attrs": [
+              "idl-name",
+              "padding"
+            ]
+          },
+          {
+            "name": "customTypedField",
+            "type": "u32",
+            "attrs": [
+              "idl-type",
+              "idl-name"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
