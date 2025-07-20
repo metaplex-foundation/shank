@@ -177,9 +177,7 @@ fn candy_guard_mint_limit_impl() {
 // Including Comments
 // -----------------
 
-// NOTE: once comments are involved it is very brittle to compare rendered code
-//       thus this test only exists to allow uncommenting dumping the rendered code
-// #[test]
+#[test]
 #[allow(unused)]
 fn literal_pubkeys_and_u8_byte_impl_commented() {
     let code = quote! {
