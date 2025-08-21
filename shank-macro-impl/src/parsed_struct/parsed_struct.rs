@@ -54,11 +54,6 @@ impl StructField {
             }
         })
     }
-
-    /// Check if this field should be skipped from the IDL
-    pub fn is_skipped(&self) -> bool {
-        self.attrs.iter().any(|attr| matches!(attr, StructFieldAttr::Skip))
-    }
 }
 
 impl TryFrom<&Field> for StructField {
@@ -105,6 +100,11 @@ impl Parse for ParsedStruct {
     }
 }
 
+/// Helper function to check if a field has the skip attribute
+fn field_has_skip_attr(field: &Field) -> bool {
+    field.attrs.iter().any(|attr| attr.path.is_ident("skip"))
+}
+
 impl TryFrom<&ItemStruct> for ParsedStruct {
     type Error = ParseError;
 
@@ -113,6 +113,8 @@ impl TryFrom<&ItemStruct> for ParsedStruct {
             syn::Fields::Named(fields) => fields
                 .named
                 .iter()
+                // Filter out fields with #[skip] attribute before trying to parse them
+                .filter(|f| !field_has_skip_attr(f))
                 .map(StructField::try_from)
                 .collect::<ParseResult<Vec<StructField>>>()?,
             _ => {
