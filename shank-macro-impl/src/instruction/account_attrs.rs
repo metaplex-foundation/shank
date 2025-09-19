@@ -3,12 +3,13 @@ use std::convert::TryFrom;
 use proc_macro2::Span;
 use syn::{
     punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta, MetaList,
-    MetaNameValue, NestedMeta, Result as ParseResult, Token,
+    MetaNameValue, NestedMeta, Path, Result as ParseResult, Token,
 };
 
 const IX_ACCOUNT: &str = "account";
+const IX_ACCOUNTS: &str = "accounts";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct InstructionAccount {
     pub ident: Ident,
     pub index: Option<u32>,
@@ -20,8 +21,16 @@ pub struct InstructionAccount {
     pub optional: bool,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct InstructionAccounts(pub Vec<InstructionAccount>);
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum AccountsSource {
+    /// Accounts defined via individual #[account(...)] attributes
+    Inline(InstructionAccounts),
+    /// Accounts defined via #[accounts(StructName)] referencing a ShankAccounts struct
+    Struct(Path),
+}
 
 impl InstructionAccount {
     fn is_account_attr(attr: &Attribute) -> Option<&Attribute> {
@@ -140,6 +149,72 @@ impl InstructionAccount {
                 optional,
             }),
             None => Err(ParseError::new_spanned(nested, "Missing account name")),
+        }
+    }
+}
+
+impl AccountsSource {
+    /// Check if an attribute is an #[accounts(...)] attribute
+    fn is_accounts_struct_attr(attr: &Attribute) -> bool {
+        attr.path.is_ident(IX_ACCOUNTS)
+    }
+
+    /// Parse #[accounts(StructName)] attribute
+    fn from_accounts_struct_attr(attr: &Attribute) -> ParseResult<Path> {
+        let meta = attr.parse_meta()?;
+        match meta {
+            Meta::List(MetaList { nested, .. }) => {
+                if nested.len() != 1 {
+                    return Err(ParseError::new_spanned(
+                        attr,
+                        "#[accounts] attribute requires exactly one struct name",
+                    ));
+                }
+                
+                match nested.first() {
+                    Some(NestedMeta::Meta(Meta::Path(path))) => Ok(path.clone()),
+                    _ => Err(ParseError::new_spanned(
+                        attr,
+                        "#[accounts] attribute requires a struct name",
+                    )),
+                }
+            }
+            _ => Err(ParseError::new_spanned(
+                attr,
+                "#[accounts] attribute requires a struct name in parentheses: #[accounts(StructName)]",
+            )),
+        }
+    }
+}
+
+impl TryFrom<&[Attribute]> for AccountsSource {
+    type Error = ParseError;
+
+    fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
+        // First check for #[accounts(StructName)] attribute
+        let accounts_struct_attr = attrs
+            .iter()
+            .find(|attr| AccountsSource::is_accounts_struct_attr(attr));
+        
+        if let Some(attr) = accounts_struct_attr {
+            // Can't have both #[accounts(StructName)] and #[account(...)] attributes
+            let has_inline_accounts = attrs
+                .iter()
+                .any(|attr| InstructionAccount::is_account_attr(attr).is_some());
+            
+            if has_inline_accounts {
+                return Err(ParseError::new_spanned(
+                    attr,
+                    "Cannot use both #[accounts(StructName)] and #[account(...)] attributes on the same instruction variant",
+                ));
+            }
+            
+            let struct_path = AccountsSource::from_accounts_struct_attr(attr)?;
+            Ok(AccountsSource::Struct(struct_path))
+        } else {
+            // Fall back to parsing inline #[account(...)] attributes
+            let accounts = InstructionAccounts::try_from(attrs)?;
+            Ok(AccountsSource::Inline(accounts))
         }
     }
 }

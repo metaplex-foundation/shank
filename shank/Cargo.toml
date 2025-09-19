@@ -10,3 +10,11 @@ edition = "2018"
 
 [dependencies]
 shank_macro = { version = "0.4.5", path = "../shank-macro" }
+solana-program = { version = "1.18", optional = true }
+
+[dev-dependencies]
+macrotest = "1.0"
+
+[features]
+default = []
+solana-program = ["dep:solana-program"]

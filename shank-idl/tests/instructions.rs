@@ -190,3 +190,54 @@ fn instruction_from_single_file_with_docs() {
 
     assert_eq!(idl, expected_idl);
 }
+
+#[test]
+fn instruction_from_single_file_with_simple_accounts_struct() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("instruction_with_simple_accounts_struct.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/instruction_with_simple_accounts_struct.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
+fn instruction_from_single_file_with_accounts_struct() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("instruction_with_accounts_struct.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/instruction_with_accounts_struct.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test] 
+fn instruction_from_single_file_with_complex_accounts_struct() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("instruction_with_complex_accounts_struct.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/instructions/single_file/instruction_with_complex_accounts_struct.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}

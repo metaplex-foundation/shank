@@ -5,6 +5,7 @@ use shank_macro_impl::custom_type::DetectCustomTypeConfig;
 
 use std::path::PathBuf;
 
+mod accounts_extraction;
 mod file;
 pub mod idl;
 mod idl_error_code;

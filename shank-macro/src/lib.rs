@@ -1,4 +1,5 @@
 use account::derive_account;
+use accounts::derive_accounts;
 use builder::derive_builder;
 use context::derive_context;
 use instruction::derive_instruction;
@@ -7,6 +8,7 @@ use quote::quote;
 use syn::{parse_macro_input, DeriveInput, Error as ParseError};
 
 mod account;
+mod accounts;
 mod builder;
 mod context;
 mod instruction;
@@ -241,7 +243,7 @@ pub fn shank_account(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_derive(
     ShankInstruction,
-    attributes(account, legacy_optional_accounts_strategy)
+    attributes(account, accounts, legacy_optional_accounts_strategy)
 )]
 pub fn shank_instruction(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -352,6 +354,100 @@ pub fn shank_builder(input: TokenStream) -> TokenStream {
 pub fn shank_context(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     derive_context(input)
+        .unwrap_or_else(to_compile_error)
+        .into()
+}
+
+// -----------------
+// #[derive(ShankAccounts)]
+// -----------------
+
+/// Annotates a _struct_ that defines accounts for an instruction in a similar way to Anchor.
+/// 
+/// This is designed as a complete replacement for both:
+/// - The `#[account]` attribute system on instruction enums
+/// - The `ShankContext` derive macro for context generation
+/// 
+/// Instead of annotating instruction variants directly, you define a separate struct
+/// that contains all accounts with their constraints. This generates both IDL metadata
+/// and runtime context handling code for type-safe account access.
+///
+/// # Field Attributes
+///
+/// Each field in the struct represents an account and can be annotated with attributes:
+///
+/// - `#[account(writable)]` or `#[account(mut)]` - The account is writable
+/// - `#[account(signer)]` - The account must sign the transaction
+/// - `#[account(optional_signer)]` - The account may optionally sign
+/// - `#[account(optional)]` - The account is optional (defaults to program_id when not provided)
+/// - `#[account(desc = "...")]` - Description of the account for documentation
+///
+/// # Example
+///
+/// ```ignore
+/// use shank::ShankAccounts;
+///
+/// #[derive(ShankAccounts)]
+/// pub struct CreateVaultAccounts {
+///     #[account(mut, desc = "Initialized fractional share mint")]
+///     pub fraction_mint: std::marker::PhantomData<()>,
+///     
+///     #[account(mut, desc = "Initialized redeem treasury")]
+///     pub redeem_treasury: std::marker::PhantomData<()>,
+///     
+///     #[account(mut, desc = "Fraction treasury")]
+///     pub fraction_treasury: std::marker::PhantomData<()>,
+///     
+///     #[account(mut, desc = "Uninitialized vault account")]
+///     pub vault: std::marker::PhantomData<()>,
+///     
+///     #[account(optional_signer, desc = "Authority on the vault")]
+///     pub authority: std::marker::PhantomData<()>,
+///     
+///     #[account(desc = "Token program")]
+///     pub token_program: std::marker::PhantomData<()>,
+/// }
+///
+/// // Then reference it in your instruction enum:
+/// #[derive(ShankInstruction)]
+/// pub enum VaultInstruction {
+///     #[accounts(CreateVaultAccounts)]
+///     InitVault(InitVaultArgs),
+/// }
+/// ```
+///
+/// # Generated Code
+///
+/// ShankAccounts generates:
+/// 1. **IDL Metadata Methods** - For shank-idl to extract account information
+/// 2. **Context Structs** - `{StructName}Context<'a>` with `AccountInfo<'a>` fields  
+/// 3. **Context Methods** - `{StructName}::context(program_id, accounts)` for validation
+///
+/// # Usage in Solana Programs
+///
+/// ```ignore
+/// pub fn process_init_vault(
+///     program_id: &Pubkey,
+///     accounts: &[AccountInfo],
+///     data: &[u8],
+/// ) -> ProgramResult {
+///     let ctx = CreateVaultAccounts::context(program_id, accounts)?;
+///     
+///     // Type-safe access by name:
+///     msg!("Vault: {}", ctx.vault.key);
+///     msg!("Authority: {}", ctx.authority.key);
+///     
+///     Ok(())
+/// }
+/// ```
+///
+/// Note: The field types don't affect IDL generation - ShankAccounts only processes
+/// the `#[account(...)]` attributes. In real Solana programs, use `AccountInfo<'info>`
+/// from `solana_program::account_info` for field types.
+#[proc_macro_derive(ShankAccounts, attributes(account))]
+pub fn shank_accounts(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    derive_accounts(input)
         .unwrap_or_else(to_compile_error)
         .into()
 }
