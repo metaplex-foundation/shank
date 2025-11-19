@@ -1,5 +1,8 @@
 use shank::{ShankAccounts, ShankInstruction};
 
+// Mock program ID
+pub const ID: [u8; 32] = [1; 32];
+
 // Mock AccountInfo for testing (in real programs, import from solana_program)
 pub struct AccountInfo<'info> {
     pub key: &'info [u8; 32], // Mock pubkey
@@ -11,28 +14,28 @@ pub struct AccountInfo<'info> {
 #[derive(ShankAccounts)]
 pub struct CreateVaultAccounts<'info> {
     #[account(mut, desc = "Initialized fractional share mint")]
-    pub fraction_mint: AccountInfo<'info>,
+    pub fraction_mint: &'info AccountInfo<'info>,
 
     #[account(mut, desc = "Initialized redeem treasury")]
-    pub redeem_treasury: AccountInfo<'info>,
+    pub redeem_treasury: &'info AccountInfo<'info>,
 
     #[account(mut, desc = "Fraction treasury")]
-    pub fraction_treasury: AccountInfo<'info>,
+    pub fraction_treasury: &'info AccountInfo<'info>,
 
     #[account(mut, desc = "Uninitialized vault account")]
-    pub vault: AccountInfo<'info>,
+    pub vault: &'info AccountInfo<'info>,
 
     #[account(optional_signer, desc = "Authority on the vault")]
-    pub authority: AccountInfo<'info>,
+    pub authority: Option<&'info AccountInfo<'info>>,
 
     #[account(desc = "Pricing Lookup Address")]
-    pub pricing_lookup_address: AccountInfo<'info>,
+    pub pricing_lookup_address: &'info AccountInfo<'info>,
 
     #[account(desc = "Token program")]
-    pub token_program: AccountInfo<'info>,
+    pub token_program: &'info AccountInfo<'info>,
 
     #[account(desc = "Rent sysvar")]
-    pub rent: AccountInfo<'info>,
+    pub rent: &'info AccountInfo<'info>,
 }
 
 #[derive(ShankAccounts)]
@@ -41,22 +44,22 @@ pub struct ActivateVaultAccounts<'info> {
         mut,
         desc = "Initialized inactivated fractionalized token vault"
     )]
-    pub vault: AccountInfo<'info>,
+    pub vault: &'info AccountInfo<'info>,
 
     #[account(mut, desc = "Fraction mint")]
-    pub fraction_mint: AccountInfo<'info>,
+    pub fraction_mint: &'info AccountInfo<'info>,
 
     #[account(mut, desc = "Fraction treasury")]
-    pub fraction_treasury: AccountInfo<'info>,
+    pub fraction_treasury: &'info AccountInfo<'info>,
 
     #[account(desc = "Fraction mint authority for the program")]
-    pub fraction_mint_authority: AccountInfo<'info>,
+    pub fraction_mint_authority: &'info AccountInfo<'info>,
 
     #[account(signer, desc = "Authority on the vault")]
-    pub vault_authority: AccountInfo<'info>,
+    pub vault_authority: &'info AccountInfo<'info>,
 
     #[account(desc = "Token program")]
-    pub token_program: AccountInfo<'info>,
+    pub token_program: &'info AccountInfo<'info>,
 }
 
 // Test instruction enum using the new #[accounts(StructName)] attribute
@@ -80,12 +83,12 @@ fn test_simple_accounts_struct_compiles() {
     #[derive(ShankAccounts)]
     pub struct SimpleAccounts<'info> {
         #[account(mut, signer)]
-        pub payer: AccountInfo<'info>,
+        pub payer: &'info AccountInfo<'info>,
 
         #[account(mut)]
-        pub account_to_modify: AccountInfo<'info>,
+        pub account_to_modify: &'info AccountInfo<'info>,
 
-        pub system_program: AccountInfo<'info>,
+        pub system_program: &'info AccountInfo<'info>,
     }
 
     #[derive(Debug, Clone, ShankInstruction)]

@@ -3,7 +3,7 @@ fn expand_basic_accounts() {
     macrotest::expand("tests/expand/basic_accounts.rs");
 }
 
-#[test] 
+#[test]
 fn expand_optional_accounts() {
     macrotest::expand("tests/expand/optional_accounts.rs");
 }

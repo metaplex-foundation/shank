@@ -28,23 +28,43 @@ impl AccountField {
                     for nested in list.nested {
                         match nested {
                             NestedMeta::Meta(Meta::Path(path)) => {
-                                if path.is_ident("writable") || path.is_ident("mut") || path.is_ident("write") || path.is_ident("writ") || path.is_ident("w") {
+                                if path.is_ident("writable")
+                                    || path.is_ident("mut")
+                                    || path.is_ident("write")
+                                    || path.is_ident("writ")
+                                    || path.is_ident("w")
+                                {
                                     writable = true;
-                                } else if path.is_ident("signer") || path.is_ident("sign") || path.is_ident("sig") || path.is_ident("s") {
+                                } else if path.is_ident("signer")
+                                    || path.is_ident("sign")
+                                    || path.is_ident("sig")
+                                    || path.is_ident("s")
+                                {
                                     signer = true;
                                 } else if path.is_ident("optional_signer") {
                                     optional_signer = true;
-                                } else if path.is_ident("optional") || path.is_ident("option") || path.is_ident("opt") {
+                                } else if path.is_ident("optional")
+                                    || path.is_ident("option")
+                                    || path.is_ident("opt")
+                                {
                                     optional = true;
                                 } else {
                                     return Err(syn::Error::new_spanned(
                                         &path,
-                                        format!("Unknown account attribute: {:?}", path.get_ident()),
+                                        format!(
+                                            "Unknown account attribute: {:?}",
+                                            path.get_ident()
+                                        ),
                                     ));
                                 }
                             }
-                            NestedMeta::Meta(Meta::NameValue(MetaNameValue { path, lit, .. })) => {
-                                if path.is_ident("desc") || path.is_ident("description") || path.is_ident("docs") {
+                            NestedMeta::Meta(Meta::NameValue(
+                                MetaNameValue { path, lit, .. },
+                            )) => {
+                                if path.is_ident("desc")
+                                    || path.is_ident("description")
+                                    || path.is_ident("docs")
+                                {
                                     if let Lit::Str(s) = lit {
                                         desc = Some(s.value());
                                     }

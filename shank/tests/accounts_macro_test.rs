@@ -1,5 +1,8 @@
 use shank::ShankAccounts;
 
+// Mock program ID
+pub const ID: [u8; 32] = [1; 32];
+
 // Mock AccountInfo for testing (in real programs, import from solana_program)
 pub struct AccountInfo<'info> {
     pub key: &'info [u8; 32], // Mock pubkey
@@ -32,16 +35,16 @@ fn test_all_account_attributes_compile() {
     #[derive(ShankAccounts)]
     pub struct ComplexAccounts<'info> {
         #[account(mut, signer, desc = "Payer account")]
-        pub payer: AccountInfo<'info>,
+        pub payer: &'info AccountInfo<'info>,
 
         #[account(optional, desc = "Optional account")]
-        pub optional_account: AccountInfo<'info>,
+        pub optional_account: Option<&'info AccountInfo<'info>>,
 
         #[account(optional_signer, desc = "Optional signer")]
-        pub optional_signer: AccountInfo<'info>,
+        pub optional_signer: Option<&'info AccountInfo<'info>>,
 
         #[account(writable)]
-        pub data_account: AccountInfo<'info>,
+        pub data_account: &'info AccountInfo<'info>,
     }
 }
 
@@ -51,27 +54,27 @@ fn test_alternative_attribute_names_compile() {
     #[derive(ShankAccounts)]
     pub struct AlternativeAccounts<'info> {
         #[account(write)]
-        pub writable1: AccountInfo<'info>,
+        pub writable1: &'info AccountInfo<'info>,
 
         #[account(writ)]
-        pub writable2: AccountInfo<'info>,
+        pub writable2: &'info AccountInfo<'info>,
 
         #[account(w)]
-        pub writable3: AccountInfo<'info>,
+        pub writable3: &'info AccountInfo<'info>,
 
         #[account(sign)]
-        pub signer1: AccountInfo<'info>,
+        pub signer1: &'info AccountInfo<'info>,
 
         #[account(sig)]
-        pub signer2: AccountInfo<'info>,
+        pub signer2: &'info AccountInfo<'info>,
 
         #[account(s)]
-        pub signer3: AccountInfo<'info>,
+        pub signer3: &'info AccountInfo<'info>,
 
         #[account(opt)]
-        pub optional1: AccountInfo<'info>,
+        pub optional1: Option<&'info AccountInfo<'info>>,
 
         #[account(option)]
-        pub optional2: AccountInfo<'info>,
+        pub optional2: Option<&'info AccountInfo<'info>>,
     }
 }

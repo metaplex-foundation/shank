@@ -3,14 +3,19 @@ use std::fmt;
 
 use proc_macro2::Span;
 use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Meta, MetaList, NestedMeta,
-    Result as ParseResult, Token,
+    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Meta,
+    MetaList, NestedMeta, Result as ParseResult, Token,
 };
 
-use crate::{instruction::account_attrs::identifier_from_nested_meta, types::{RustType, RustTypeContext, Primitive}};
-use crate::types::{TypeKind, Composite, Value};
+use crate::types::{Composite, TypeKind, Value};
+use crate::{
+    instruction::account_attrs::identifier_from_nested_meta,
+    types::{Primitive, RustType, RustTypeContext},
+};
 
-use super::{InstructionAccount, InstructionAccounts, InstructionVariantFields};
+use super::{
+    InstructionAccount, InstructionAccounts, InstructionVariantFields,
+};
 
 const IX_IDL: &str = "idl_instruction";
 
@@ -25,15 +30,19 @@ pub enum IdlInstruction {
 
 impl IdlInstruction {
     fn is_idl_instruction_attr(attr: &Attribute) -> Option<&Attribute> {
-        match attr.path.get_ident().map(|x| {
-            x.to_string().as_str() == IX_IDL
-        }) {
+        match attr
+            .path
+            .get_ident()
+            .map(|x| x.to_string().as_str() == IX_IDL)
+        {
             Some(true) => Some(attr),
             _ => None,
         }
     }
 
-    fn from_idl_instruction_attr(attr: &Attribute) -> ParseResult<IdlInstruction> {
+    fn from_idl_instruction_attr(
+        attr: &Attribute,
+    ) -> ParseResult<IdlInstruction> {
         let meta = &attr.parse_meta()?;
         match meta {
             Meta::List(MetaList { nested, .. }) => {
@@ -135,7 +144,7 @@ impl IdlInstruction {
                 writable: false,
                 optional: false,
             }]),
-            IdlInstruction::CreateBuffer =>  
+            IdlInstruction::CreateBuffer =>
                 InstructionAccounts(vec![InstructionAccount {
                         ident: ident.clone(),
                         index: Some(0),
@@ -155,7 +164,7 @@ impl IdlInstruction {
                         writable: false,
                         optional: false,
                     }]),
-            IdlInstruction::SetBuffer => 
+            IdlInstruction::SetBuffer =>
                 InstructionAccounts(vec![InstructionAccount {
                         ident: ident.clone(),
                         index: Some(0),
@@ -184,7 +193,7 @@ impl IdlInstruction {
                         writable: false,
                         optional: false,
                     }]),
-            IdlInstruction::SetAuthority | IdlInstruction::Write => 
+            IdlInstruction::SetAuthority | IdlInstruction::Write =>
                 InstructionAccounts(vec![InstructionAccount {
                         ident: ident.clone(),
                         index: Some(0),
@@ -207,48 +216,50 @@ impl IdlInstruction {
         }
     }
 
-    pub fn to_instruction_fields(&self, ident: Ident) -> InstructionVariantFields {
+    pub fn to_instruction_fields(
+        &self,
+        ident: Ident,
+    ) -> InstructionVariantFields {
         match self {
-            IdlInstruction::Create => InstructionVariantFields::Named(
-                vec![(
-                    "data_len".to_string(), 
-                    RustType {
-                        ident,
-                        kind: TypeKind::Primitive(Primitive::U64),
-                        context: RustTypeContext::Default,
-                        reference: crate::types::ParsedReference::Owned,
-                    }
-                )]
-            ),
-            IdlInstruction::SetAuthority => InstructionVariantFields::Named(
-                vec![(
+            IdlInstruction::Create => InstructionVariantFields::Named(vec![(
+                "data_len".to_string(),
+                RustType {
+                    ident,
+                    kind: TypeKind::Primitive(Primitive::U64),
+                    context: RustTypeContext::Default,
+                    reference: crate::types::ParsedReference::Owned,
+                },
+            )]),
+            IdlInstruction::SetAuthority => {
+                InstructionVariantFields::Named(vec![(
                     "new_authority".to_string(),
                     RustType {
                         ident,
-                        kind: TypeKind::Value(Value::Custom("Pubkey".to_string())),
-                        context: RustTypeContext::Default,
-                        reference: crate::types::ParsedReference::Owned
-                    }
-                )]
-            ),
-            IdlInstruction::Write => InstructionVariantFields::Named(
-                vec![(
-                    "idl_data".to_string(), 
-                    RustType {
-                        ident: ident.clone(),
-                        kind: TypeKind::Composite(Composite::Vec, vec![
-                            RustType {
-                                ident,
-                                kind: TypeKind::Primitive(Primitive::U8),
-                                context: RustTypeContext::CollectionItem,
-                                reference: crate::types::ParsedReference::Owned
-                            }
-                        ]),
+                        kind: TypeKind::Value(Value::Custom(
+                            "Pubkey".to_string(),
+                        )),
                         context: RustTypeContext::Default,
                         reference: crate::types::ParsedReference::Owned,
-                    }
-                )]
-            ),
+                    },
+                )])
+            }
+            IdlInstruction::Write => InstructionVariantFields::Named(vec![(
+                "idl_data".to_string(),
+                RustType {
+                    ident: ident.clone(),
+                    kind: TypeKind::Composite(
+                        Composite::Vec,
+                        vec![RustType {
+                            ident,
+                            kind: TypeKind::Primitive(Primitive::U8),
+                            context: RustTypeContext::CollectionItem,
+                            reference: crate::types::ParsedReference::Owned,
+                        }],
+                    ),
+                    context: RustTypeContext::Default,
+                    reference: crate::types::ParsedReference::Owned,
+                },
+            )]),
             IdlInstruction::CreateBuffer | IdlInstruction::SetBuffer => {
                 InstructionVariantFields::Unnamed(vec![])
             }

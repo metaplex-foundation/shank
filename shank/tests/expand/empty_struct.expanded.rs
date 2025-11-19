@@ -1,4 +1,5 @@
 use shank::ShankAccounts;
+pub const ID: [u8; 32] = [1; 32];
 pub struct EmptyAccounts {}
 impl EmptyAccounts {
     #[doc(hidden)]
@@ -8,4 +9,5 @@ impl EmptyAccounts {
         ::alloc::vec::Vec::new()
     }
 }
+impl EmptyAccounts {}
 fn main() {}

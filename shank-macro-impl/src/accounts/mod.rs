@@ -74,39 +74,42 @@ impl Accounts {
         let ident = &self.ident;
         let (impl_gen, type_gen, where_clause) = self.generics.split_for_impl();
         let fields = &self.account_struct.fields;
-        
+
         // All accounts must be provided, but optional ones can be program_id placeholders
         let expected_accounts = fields.len();
         let _total_accounts = fields.len();
-        
+
         // Use the same lifetime as the struct, or skip context method if no lifetimes
-        let context_method = if let Some(lifetime) = self.generics.lifetimes().next() {
+        let context_method = if let Some(lifetime) =
+            self.generics.lifetimes().next()
+        {
             let lifetime_ident = &lifetime.lifetime;
-            
-            let account_assignments = fields.iter().enumerate().map(|(idx, field)| {
-                let field_name = &field.name;
-                if field.optional || field.optional_signer {
-                    quote! {
-                        #field_name: if accounts[#idx].key == &crate::ID {
-                            None
-                        } else {
-                            Some(&accounts[#idx])
+
+            let account_assignments =
+                fields.iter().enumerate().map(|(idx, field)| {
+                    let field_name = &field.name;
+                    if field.optional || field.optional_signer {
+                        quote! {
+                            #field_name: if accounts[#idx].key == &crate::ID {
+                                None
+                            } else {
+                                Some(&accounts[#idx])
+                            }
+                        }
+                    } else {
+                        quote! {
+                            #field_name: &accounts[#idx]
                         }
                     }
-                } else {
-                    quote! {
-                        #field_name: &accounts[#idx]
-                    }
-                }
-            });
+                });
 
             quote! {
                 /// Create a context from a slice of accounts
-                /// 
+                ///
                 /// This method parses the accounts according to the struct definition
                 /// and returns a Context containing the account struct.
-                /// 
-                /// Optional accounts are determined by checking if the account key 
+                ///
+                /// Optional accounts are determined by checking if the account key
                 /// equals the program ID (crate::ID). If so, they are set to None, otherwise Some.
                 pub fn context(
                     accounts: &#lifetime_ident [AccountInfo<#lifetime_ident>]

@@ -5,7 +5,7 @@ use shank::{ShankAccounts, ShankInstruction};
 
 // Define accounts structs using the new ShankAccounts macro
 // This is similar to how Anchor defines accounts
-// Note: The actual field types don't matter for IDL generation - 
+// Note: The actual field types don't matter for IDL generation -
 // ShankAccounts only cares about the #[account(...)] attributes
 // In a real Solana program, you would use AccountInfo<'info> from solana_program
 #[derive(ShankAccounts)]
@@ -13,23 +13,23 @@ pub struct InitializeVaultAccounts {
     /// The vault account to initialize
     #[account(mut, desc = "Vault account to initialize")]
     pub vault: std::marker::PhantomData<()>, // Placeholder - use AccountInfo<'info> in real programs
-    
+
     /// The authority that will control the vault
     #[account(signer, desc = "Authority that will control the vault")]
     pub authority: std::marker::PhantomData<()>,
-    
+
     /// The token mint for the vault
     #[account(desc = "Token mint for the vault")]
     pub mint: std::marker::PhantomData<()>,
-    
+
     /// The payer for account creation
     #[account(mut, signer, desc = "Payer for account creation")]
     pub payer: std::marker::PhantomData<()>,
-    
+
     /// System program for account creation
     #[account(desc = "System program")]
     pub system_program: std::marker::PhantomData<()>,
-    
+
     /// Token program
     #[account(desc = "Token program")]
     pub token_program: std::marker::PhantomData<()>,
@@ -40,11 +40,11 @@ pub struct UpdateVaultAccounts {
     /// The vault account to update
     #[account(mut, desc = "Vault account to update")]
     pub vault: std::marker::PhantomData<()>,
-    
+
     /// The authority that controls the vault
     #[account(signer, desc = "Authority that controls the vault")]
     pub authority: std::marker::PhantomData<()>,
-    
+
     /// Optional new authority
     #[account(optional, desc = "Optional new authority")]
     pub new_authority: std::marker::PhantomData<()>,
@@ -55,11 +55,11 @@ pub struct CloseVaultAccounts {
     /// The vault account to close
     #[account(mut, desc = "Vault account to close")]
     pub vault: std::marker::PhantomData<()>,
-    
+
     /// The authority that controls the vault
     #[account(signer, desc = "Authority that controls the vault")]
     pub authority: std::marker::PhantomData<()>,
-    
+
     /// The account to receive the rent
     #[account(mut, desc = "Account to receive the rent")]
     pub rent_receiver: std::marker::PhantomData<()>,
@@ -71,18 +71,18 @@ pub struct CloseVaultAccounts {
 pub enum VaultInstruction {
     /// Initialize a new vault
     #[accounts(InitializeVaultAccounts)]
-    Initialize { 
+    Initialize {
         /// The initial balance for the vault
-        initial_balance: u64 
+        initial_balance: u64,
     },
-    
+
     /// Update vault settings
     #[accounts(UpdateVaultAccounts)]
-    Update { 
+    Update {
         /// New settings for the vault
-        new_settings: u8 
+        new_settings: u8,
     },
-    
+
     /// Close the vault and return rent
     #[accounts(CloseVaultAccounts)]
     Close,
@@ -92,12 +92,15 @@ pub enum VaultInstruction {
 #[derive(Debug, Clone, ShankInstruction)]
 pub enum LegacyInstruction {
     /// Old style instruction with inline account definitions
-    #[account(0, writable, name="data_account", desc="Account to store data")]
-    #[account(1, signer, name="authority", desc="Authority")]
-    #[account(2, name="system_program", desc="System program")]
-    OldStyleInstruction {
-        data: [u8; 32],
-    },
+    #[account(
+        0,
+        writable,
+        name = "data_account",
+        desc = "Account to store data"
+    )]
+    #[account(1, signer, name = "authority", desc = "Authority")]
+    #[account(2, name = "system_program", desc = "System program")]
+    OldStyleInstruction { data: [u8; 32] },
 }
 
 fn main() {
@@ -110,10 +113,14 @@ fn main() {
     println!("3. Provides cleaner separation of account definitions from instruction logic");
     println!("4. Account structs can be reused across multiple instructions");
     println!("5. More similar to Anchor's account definition style");
-    println!("6. Fully backward compatible - old #[account(...)] style still works");
+    println!(
+        "6. Fully backward compatible - old #[account(...)] style still works"
+    );
     println!();
     println!("ShankAccounts is designed to be a complete replacement for:");
-    println!("- Traditional #[account(...)] attributes on instruction variants");
+    println!(
+        "- Traditional #[account(...)] attributes on instruction variants"
+    );
     println!("- ShankContext derive macro for context generation");
     println!();
     println!("In a real Solana program, you would typically:");

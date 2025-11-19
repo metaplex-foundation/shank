@@ -4,8 +4,8 @@ use anyhow::{anyhow, ensure, Error, Result};
 use heck::MixedCase;
 use serde::{Deserialize, Serialize};
 use shank_macro_impl::instruction::{
-    AccountsSource, Instruction, InstructionAccount, InstructionStrategy, InstructionVariant,
-    InstructionVariantFields,
+    AccountsSource, Instruction, InstructionAccount, InstructionStrategy,
+    InstructionVariant, InstructionVariantFields,
 };
 
 use crate::{idl_field::IdlField, idl_type::IdlType};
@@ -37,7 +37,9 @@ impl IdlInstructions {
         let instructions = ix
             .variants
             .into_iter()
-            .map(|variant| IdlInstruction::try_from_with_accounts(variant, accounts_map))
+            .map(|variant| {
+                IdlInstruction::try_from_with_accounts(variant, accounts_map)
+            })
             .collect::<Result<Vec<IdlInstruction>>>()?;
         Ok(Self(instructions))
     }
@@ -125,14 +127,17 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
                     .last()
                     .map(|seg| seg.ident.to_string())
                     .unwrap_or_else(|| "UnknownStruct".to_string());
-                
+
                 vec![IdlAccountItem::IdlAccount(IdlAccount {
                     name: format!("accountsStruct{}", struct_name),
                     is_mut: false,
                     is_signer: false,
                     is_optional: false,
                     is_optional_signer: false,
-                    docs: Some(vec![format!("Accounts defined by struct: {}", struct_name)]),
+                    docs: Some(vec![format!(
+                        "Accounts defined by struct: {}",
+                        struct_name
+                    )]),
                 })]
             }
         };
@@ -180,7 +185,7 @@ impl IdlInstruction {
         } = variant;
 
         let name = ident.to_string();
-        
+
         // Parse instruction arguments (same as regular try_from)
         let parsed_idl_fields: Result<Vec<IdlField>, Error> = match field_tys {
             InstructionVariantFields::Named(args) => {
@@ -232,7 +237,7 @@ impl IdlInstruction {
                     .last()
                     .map(|seg| seg.ident.to_string())
                     .unwrap_or_else(|| "UnknownStruct".to_string());
-                
+
                 if let Some(struct_accounts) = accounts_map.get(&struct_name) {
                     // Found the struct - expand its accounts
                     struct_accounts
@@ -247,7 +252,10 @@ impl IdlInstruction {
                         is_signer: false,
                         is_optional: false,
                         is_optional_signer: false,
-                        docs: Some(vec![format!("Accounts defined by struct: {} (not resolved)", struct_name)]),
+                        docs: Some(vec![format!(
+                            "Accounts defined by struct: {} (not resolved)",
+                            struct_name
+                        )]),
                     })]
                 }
             }

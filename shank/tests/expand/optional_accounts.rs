@@ -1,5 +1,8 @@
 use shank::ShankAccounts;
 
+// Mock program ID
+pub const ID: [u8; 32] = [1; 32];
+
 // Mock AccountInfo for testing
 pub struct AccountInfo<'info> {
     pub key: &'info [u8; 32],

@@ -2,8 +2,8 @@ use std::convert::TryFrom;
 
 use proc_macro2::Span;
 use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta, MetaList,
-    MetaNameValue, NestedMeta, Path, Result as ParseResult, Token,
+    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
+    MetaList, MetaNameValue, NestedMeta, Path, Result as ParseResult, Token,
 };
 
 const IX_ACCOUNT: &str = "account";
@@ -44,7 +44,9 @@ impl InstructionAccount {
         }
     }
 
-    pub fn from_account_attr(attr: &Attribute) -> ParseResult<InstructionAccount> {
+    pub fn from_account_attr(
+        attr: &Attribute,
+    ) -> ParseResult<InstructionAccount> {
         let meta = &attr.parse_meta()?;
 
         match meta {
@@ -82,7 +84,9 @@ impl InstructionAccount {
         let mut optional = false;
 
         for meta in nested {
-            if let Some((ident, name, value)) = string_assign_from_nested_meta(meta)? {
+            if let Some((ident, name, value)) =
+                string_assign_from_nested_meta(meta)?
+            {
                 // name/desc
                 match name.as_str() {
                     "desc" | "description" | "docs" => desc = Some(value),
@@ -93,14 +97,14 @@ impl InstructionAccount {
                         ))
                     }
                     "name" => account_name = Some(value),
-                    _ => {
-                        return Err(ParseError::new_spanned(
-                            ident,
-                            "Only desc/description or name can be assigned strings",
-                        ))
-                    }
+                    _ => return Err(ParseError::new_spanned(
+                        ident,
+                        "Only desc/description or name can be assigned strings",
+                    )),
                 };
-            } else if let Some((ident, name)) = identifier_from_nested_meta(meta) {
+            } else if let Some((ident, name)) =
+                identifier_from_nested_meta(meta)
+            {
                 // signer, writable, optional ...
                 match name.as_str() {
                     "signer" | "sign" | "sig" | "s" => signer = true,
@@ -148,7 +152,9 @@ impl InstructionAccount {
                 desc,
                 optional,
             }),
-            None => Err(ParseError::new_spanned(nested, "Missing account name")),
+            None => {
+                Err(ParseError::new_spanned(nested, "Missing account name"))
+            }
         }
     }
 }
@@ -170,7 +176,7 @@ impl AccountsSource {
                         "#[accounts] attribute requires exactly one struct name",
                     ));
                 }
-                
+
                 match nested.first() {
                     Some(NestedMeta::Meta(Meta::Path(path))) => Ok(path.clone()),
                     _ => Err(ParseError::new_spanned(
@@ -195,20 +201,20 @@ impl TryFrom<&[Attribute]> for AccountsSource {
         let accounts_struct_attr = attrs
             .iter()
             .find(|attr| AccountsSource::is_accounts_struct_attr(attr));
-        
+
         if let Some(attr) = accounts_struct_attr {
             // Can't have both #[accounts(StructName)] and #[account(...)] attributes
-            let has_inline_accounts = attrs
-                .iter()
-                .any(|attr| InstructionAccount::is_account_attr(attr).is_some());
-            
+            let has_inline_accounts = attrs.iter().any(|attr| {
+                InstructionAccount::is_account_attr(attr).is_some()
+            });
+
             if has_inline_accounts {
                 return Err(ParseError::new_spanned(
                     attr,
                     "Cannot use both #[accounts(StructName)] and #[account(...)] attributes on the same instruction variant",
                 ));
             }
-            
+
             let struct_path = AccountsSource::from_accounts_struct_attr(attr)?;
             Ok(AccountsSource::Struct(struct_path))
         } else {
@@ -255,7 +261,9 @@ fn string_assign_from_nested_meta(
     nested_meta: &NestedMeta,
 ) -> ParseResult<Option<(Ident, String, String)>> {
     match nested_meta {
-        NestedMeta::Meta(Meta::NameValue(MetaNameValue { path, lit, .. })) => {
+        NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+            path, lit, ..
+        })) => {
             let ident = path.get_ident();
             if let Some(ident) = ident {
                 let token = match lit {
@@ -274,10 +282,14 @@ fn string_assign_from_nested_meta(
     }
 }
 
-pub fn identifier_from_nested_meta(nested_meta: &NestedMeta) -> Option<(Ident, String)> {
+pub fn identifier_from_nested_meta(
+    nested_meta: &NestedMeta,
+) -> Option<(Ident, String)> {
     match nested_meta {
         NestedMeta::Meta(meta) => match meta {
-            Meta::Path(_) => meta.path().get_ident().map(|x| (x.clone(), x.to_string())),
+            Meta::Path(_) => {
+                meta.path().get_ident().map(|x| (x.clone(), x.to_string()))
+            }
             // ignore named values and lists
             _ => None,
         },

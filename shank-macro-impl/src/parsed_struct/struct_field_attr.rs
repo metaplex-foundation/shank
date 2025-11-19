@@ -48,8 +48,12 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
                             ));
                         }
 
-                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
-                            result.push(StructFieldAttr::IdlName(lit_str.value()));
+                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) =
+                            meta_list.nested.first()
+                        {
+                            result.push(StructFieldAttr::IdlName(
+                                lit_str.value(),
+                            ));
                         } else {
                             return Err(ParseError::new_spanned(
                                 attr,
@@ -66,7 +70,10 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
                     Err(err) => {
                         return Err(ParseError::new_spanned(
                             attr,
-                            format!("Failed to parse idl_name attribute: {}", err)
+                            format!(
+                                "Failed to parse idl_name attribute: {}",
+                                err
+                            ),
                         ));
                     }
                 }
@@ -112,9 +119,9 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
                             if let Some(type_str) = type_str {
                                 match RustType::try_from(type_str.as_str()) {
                                     Ok(rust_type) => {
-                                        result.push(
-                                            StructFieldAttr::IdlType(rust_type),
-                                        );
+                                        result.push(StructFieldAttr::IdlType(
+                                            rust_type,
+                                        ));
                                         found_valid_type = true;
                                         break;
                                     }

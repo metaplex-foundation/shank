@@ -34,7 +34,9 @@ impl AccountStruct {
         }
     }
 
-    pub fn to_instruction_accounts(&self) -> Vec<crate::instruction::InstructionAccount> {
+    pub fn to_instruction_accounts(
+        &self,
+    ) -> Vec<crate::instruction::InstructionAccount> {
         self.fields
             .iter()
             .enumerate()

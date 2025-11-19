@@ -225,7 +225,7 @@ fn instruction_from_single_file_with_accounts_struct() {
     assert_eq!(idl, expected_idl);
 }
 
-#[test] 
+#[test]
 fn instruction_from_single_file_with_complex_accounts_struct() {
     let file = fixtures_dir()
         .join("single_file")

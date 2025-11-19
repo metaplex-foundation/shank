@@ -14,10 +14,10 @@ pub struct AccountInfo<'info> {
 pub struct SimpleAccounts<'info> {
     #[account(mut, signer)]
     pub payer: &'info AccountInfo<'info>,
-    
+
     #[account(mut)]
     pub data: &'info AccountInfo<'info>,
-    
+
     #[account(optional)]
     pub optional_account: Option<&'info AccountInfo<'info>>,
 }

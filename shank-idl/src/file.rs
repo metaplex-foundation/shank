@@ -110,7 +110,7 @@ fn accounts(ctx: &CrateContext) -> Result<Vec<IdlTypeDefinition>> {
 fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
     // Extract ShankAccounts structs first
     let shank_accounts = extract_shank_accounts_structs(ctx.structs())?;
-    
+
     let instruction_enums =
         extract_instruction_enums(ctx.enums()).map_err(parse_error_into)?;
 
@@ -121,7 +121,8 @@ fn instructions(ctx: &CrateContext) -> Result<Vec<IdlInstruction>> {
 
     for ix in instruction_enums {
         // Pass the ShankAccounts information to the IDL conversion
-        let idl_instructions: IdlInstructions = IdlInstructions::try_into_with_accounts(ix, &shank_accounts)?;
+        let idl_instructions: IdlInstructions =
+            IdlInstructions::try_into_with_accounts(ix, &shank_accounts)?;
         for ix in idl_instructions.0 {
             instructions.push(ix);
         }

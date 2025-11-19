@@ -363,11 +363,11 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
 // -----------------
 
 /// Annotates a _struct_ that defines accounts for an instruction in a similar way to Anchor.
-/// 
+///
 /// This is designed as a complete replacement for both:
 /// - The `#[account]` attribute system on instruction enums
 /// - The `ShankContext` derive macro for context generation
-/// 
+///
 /// Instead of annotating instruction variants directly, you define a separate struct
 /// that contains all accounts with their constraints. This generates both IDL metadata
 /// and runtime context handling code for type-safe account access.

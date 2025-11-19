@@ -2,14 +2,14 @@
 
 use shank::ShankAccounts;
 
+// Mock program ID
+pub const ID: [u8; 32] = [1; 32];
+
 // The context() method is only available when the solana-program feature is enabled
 #[cfg(feature = "solana-program")]
 use solana_program::{
-    account_info::AccountInfo,
-    entrypoint::ProgramResult,
-    program_error::ProgramError,
-    pubkey::Pubkey,
-    msg,
+    account_info::AccountInfo, entrypoint::ProgramResult, msg,
+    program_error::ProgramError, pubkey::Pubkey,
 };
 
 // Mock AccountInfo when solana-program feature is not enabled
@@ -24,13 +24,13 @@ pub struct AccountInfo<'info> {
 pub struct CreateTokenAccounts<'info> {
     #[account(mut, signer, desc = "Payer and authority")]
     pub payer: &'info AccountInfo<'info>,
-    
+
     #[account(mut, desc = "Token mint account")]
     pub mint: &'info AccountInfo<'info>,
-    
+
     #[account(desc = "System program")]
     pub system_program: &'info AccountInfo<'info>,
-    
+
     #[account(optional, desc = "Optional metadata account")]
     pub metadata: Option<&'info AccountInfo<'info>>,
 }
@@ -43,21 +43,21 @@ pub fn process_create_token(
 ) -> ProgramResult {
     // Use the generated context method to parse accounts
     let ctx = CreateTokenAccounts::context(accounts, program_id)?;
-    
+
     // Now you can access accounts with type safety and validation
     msg!("Payer: {:?}", ctx.payer.key);
     msg!("Mint: {:?}", ctx.mint.key);
     msg!("System program: {:?}", ctx.system_program.key);
-    
+
     // Handle optional accounts safely
     if let Some(metadata) = ctx.metadata {
         msg!("Metadata provided: {:?}", metadata.key);
     } else {
         msg!("No metadata account provided");
     }
-    
+
     // Your program logic here...
-    
+
     Ok(())
 }
 
@@ -71,9 +71,9 @@ pub fn process_instruction_with_error_handling(
         Ok(ctx) => {
             // Successfully parsed accounts
             msg!("Successfully parsed {} accounts", 4);
-            
+
             // Your program logic here...
-            
+
             Ok(())
         }
         Err(ProgramError::NotEnoughAccountKeys) => {
@@ -102,7 +102,9 @@ fn main() {
     println!("4. Integration with Solana program entry points");
     println!();
     println!("Usage in your Solana program:");
-    println!("  let ctx = CreateTokenAccounts::context(accounts, program_id)?;");
+    println!(
+        "  let ctx = CreateTokenAccounts::context(accounts, program_id)?;"
+    );
     println!("  // Now access accounts safely: ctx.payer.key, ctx.mint, etc.");
     println!();
     println!("The context() method provides these benefits:");
@@ -115,5 +117,7 @@ fn main() {
 #[cfg(feature = "solana-program")]
 fn main() {
     println!("Context usage example with full Solana program support!");
-    println!("Use the process_create_token() function as your instruction handler.");
+    println!(
+        "Use the process_create_token() function as your instruction handler."
+    );
 }
