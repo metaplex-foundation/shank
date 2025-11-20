@@ -87,6 +87,32 @@ fn account_from_single_file_field_attributes() {
 }
 
 #[test]
+fn account_from_single_file_podded_types() {
+    let file = fixtures_dir().join("single_file").join("podded_types.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    check_or_update_idl(&idl, "single_file/podded_types.json");
+}
+
+#[test]
+fn account_from_single_file_pod_option_missing_sentinel() {
+    let file = fixtures_dir().join("single_file").join("pod_option_missing_sentinel.rs");
+    let result = parse_file(file, &ParseIdlConfig::optional_program_address());
+
+    assert!(result.is_err(), "Expected validation error for missing sentinel");
+    let err = result.unwrap_err();
+    let err_msg = err.to_string();
+    assert!(err_msg.contains("PodOption validation errors"),
+        "Error message should mention PodOption validation: {}", err_msg);
+    assert!(err_msg.contains("CustomTypeWithoutSentinel"),
+        "Error message should mention the custom type: {}", err_msg);
+    assert!(err_msg.contains("does not define #[pod_sentinel(...)"),
+        "Error message should mention missing pod_sentinel: {}", err_msg);
+}
+
+#[test]
 fn account_from_crate() {
     let file = fixtures_dir()
         .join("sample_crate")

@@ -20,6 +20,11 @@ pub enum IdlType {
     I64,
     I8,
     Option(Box<IdlType>),
+    FixedSizeOption {
+        inner: Box<IdlType>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        sentinel: Option<Vec<u8>>,
+    },
     Tuple(Vec<IdlType>),
     PublicKey,
     String,
@@ -33,6 +38,79 @@ pub enum IdlType {
     BTreeMap(Box<IdlType>, Box<IdlType>),
     HashSet(Box<IdlType>),
     BTreeSet(Box<IdlType>),
+}
+
+/// Generates the sentinel value for a given IdlType.
+/// Returns None if the type doesn't have a well-defined sentinel value.
+/// Sentinel values are represented as little-endian byte arrays.
+fn generate_sentinel_for_type(idl_type: &IdlType) -> Option<Vec<u8>> {
+    match idl_type {
+        // Integer types use MAX value as sentinel
+        IdlType::I8 => Some(vec![0x7F]),                                          // i8::MAX
+        IdlType::U8 => Some(vec![0xFF]),                                          // u8::MAX
+        IdlType::I16 => Some(vec![0xFF, 0x7F]),                                   // i16::MAX
+        IdlType::U16 => Some(vec![0xFF, 0xFF]),                                   // u16::MAX
+        IdlType::I32 => Some(vec![0xFF, 0xFF, 0xFF, 0x7F]),                       // i32::MAX
+        IdlType::U32 => Some(vec![0xFF, 0xFF, 0xFF, 0xFF]),                       // u32::MAX
+        IdlType::I64 => Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]), // i64::MAX
+        IdlType::U64 => Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]), // u64::MAX
+        IdlType::I128 => Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]), // i128::MAX
+        IdlType::U128 => Some(vec![0xFF; 16]),                                    // u128::MAX
+
+        // Pubkey uses all zeros as sentinel
+        IdlType::PublicKey => Some(vec![0x00; 32]),
+
+        // Other types don't have well-defined sentinel values for PodOption
+        _ => None,
+    }
+}
+
+/// Maps podded/bytemuck types to their corresponding IDL types.
+/// Returns Some(IdlType) if the type name matches a known podded type, None otherwise.
+/// Sentinel values are represented as little-endian byte arrays.
+fn map_podded_type(name: &str) -> Option<IdlType> {
+    match name {
+        // Fixed-width optional types (use sentinel values instead of tag byte)
+        // Sentinel values are the maximum value for each type in little-endian format
+        "OptionalI64" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::I64),
+            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]), // i64::MAX
+        }),
+        "OptionalU64" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::U64),
+            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]), // u64::MAX
+        }),
+        "OptionalI32" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::I32),
+            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0x7F]), // i32::MAX
+        }),
+        "OptionalU32" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::U32),
+            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF]), // u32::MAX
+        }),
+        "OptionalI16" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::I16),
+            sentinel: Some(vec![0xFF, 0x7F]), // i16::MAX
+        }),
+        "OptionalU16" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::U16),
+            sentinel: Some(vec![0xFF, 0xFF]), // u16::MAX
+        }),
+        "OptionalI8" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::I8),
+            sentinel: Some(vec![0x7F]), // i8::MAX
+        }),
+        "OptionalU8" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::U8),
+            sentinel: Some(vec![0xFF]), // u8::MAX
+        }),
+        "OptionalPubkey" => Some(IdlType::FixedSizeOption {
+            inner: Box::new(IdlType::PublicKey),
+            sentinel: Some(vec![0x00; 32]), // All bits 0 for Pubkey (32 bytes)
+        }),
+        _ => None,
+    }
 }
 
 impl TryFrom<RustType> for IdlType {
@@ -58,7 +136,10 @@ impl TryFrom<RustType> for IdlType {
             TypeKind::Value(val) => match val {
                 Value::CString | Value::String | Value::Str => IdlType::String,
                 Value::Custom(name) => {
-                    if name == "Pubkey" {
+                    // Check for podded/bytemuck types first
+                    if let Some(podded_type) = map_podded_type(&name) {
+                        podded_type
+                    } else if name == "Pubkey" {
                         IdlType::PublicKey
                     } else {
                         IdlType::Defined(name)
@@ -97,6 +178,22 @@ impl TryFrom<RustType> for IdlType {
                     }
                     None => {
                         anyhow::bail!("Rust Option Composite needs inner type")
+                    }
+                },
+                Composite::PodOption => match inners.first().cloned() {
+                    Some(inner) => {
+                        let inner_idl: IdlType = inner.try_into()?;
+                        // Generate sentinel for primitives and well-known types
+                        // For custom types (Defined), sentinel will be None initially and
+                        // will be populated during post-processing from the type's #[pod_sentinel] attribute
+                        let sentinel = generate_sentinel_for_type(&inner_idl);
+                        IdlType::FixedSizeOption {
+                            inner: Box::new(inner_idl),
+                            sentinel,
+                        }
+                    }
+                    None => {
+                        anyhow::bail!("Rust PodOption Composite needs inner type")
                     }
                 },
                 Composite::Tuple => {

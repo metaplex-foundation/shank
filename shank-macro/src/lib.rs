@@ -137,7 +137,7 @@ mod instruction;
 /// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
 #[proc_macro_derive(
     ShankAccount,
-    attributes(padding, seeds, idl_type, idl_name, skip)
+    attributes(padding, seeds, idl_type, idl_name, skip, pod_sentinel)
 )]
 pub fn shank_account(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -378,11 +378,39 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
+/// # Type Attributes
+///
+/// ## `#[pod_sentinel(...)]` attribute
+///
+/// Specifies the sentinel value for custom types used with `PodOption`. This is required when
+/// your type is wrapped in `PodOption<T>` for fixed-size optional serialization (bytemuck/podded).
+///
+/// The sentinel value is a sequence of bytes that represents the "None" state for this type.
+///
+/// ```
+/// use shank::ShankType;
+///
+/// #[derive(ShankType)]
+/// #[pod_sentinel(0xFF, 0xFF, 0xFF, 0xFF)]
+/// pub struct CustomU32Wrapper {
+///     pub value: u32,
+/// }
+///
+/// // Now this type can be used with PodOption:
+/// #[derive(ShankAccount)]
+/// pub struct MyAccount {
+///     pub optional_field: PodOption<CustomU32Wrapper>,
+/// }
+/// ```
+///
 ///# Note
 ///
 /// The fields of a _ShankType_ struct or enum can reference other types as long as they are annotated
 /// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
-#[proc_macro_derive(ShankType, attributes(idl_name, idl_type, skip))]
+#[proc_macro_derive(
+    ShankType,
+    attributes(idl_name, idl_type, skip, pod_sentinel)
+)]
 pub fn shank_type(_input: TokenStream) -> TokenStream {
     // returns the token stream that was passed in (the macro is only an annotation for shank-idl
     // to export the type in the program's IDL)

@@ -456,10 +456,11 @@ fn ident_to_kind(ident: &Ident, arguments: &PathArguments) -> TypeKind {
                 // -----------------
                 1 => match &args[0] {
                     GenericArgument::Type(ty) => match pat {
-                        "Vec" | "Option" | "HashSet" | "BTreeSet" => {
+                        "Vec" | "Option" | "PodOption" | "HashSet" | "BTreeSet" => {
                             let composite = match pat {
                                 "Vec" => Composite::Vec,
                                 "Option" => Composite::Option,
+                                "PodOption" => Composite::PodOption,
                                 "HashSet" => Composite::HashSet,
                                 "BTreeSet" => Composite::BTreeSet,
                                 _ => {

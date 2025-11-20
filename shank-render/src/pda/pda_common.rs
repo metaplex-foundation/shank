@@ -9,8 +9,9 @@ pub fn try_process_seeds(
     let all_seeds = struct_attrs
         .items_ref()
         .iter()
-        .map(|attr| match attr {
-            StructAttr::Seeds(seeds) => seeds,
+        .filter_map(|attr| match attr {
+            StructAttr::Seeds(seeds) => Some(seeds),
+            StructAttr::PodSentinel(_) => None,
         })
         .collect::<Vec<_>>();
 

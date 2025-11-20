@@ -1,0 +1,115 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [],
+  "accounts": [
+    {
+      "name": "AccountWithPoddedTypes",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "regularOption",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "claimStartTime",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "i64",
+                "sentinel": [255, 255, 255, 255, 255, 255, 255, 127]
+              }
+            }
+          },
+          {
+            "name": "optionalAmount",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "u64",
+                "sentinel": [255, 255, 255, 255, 255, 255, 255, 255]
+              }
+            }
+          },
+          {
+            "name": "optionalPubkey",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "publicKey",
+                "sentinel": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+              }
+            }
+          },
+          {
+            "name": "counter",
+            "type": "u64"
+          },
+          {
+            "name": "podOptionI64",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "i64",
+                "sentinel": [255, 255, 255, 255, 255, 255, 255, 127]
+              }
+            }
+          },
+          {
+            "name": "podOptionU32",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "u32",
+                "sentinel": [255, 255, 255, 255]
+              }
+            }
+          },
+          {
+            "name": "podOptionPubkey",
+            "type": {
+              "fixedSizeOption": {
+                "inner": "publicKey",
+                "sentinel": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+              }
+            }
+          },
+          {
+            "name": "podOptionCustom",
+            "type": {
+              "fixedSizeOption": {
+                "inner": {
+                  "defined": "CustomU32Wrapper"
+                },
+                "sentinel": [255, 255, 255, 255]
+              }
+            }
+          },
+          {
+            "name": "manualOverride",
+            "type": {
+              "option": "i64"
+            },
+            "attrs": ["idl-type"]
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "CustomU32Wrapper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "value",
+            "type": "u32"
+          }
+        ]
+      },
+      "podSentinel": [255, 255, 255, 255]
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
