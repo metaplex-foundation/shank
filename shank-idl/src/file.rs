@@ -10,6 +10,7 @@ use crate::{
     idl_error_code::IdlErrorCode,
     idl_instruction::{IdlInstruction, IdlInstructions},
     idl_metadata::IdlMetadata,
+    idl_type::IdlType,
     idl_type_definition::IdlTypeDefinition,
 };
 use shank_macro_impl::{
@@ -205,8 +206,218 @@ fn errors(ctx: &CrateContext) -> Result<Option<Vec<IdlErrorCode>>> {
     }
 }
 
+/// Walks all IdlType instances in the IDL, calling the provided closure for each type
+/// including nested types within containers (Vec, Option, HashMap, etc.)
+fn walk_idl_types<F>(idl: &mut Idl, mut f: F)
+where
+    F: FnMut(&mut IdlType),
+{
+    fn walk_type<F>(ty: &mut IdlType, f: &mut F)
+    where
+        F: FnMut(&mut IdlType),
+    {
+        // Call the closure on this type
+        f(ty);
+
+        // Recursively walk nested types
+        match ty {
+            IdlType::Vec(inner)
+            | IdlType::Option(inner)
+            | IdlType::HashSet(inner)
+            | IdlType::BTreeSet(inner) => {
+                walk_type(inner, f);
+            }
+            IdlType::Array(inner, _) => {
+                walk_type(inner, f);
+            }
+            IdlType::HashMap(key, val) | IdlType::BTreeMap(key, val) => {
+                walk_type(key, f);
+                walk_type(val, f);
+            }
+            IdlType::Tuple(types) => {
+                for t in types {
+                    walk_type(t, f);
+                }
+            }
+            IdlType::FixedSizeOption { inner, .. } => {
+                walk_type(inner, f);
+            }
+            _ => {}
+        }
+    }
+
+    // Walk all account fields
+    for account in &mut idl.accounts {
+        match &mut account.ty {
+            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
+                for field in fields {
+                    walk_type(&mut field.ty, &mut f);
+                }
+            }
+            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
+                for variant in variants {
+                    if let Some(fields) = &mut variant.fields {
+                        match fields {
+                            crate::idl_variant::EnumFields::Named(named_fields) => {
+                                for field in named_fields {
+                                    walk_type(&mut field.ty, &mut f);
+                                }
+                            }
+                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
+                                for ty in tuple_types {
+                                    walk_type(ty, &mut f);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Walk all custom type fields
+    for type_def in &mut idl.types {
+        match &mut type_def.ty {
+            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
+                for field in fields {
+                    walk_type(&mut field.ty, &mut f);
+                }
+            }
+            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
+                for variant in variants {
+                    if let Some(fields) = &mut variant.fields {
+                        match fields {
+                            crate::idl_variant::EnumFields::Named(named_fields) => {
+                                for field in named_fields {
+                                    walk_type(&mut field.ty, &mut f);
+                                }
+                            }
+                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
+                                for ty in tuple_types {
+                                    walk_type(ty, &mut f);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Walk all instruction arguments
+    for instruction in &mut idl.instructions {
+        for arg in &mut instruction.args {
+            walk_type(&mut arg.ty, &mut f);
+        }
+    }
+}
+
+/// Walks all IdlType instances in the IDL (immutable version)
+fn walk_idl_types_ref<F>(idl: &Idl, mut f: F)
+where
+    F: FnMut(&IdlType),
+{
+    fn walk_type<F>(ty: &IdlType, f: &mut F)
+    where
+        F: FnMut(&IdlType),
+    {
+        // Call the closure on this type
+        f(ty);
+
+        // Recursively walk nested types
+        match ty {
+            IdlType::Vec(inner)
+            | IdlType::Option(inner)
+            | IdlType::HashSet(inner)
+            | IdlType::BTreeSet(inner) => {
+                walk_type(inner, f);
+            }
+            IdlType::Array(inner, _) => {
+                walk_type(inner, f);
+            }
+            IdlType::HashMap(key, val) | IdlType::BTreeMap(key, val) => {
+                walk_type(key, f);
+                walk_type(val, f);
+            }
+            IdlType::Tuple(types) => {
+                for t in types {
+                    walk_type(t, f);
+                }
+            }
+            IdlType::FixedSizeOption { inner, .. } => {
+                walk_type(inner, f);
+            }
+            _ => {}
+        }
+    }
+
+    // Walk all account fields
+    for account in &idl.accounts {
+        match &account.ty {
+            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
+                for field in fields {
+                    walk_type(&field.ty, &mut f);
+                }
+            }
+            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
+                for variant in variants {
+                    if let Some(fields) = &variant.fields {
+                        match fields {
+                            crate::idl_variant::EnumFields::Named(named_fields) => {
+                                for field in named_fields {
+                                    walk_type(&field.ty, &mut f);
+                                }
+                            }
+                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
+                                for ty in tuple_types {
+                                    walk_type(ty, &mut f);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Walk all custom type fields
+    for type_def in &idl.types {
+        match &type_def.ty {
+            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
+                for field in fields {
+                    walk_type(&field.ty, &mut f);
+                }
+            }
+            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
+                for variant in variants {
+                    if let Some(fields) = &variant.fields {
+                        match fields {
+                            crate::idl_variant::EnumFields::Named(named_fields) => {
+                                for field in named_fields {
+                                    walk_type(&field.ty, &mut f);
+                                }
+                            }
+                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
+                                for ty in tuple_types {
+                                    walk_type(ty, &mut f);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Walk all instruction arguments
+    for instruction in &idl.instructions {
+        for arg in &instruction.args {
+            walk_type(&arg.ty, &mut f);
+        }
+    }
+}
+
 fn populate_pod_option_sentinels(idl: &mut Idl) -> Result<()> {
-    use crate::idl_type::IdlType;
     use std::collections::HashMap;
 
     // Build a map of custom type names to their podSentinel (owned data)
@@ -220,218 +431,42 @@ fn populate_pod_option_sentinels(idl: &mut Idl) -> Result<()> {
         })
         .collect();
 
-    // Helper function to populate sentinel in FixedSizeOption types
-    fn populate_type(
-        ty: &mut IdlType,
-        type_sentinels: &HashMap<String, Vec<u8>>,
-    ) {
-        match ty {
-            IdlType::FixedSizeOption { inner, sentinel } => {
-                if let IdlType::Defined(type_name) = inner.as_ref() {
-                    // If sentinel is not already set, populate it from the type definition
-                    if sentinel.is_none() {
-                        if let Some(type_sentinel) = type_sentinels.get(type_name) {
-                            *sentinel = Some(type_sentinel.clone());
-                        }
-                    }
-                }
-            }
-            // Recursively populate nested types
-            IdlType::Vec(inner) | IdlType::Option(inner) | IdlType::HashSet(inner) | IdlType::BTreeSet(inner) => {
-                populate_type(inner, type_sentinels);
-            }
-            IdlType::Array(inner, _) => {
-                populate_type(inner, type_sentinels);
-            }
-            IdlType::HashMap(key, val) | IdlType::BTreeMap(key, val) => {
-                populate_type(key, type_sentinels);
-                populate_type(val, type_sentinels);
-            }
-            IdlType::Tuple(types) => {
-                for t in types {
-                    populate_type(t, type_sentinels);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    // Populate sentinels in all account fields
-    for account in &mut idl.accounts {
-        match &mut account.ty {
-            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
-                for field in fields {
-                    populate_type(&mut field.ty, &type_sentinels);
-                }
-            }
-            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
-                for variant in variants {
-                    if let Some(fields) = &mut variant.fields {
-                        match fields {
-                            crate::idl_variant::EnumFields::Named(named_fields) => {
-                                for field in named_fields {
-                                    populate_type(&mut field.ty, &type_sentinels);
-                                }
-                            }
-                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
-                                for ty in tuple_types {
-                                    populate_type(ty, &type_sentinels);
-                                }
-                            }
-                        }
+    // Walk all IdlType instances and populate sentinels for PodOption<CustomType>
+    walk_idl_types(idl, |ty| {
+        if let IdlType::FixedSizeOption { inner, sentinel } = ty {
+            if let IdlType::Defined(type_name) = inner.as_ref() {
+                // If sentinel is not already set, populate it from the type definition
+                if sentinel.is_none() {
+                    if let Some(type_sentinel) = type_sentinels.get(type_name) {
+                        *sentinel = Some(type_sentinel.clone());
                     }
                 }
             }
         }
-    }
-
-    // Populate sentinels in all custom type fields
-    for type_def in &mut idl.types {
-        match &mut type_def.ty {
-            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
-                for field in fields {
-                    populate_type(&mut field.ty, &type_sentinels);
-                }
-            }
-            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
-                for variant in variants {
-                    if let Some(fields) = &mut variant.fields {
-                        match fields {
-                            crate::idl_variant::EnumFields::Named(named_fields) => {
-                                for field in named_fields {
-                                    populate_type(&mut field.ty, &type_sentinels);
-                                }
-                            }
-                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
-                                for ty in tuple_types {
-                                    populate_type(ty, &type_sentinels);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Populate sentinels in instruction arguments
-    for instruction in &mut idl.instructions {
-        for arg in &mut instruction.args {
-            populate_type(&mut arg.ty, &type_sentinels);
-        }
-    }
+    });
 
     Ok(())
 }
 
 fn validate_pod_option_sentinels(idl: &Idl) -> Result<()> {
-    use crate::idl_type::IdlType;
-
-    // Helper function to recursively check for PodOption with missing sentinel
-    fn check_type(
-        ty: &IdlType,
-        errors: &mut Vec<String>,
-    ) {
-        match ty {
-            IdlType::FixedSizeOption { inner, sentinel } => {
-                if let IdlType::Defined(type_name) = inner.as_ref() {
-                    // This is PodOption<CustomType>
-                    // After population, sentinel should be present
-                    if sentinel.is_none() {
-                        errors.push(format!(
-                            "Type '{}' is used in PodOption but does not define #[pod_sentinel(...)]. \
-                             Custom types used with PodOption must specify a sentinel value.",
-                            type_name
-                        ));
-                    }
-                }
-            }
-            // Recursively check nested types
-            IdlType::Vec(inner) | IdlType::Option(inner) | IdlType::HashSet(inner) | IdlType::BTreeSet(inner) => {
-                check_type(inner, errors);
-            }
-            IdlType::Array(inner, _) => {
-                check_type(inner, errors);
-            }
-            IdlType::HashMap(key, val) | IdlType::BTreeMap(key, val) => {
-                check_type(key, errors);
-                check_type(val, errors);
-            }
-            IdlType::Tuple(types) => {
-                for t in types {
-                    check_type(t, errors);
-                }
-            }
-            _ => {}
-        }
-    }
-
     let mut errors = Vec::new();
 
-    // Check all account fields
-    for account in &idl.accounts {
-        match &account.ty {
-            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
-                for field in fields {
-                    check_type(&field.ty, &mut errors);
-                }
-            }
-            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
-                for variant in variants {
-                    if let Some(fields) = &variant.fields {
-                        match fields {
-                            crate::idl_variant::EnumFields::Named(named_fields) => {
-                                for field in named_fields {
-                                    check_type(&field.ty, &mut errors);
-                                }
-                            }
-                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
-                                for ty in tuple_types {
-                                    check_type(ty, &mut errors);
-                                }
-                            }
-                        }
-                    }
+    // Walk all IdlType instances and check for missing sentinels
+    walk_idl_types_ref(idl, |ty| {
+        if let IdlType::FixedSizeOption { inner, sentinel } = ty {
+            if let IdlType::Defined(type_name) = inner.as_ref() {
+                // This is PodOption<CustomType>
+                // After population, sentinel should be present
+                if sentinel.is_none() {
+                    errors.push(format!(
+                        "Type '{}' is used in PodOption but does not define #[pod_sentinel(...)]. \
+                         Custom types used with PodOption must specify a sentinel value.",
+                        type_name
+                    ));
                 }
             }
         }
-    }
-
-    // Check all custom type fields
-    for type_def in &idl.types {
-        match &type_def.ty {
-            crate::idl_type_definition::IdlTypeDefinitionTy::Struct { fields } => {
-                for field in fields {
-                    check_type(&field.ty, &mut errors);
-                }
-            }
-            crate::idl_type_definition::IdlTypeDefinitionTy::Enum { variants } => {
-                for variant in variants {
-                    if let Some(fields) = &variant.fields {
-                        match fields {
-                            crate::idl_variant::EnumFields::Named(named_fields) => {
-                                for field in named_fields {
-                                    check_type(&field.ty, &mut errors);
-                                }
-                            }
-                            crate::idl_variant::EnumFields::Tuple(tuple_types) => {
-                                for ty in tuple_types {
-                                    check_type(ty, &mut errors);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Check instruction arguments
-    for instruction in &idl.instructions {
-        for arg in &instruction.args {
-            check_type(&arg.ty, &mut errors);
-        }
-    }
+    });
 
     if !errors.is_empty() {
         anyhow::bail!("PodOption validation errors:\n  - {}", errors.join("\n  - "));

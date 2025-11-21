@@ -1,7 +1,7 @@
 use shank::{ShankAccount, ShankType};
 
 // Placeholder for Pubkey type (normally from solana_program)
-pub struct Pubkey([u8; 32]);
+pub struct Pubkey(pub [u8; 32]);
 
 // These types would normally come from the podded crate or similar
 /// Represents an optional i64 using sentinel values instead of borsh tag
@@ -18,7 +18,7 @@ pub struct PodOption<T>(pub T);
 
 /// Custom type with a pod_sentinel for use with PodOption
 #[derive(ShankType)]
-#[pod_sentinel(0xFF, 0xFF, 0xFF, 0xFF)]
+#[pod_sentinel(255, 255, 255, 255)]
 pub struct CustomU32Wrapper {
     pub value: u32,
 }

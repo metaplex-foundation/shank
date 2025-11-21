@@ -385,13 +385,14 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
 /// Specifies the sentinel value for custom types used with `PodOption`. This is required when
 /// your type is wrapped in `PodOption<T>` for fixed-size optional serialization (bytemuck/podded).
 ///
-/// The sentinel value is a sequence of bytes that represents the "None" state for this type.
+/// The sentinel value is a comma-separated list of u8 decimal integers (0-255) that represents
+/// the "None" state for this type.
 ///
 /// ```
 /// use shank::ShankType;
 ///
 /// #[derive(ShankType)]
-/// #[pod_sentinel(0xFF, 0xFF, 0xFF, 0xFF)]
+/// #[pod_sentinel(255, 255, 255, 255)]
 /// pub struct CustomU32Wrapper {
 ///     pub value: u32,
 /// }

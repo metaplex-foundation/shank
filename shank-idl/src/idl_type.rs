@@ -68,49 +68,29 @@ fn generate_sentinel_for_type(idl_type: &IdlType) -> Option<Vec<u8>> {
 
 /// Maps podded/bytemuck types to their corresponding IDL types.
 /// Returns Some(IdlType) if the type name matches a known podded type, None otherwise.
-/// Sentinel values are represented as little-endian byte arrays.
+/// Sentinel values are delegated to generate_sentinel_for_type to ensure consistency.
 fn map_podded_type(name: &str) -> Option<IdlType> {
-    match name {
-        // Fixed-width optional types (use sentinel values instead of tag byte)
-        // Sentinel values are the maximum value for each type in little-endian format
-        "OptionalI64" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::I64),
-            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]), // i64::MAX
-        }),
-        "OptionalU64" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::U64),
-            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]), // u64::MAX
-        }),
-        "OptionalI32" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::I32),
-            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0x7F]), // i32::MAX
-        }),
-        "OptionalU32" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::U32),
-            sentinel: Some(vec![0xFF, 0xFF, 0xFF, 0xFF]), // u32::MAX
-        }),
-        "OptionalI16" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::I16),
-            sentinel: Some(vec![0xFF, 0x7F]), // i16::MAX
-        }),
-        "OptionalU16" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::U16),
-            sentinel: Some(vec![0xFF, 0xFF]), // u16::MAX
-        }),
-        "OptionalI8" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::I8),
-            sentinel: Some(vec![0x7F]), // i8::MAX
-        }),
-        "OptionalU8" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::U8),
-            sentinel: Some(vec![0xFF]), // u8::MAX
-        }),
-        "OptionalPubkey" => Some(IdlType::FixedSizeOption {
-            inner: Box::new(IdlType::PublicKey),
-            sentinel: Some(vec![0x00; 32]), // All bits 0 for Pubkey (32 bytes)
-        }),
+    // Map type names to their corresponding IdlType inner types
+    let inner_type = match name {
+        "OptionalI64" => Some(IdlType::I64),
+        "OptionalU64" => Some(IdlType::U64),
+        "OptionalI32" => Some(IdlType::I32),
+        "OptionalU32" => Some(IdlType::U32),
+        "OptionalI16" => Some(IdlType::I16),
+        "OptionalU16" => Some(IdlType::U16),
+        "OptionalI8" => Some(IdlType::I8),
+        "OptionalU8" => Some(IdlType::U8),
+        "OptionalPubkey" => Some(IdlType::PublicKey),
         _ => None,
-    }
+    }?;
+
+    // Generate sentinel using the same logic as generate_sentinel_for_type
+    let sentinel = generate_sentinel_for_type(&inner_type);
+
+    Some(IdlType::FixedSizeOption {
+        inner: Box::new(inner_type),
+        sentinel,
+    })
 }
 
 impl TryFrom<RustType> for IdlType {
@@ -187,6 +167,17 @@ impl TryFrom<RustType> for IdlType {
                         // For custom types (Defined), sentinel will be None initially and
                         // will be populated during post-processing from the type's #[pod_sentinel] attribute
                         let sentinel = generate_sentinel_for_type(&inner_idl);
+
+                        // Validate that the inner type is supported by PodOption
+                        // Only primitives (with generated sentinels), Pubkey, or custom types are allowed
+                        if sentinel.is_none() && !matches!(inner_idl, IdlType::Defined(_)) {
+                            anyhow::bail!(
+                                "PodOption<T> is only supported for integer/Pubkey primitives or \
+                                 custom types with #[pod_sentinel]. Type '{}' is not supported.",
+                                format!("{:?}", inner_idl)
+                            );
+                        }
+
                         IdlType::FixedSizeOption {
                             inner: Box::new(inner_idl),
                             sentinel,
@@ -343,5 +334,205 @@ mod tests {
         let rust_ty = RustType::owned_option_primitive("bytes", Primitive::I64);
         let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
         assert_eq!(idl_ty, IdlType::Option(Box::new(IdlType::I64)));
+    }
+
+    // Tests for map_podded_type to ensure sentinels match generate_sentinel_for_type
+
+    #[test]
+    fn map_podded_type_optional_i64() {
+        let result = map_podded_type("OptionalI64");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::I64);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::I64));
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_u64() {
+        let result = map_podded_type("OptionalU64");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::U64);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::U64));
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_i32() {
+        let result = map_podded_type("OptionalI32");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::I32);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::I32));
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF, 0xFF, 0x7F]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_u32() {
+        let result = map_podded_type("OptionalU32");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::U32);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::U32));
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF, 0xFF, 0xFF]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_i16() {
+        let result = map_podded_type("OptionalI16");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::I16);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::I16));
+            assert_eq!(sentinel, Some(vec![0xFF, 0x7F]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_u16() {
+        let result = map_podded_type("OptionalU16");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::U16);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::U16));
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_i8() {
+        let result = map_podded_type("OptionalI8");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::I8);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::I8));
+            assert_eq!(sentinel, Some(vec![0x7F]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_u8() {
+        let result = map_podded_type("OptionalU8");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::U8);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::U8));
+            assert_eq!(sentinel, Some(vec![0xFF]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_optional_pubkey() {
+        let result = map_podded_type("OptionalPubkey");
+        assert!(result.is_some());
+
+        if let Some(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::PublicKey);
+            assert_eq!(sentinel, generate_sentinel_for_type(&IdlType::PublicKey));
+            assert_eq!(sentinel, Some(vec![0x00; 32]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn map_podded_type_unknown() {
+        let result = map_podded_type("UnknownType");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn pod_option_with_unsupported_type_fails() {
+        use shank_macro_impl::types::{Composite, RustType, TypeKind};
+
+        // Test PodOption<String> which should fail
+        let inner = RustType::owned_string("inner");
+        let rust_ty = RustType::owned(
+            "field",
+            TypeKind::Composite(Composite::PodOption, vec![inner]),
+        );
+
+        let result: Result<IdlType> = rust_ty.try_into();
+        assert!(result.is_err());
+
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("PodOption<T> is only supported for integer/Pubkey primitives"),
+            "Error message should mention supported types. Got: {}",
+            err_msg
+        );
+    }
+
+    #[test]
+    fn pod_option_with_supported_primitive_succeeds() {
+        use shank_macro_impl::types::{Composite, Primitive, RustType, TypeKind};
+
+        // Test PodOption<u64> which should succeed
+        let inner = RustType::owned_primitive("inner", Primitive::U64);
+        let rust_ty = RustType::owned(
+            "field",
+            TypeKind::Composite(Composite::PodOption, vec![inner]),
+        );
+
+        let result: Result<IdlType> = rust_ty.try_into();
+        assert!(result.is_ok());
+
+        if let Ok(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::U64);
+            assert_eq!(sentinel, Some(vec![0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]));
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
+    }
+
+    #[test]
+    fn pod_option_with_custom_type_succeeds() {
+        use shank_macro_impl::types::{Composite, RustType, TypeKind};
+
+        // Test PodOption<CustomType> which should succeed (sentinel populated later)
+        let inner = RustType::owned_custom_value("inner", "CustomType");
+        let rust_ty = RustType::owned(
+            "field",
+            TypeKind::Composite(Composite::PodOption, vec![inner]),
+        );
+
+        let result: Result<IdlType> = rust_ty.try_into();
+        assert!(result.is_ok());
+
+        if let Ok(IdlType::FixedSizeOption { inner, sentinel }) = result {
+            assert_eq!(*inner, IdlType::Defined("CustomType".to_string()));
+            assert_eq!(sentinel, None); // Will be populated during post-processing
+        } else {
+            panic!("Expected FixedSizeOption");
+        }
     }
 }

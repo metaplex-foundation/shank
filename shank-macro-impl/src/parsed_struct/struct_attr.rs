@@ -232,13 +232,13 @@ impl TryFrom<&[Attribute]> for StructAttrs {
                     Path(_) | NameValue(_) => {
                         return Err(ParseError::new(
                             Span::call_site(),
-                            "pod_sentinel requires an array of bytes, e.g., #[pod_sentinel([0xFF, 0xFF])]",
+                            "pod_sentinel requires a comma-separated list of u8 bytes, e.g., #[pod_sentinel(255, 255)]",
                         ));
                     }
                 }
             };
 
-            // Parse comma-separated byte literals: #[pod_sentinel(0xFF, 0xFF, 0xFF)]
+            // Parse comma-separated byte literals: #[pod_sentinel(255, 255, 255)]
             let mut sentinel_bytes = vec![];
             for arg in nested_args.iter() {
                 match arg {
@@ -254,7 +254,7 @@ impl TryFrom<&[Attribute]> for StructAttrs {
                     _ => {
                         return Err(ParseError::new(
                             Span::call_site(),
-                            "pod_sentinel must contain only u8 integers, e.g., #[pod_sentinel(0xFF, 0xFF)]",
+                            "pod_sentinel must contain only u8 integers, e.g., #[pod_sentinel(255, 255)]",
                         ));
                     }
                 }
