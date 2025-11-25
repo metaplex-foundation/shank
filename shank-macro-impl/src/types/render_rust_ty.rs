@@ -20,6 +20,7 @@ impl RustType {
                     Vec => todo!("Render Vec composite"),
                     Tuple => todo!("Render Tuple composite"),
                     Option => todo!("Render Option composite"),
+                    PodOption => todo!("Render PodOption composite"),
                     HashMap => todo!("Render HashMap composite"),
                     BTreeMap => todo!("Render BTreeMap composite"),
                     HashSet => todo!("Render HashSet composite"),

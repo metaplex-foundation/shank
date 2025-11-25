@@ -17,6 +17,7 @@ const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum StructAttr {
     Seeds(Seeds),
+    PodSentinel(Vec<u8>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -50,6 +51,7 @@ impl From<&StructAttr> for String {
     fn from(attr: &StructAttr) -> Self {
         match attr {
             StructAttr::Seeds(_seeds) => "seeds".to_string(),
+            StructAttr::PodSentinel(_) => "pod_sentinel".to_string(),
         }
     }
 }
@@ -58,6 +60,14 @@ impl StructAttr {
     pub fn into_seeds(self) -> Option<Vec<Seed>> {
         match self {
             StructAttr::Seeds(seeds) => Some(seeds.0),
+            _ => None,
+        }
+    }
+
+    pub fn into_pod_sentinel(self) -> Option<Vec<u8>> {
+        match self {
+            StructAttr::PodSentinel(sentinel) => Some(sentinel),
+            _ => None,
         }
     }
 }
@@ -101,6 +111,9 @@ impl Default for StructAttrs {
 impl TryFrom<&[Attribute]> for StructAttrs {
     type Error = ParseError;
     fn try_from(attrs: &[Attribute]) -> ParseResult<Self> {
+        let mut struct_attrs = HashSet::new();
+
+        // Parse seeds attributes
         let seed_attrs: Vec<&Attribute> = attrs
             .iter()
             .filter(|attr| attr.path.is_ident("seeds"))
@@ -116,12 +129,27 @@ impl TryFrom<&[Attribute]> for StructAttrs {
             ));
         }
 
+        // Parse pod_sentinel attributes
+        let pod_sentinel_attrs: Vec<&Attribute> = attrs
+            .iter()
+            .filter(|attr| attr.path.is_ident("pod_sentinel"))
+            .collect();
+
+        if pod_sentinel_attrs.len() > 1 {
+            return Err(ParseError::new(
+                Span::call_site(),
+                "Only one #[pod_sentinel(..)] allowed per type",
+            ));
+        }
+
         // For now we only handle seeds as attributes on the `struct` itself
-        if seed_attrs.first().is_none() {
+        if seed_attrs.first().is_none() && pod_sentinel_attrs.first().is_none() {
             return Ok(StructAttrs(HashSet::new()));
         }
 
-        let seed_attrs_meta = seed_attrs.first().unwrap().parse_meta()?;
+        // Process seeds attribute if present
+        if let Some(seed_attr) = seed_attrs.first() {
+            let seed_attrs_meta = seed_attr.parse_meta()?;
         let nested_args: Punctuated<NestedMeta, Comma> = {
             use syn::Meta::*;
             match seed_attrs_meta {
@@ -190,14 +218,60 @@ impl TryFrom<&[Attribute]> for StructAttrs {
             seeds.push(seed);
         }
 
-        let seeds_struct_attr = StructAttr::Seeds(Seeds(seeds));
-        let struct_attrs = {
-            let mut set = HashSet::new();
-            set.insert(seeds_struct_attr);
-            StructAttrs(set)
-        };
+            let seeds_struct_attr = StructAttr::Seeds(Seeds(seeds));
+            struct_attrs.insert(seeds_struct_attr);
+        }
 
-        Ok(struct_attrs)
+        // Process pod_sentinel attribute if present
+        if let Some(pod_sentinel_attr) = pod_sentinel_attrs.first() {
+            let pod_sentinel_meta = pod_sentinel_attr.parse_meta()?;
+            let nested_args: Punctuated<NestedMeta, Comma> = {
+                use syn::Meta::*;
+                match pod_sentinel_meta {
+                    List(MetaList { nested, .. }) => nested,
+                    Path(_) | NameValue(_) => {
+                        return Err(ParseError::new(
+                            Span::call_site(),
+                            "pod_sentinel requires a comma-separated list of u8 bytes, e.g., #[pod_sentinel(255, 255)]",
+                        ));
+                    }
+                }
+            };
+
+            // Parse comma-separated byte literals: #[pod_sentinel(255, 255, 255)]
+            let mut sentinel_bytes = vec![];
+            for arg in nested_args.iter() {
+                match arg {
+                    NestedMeta::Lit(Lit::Int(int_lit)) => {
+                        let byte_value = int_lit.base10_parse::<u8>().map_err(|_| {
+                            ParseError::new(
+                                int_lit.span(),
+                                "Sentinel values must be u8 integers (0-255)",
+                            )
+                        })?;
+                        sentinel_bytes.push(byte_value);
+                    }
+                    _ => {
+                        return Err(ParseError::new(
+                            Span::call_site(),
+                            "pod_sentinel must contain only u8 integers, e.g., #[pod_sentinel(255, 255)]",
+                        ));
+                    }
+                }
+            }
+
+            if sentinel_bytes.is_empty() {
+                return Err(ParseError::new(
+                    Span::call_site(),
+                    "pod_sentinel must contain at least one byte",
+                ));
+            }
+
+            let pod_sentinel_struct_attr = StructAttr::PodSentinel(sentinel_bytes);
+            struct_attrs.insert(pod_sentinel_struct_attr);
+        }
+
+        Ok(StructAttrs(struct_attrs))
     }
 }
 
