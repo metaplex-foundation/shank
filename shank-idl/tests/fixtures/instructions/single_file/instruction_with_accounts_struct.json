@@ -1,0 +1,94 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "CreateVault",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The payer and authority"
+          ]
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The vault account to create"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "seed",
+          "type": "string"
+        },
+        {
+          "name": "space",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "UpdateVault",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The vault to update"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Vault authority"
+          ]
+        },
+        {
+          "name": "newAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Optional new authority"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "newConfig",
+          "type": {
+            "defined": "VaultConfig"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}

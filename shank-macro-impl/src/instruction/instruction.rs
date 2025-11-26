@@ -14,8 +14,8 @@ use crate::{
 };
 
 use super::{
-    account_attrs::InstructionAccount, IdlInstruction, InstructionStrategies,
-    InstructionStrategy,
+    account_attrs::{AccountsSource, InstructionAccount},
+    IdlInstruction, InstructionStrategies, InstructionStrategy,
 };
 
 // -----------------
@@ -90,6 +90,7 @@ pub struct InstructionVariant {
     pub ident: Ident,
     pub field_tys: InstructionVariantFields,
     pub accounts: Vec<InstructionAccount>,
+    pub accounts_source: AccountsSource,
     pub strategies: HashSet<InstructionStrategy>,
     pub discriminant: usize,
 }
@@ -130,21 +131,55 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
         };
 
         let attrs: &[Attribute] = attrs.as_ref();
-        let (accounts, strategies) = match IdlInstruction::try_from(attrs) {
-            Ok(idl_ix) => {
-                field_tys = idl_ix.to_instruction_fields(ident.clone());
-                (
-                    idl_ix.to_accounts(ident.clone()),
-                    InstructionStrategies(HashSet::<InstructionStrategy>::new()),
-                )
-            }
-            Err(_) => (attrs.try_into()?, attrs.into()),
-        };
+        let (accounts_source, accounts, strategies) =
+            match IdlInstruction::try_from(attrs) {
+                Ok(idl_ix) => {
+                    field_tys = idl_ix.to_instruction_fields(ident.clone());
+                    let accounts = idl_ix.to_accounts(ident.clone());
+                    (
+                        AccountsSource::Inline(accounts.clone()),
+                        accounts.0,
+                        InstructionStrategies(
+                            HashSet::<InstructionStrategy>::new(),
+                        ),
+                    )
+                }
+                Err(_) => {
+                    let accounts_source = AccountsSource::try_from(attrs)?;
+                    let accounts = match &accounts_source {
+                        AccountsSource::Inline(accs) => accs.0.clone(),
+                        AccountsSource::Struct(path) => {
+                            // Create placeholder accounts based on the struct name
+                            // The actual resolution will happen during IDL generation
+                            // For now, create a single placeholder account that indicates this uses a struct
+                            vec![InstructionAccount {
+                                ident: ident.clone(),
+                                index: Some(0),
+                                name: format!(
+                                    "__accounts_struct_{}",
+                                    path.get_ident().unwrap_or(&ident)
+                                ),
+                                writable: false,
+                                signer: false,
+                                optional_signer: false,
+                                desc: Some(format!(
+                                    "Accounts defined by struct: {}",
+                                    path.get_ident().unwrap_or(&ident)
+                                )),
+                                optional: false,
+                            }]
+                        }
+                    };
+                    let strategies: InstructionStrategies = attrs.into();
+                    (accounts_source, accounts, strategies)
+                }
+            };
 
         Ok(Self {
             ident: ident.clone(),
             field_tys,
-            accounts: accounts.0,
+            accounts,
+            accounts_source,
             strategies: strategies.0,
             discriminant: *discriminant,
         })

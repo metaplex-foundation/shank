@@ -1,0 +1,109 @@
+{
+  "version": "",
+  "name": "",
+  "instructions": [
+    {
+      "name": "NewStyleInstruction",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Payer and authority"
+          ]
+        },
+        {
+          "name": "dataAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Mutable data account"
+          ]
+        },
+        {
+          "name": "signerAccount",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Additional signer"
+          ]
+        },
+        {
+          "name": "optionalAccount",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Optional account"
+          ]
+        },
+        {
+          "name": "optionalSigner",
+          "isMut": false,
+          "isSigner": true,
+          "isOptionalSigner": true,
+          "docs": [
+            "Optional signer"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Read-only system program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "metadata",
+          "type": "bytes"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "OldStyleInstruction",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The authority"
+          ]
+        },
+        {
+          "name": "target",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Target account"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "value",
+          "type": "u32"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank"
+  }
+}
