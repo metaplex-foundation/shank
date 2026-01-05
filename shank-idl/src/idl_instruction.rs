@@ -107,7 +107,7 @@ impl TryFrom<InstructionVariant> for IdlInstruction {
         };
 
         ensure!(
-            discriminant < u8::MAX as usize,
+            discriminant <= u8::MAX as usize,
             anyhow!(
                 "Instruction variant discriminants have to be <= u8::MAX ({}), \
                     but the discriminant of variant '{}' is {}",
