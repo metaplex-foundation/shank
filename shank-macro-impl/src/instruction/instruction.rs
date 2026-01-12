@@ -147,13 +147,7 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             if let Some(index) = account.index {
                 // Track seen indices using a HashSet for better efficiency.
                 if !indices.insert(index) {
-                    // We can't easily get the span of the *previous* account here without more complex tracking,
-                    // but we can error on the current duplicate.
-                    // Ideally we'd point to the attribute span, but account.index is just a usize.
-                    // However, we can use the span of the account name or the variant ident as a fallback context.
-                    // Since InstructionAccount doesn't seem to carry the attribute Span, we use the variant ident.
-
-                    // Best effort: fail with a message.
+                    // Detect duplicate account indices and error on the current variant using ident.span() as fallback.
                     return Err(ParseError::new(
                         ident.span(),
                          format!("Duplicate account index {} found in instruction variant '{}'", index, ident)

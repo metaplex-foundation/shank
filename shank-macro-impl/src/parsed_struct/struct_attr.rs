@@ -155,7 +155,7 @@ impl TryFrom<&[Attribute]> for StructAttrs {
                 match seed_attrs_meta {
                     List(MetaList { nested, .. }) => nested,
                     Path(_) | NameValue(_) => {
-                        return Ok(StructAttrs(HashSet::new()))
+                        return Err(ParseError::new(Span::call_site(), "seeds requires a comma-separated list of seeds, e.g., #[seeds(\"const\", pubkey(\"description\"))]"));
                     }
                 }
             };
