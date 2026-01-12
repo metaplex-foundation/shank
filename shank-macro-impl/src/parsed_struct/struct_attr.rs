@@ -36,7 +36,7 @@ impl Seeds {
         self.0.iter().filter_map(|x| x.get_param()).collect()
     }
 
-    pub fn iter(&self) -> Iter<Seed> {
+    pub fn iter(&self) -> Iter<'_, Seed> {
         self.0.iter()
     }
 
@@ -143,80 +143,107 @@ impl TryFrom<&[Attribute]> for StructAttrs {
         }
 
         // For now we only handle seeds as attributes on the `struct` itself
-        if seed_attrs.first().is_none() && pod_sentinel_attrs.first().is_none() {
+        if seed_attrs.is_empty() && pod_sentinel_attrs.is_empty() {
             return Ok(StructAttrs(HashSet::new()));
         }
 
         // Process seeds attribute if present
         if let Some(seed_attr) = seed_attrs.first() {
             let seed_attrs_meta = seed_attr.parse_meta()?;
-        let nested_args: Punctuated<NestedMeta, Comma> = {
-            use syn::Meta::*;
-            match seed_attrs_meta {
-                List(MetaList { nested, .. }) => nested,
-                Path(_) | NameValue(_) => {
-                    return Ok(StructAttrs(HashSet::new()))
+            let nested_args: Punctuated<NestedMeta, Comma> = {
+                use syn::Meta::*;
+                match seed_attrs_meta {
+                    List(MetaList { nested, .. }) => nested,
+                    Path(_) | NameValue(_) => {
+                        return Ok(StructAttrs(HashSet::new()))
+                    }
                 }
-            }
-        };
-        let mut seeds = vec![];
-        for arg in nested_args.iter() {
-            let seed = match arg {
-                NestedMeta::Meta(meta) => {
-                    match meta {
-                        // #[seeds(program_id)]
-                        Meta::Path(path) => {
-                            let Path { segments, .. } = path;
-                            // Should be exactly one segment
-                            if segments.len() != 1 {
-                                Err(ParseError::new(
-                                    path.get_ident().unwrap().span(),
-                                    format!(
-                                        "This seed definition is invalid.\n{}",
-                                        SUPPORTED_FORMATS
-                                    ),
-                                ))
-                            } else {
-                                let ident = &segments.first().unwrap().ident;
-
-                                match ident.to_string().as_str() {
-                                    "program_id" => Ok(Seed::ProgramId),
-                                    _ => Err(ParseError::new(
-                                        ident.span(),
+            };
+            let mut seeds = vec![];
+            for arg in nested_args.iter() {
+                let seed = match arg {
+                    NestedMeta::Meta(meta) => {
+                        match meta {
+                            // #[seeds(program_id)]
+                            Meta::Path(path) => {
+                                let Path { segments, .. } = path;
+                                // Should be exactly one segment
+                                if segments.len() != 1 {
+                                    Err(ParseError::new(
+                                        path.get_ident()
+                                            .map(|i| i.span())
+                                            .unwrap_or_else(|| {
+                                                path.segments
+                                                    .first()
+                                                    .map(|s| s.ident.span())
+                                                    .unwrap_or_else(
+                                                        Span::call_site,
+                                                    )
+                                            }),
                                         format!(
                                         "This seed definition is invalid.\n{}",
                                         SUPPORTED_FORMATS
                                     ),
-                                    )),
+                                    ))
+                                } else {
+                                    let ident =
+                                        &segments.first().unwrap().ident;
+
+                                    match ident.to_string().as_str() {
+                                        "program_id" => Ok(Seed::ProgramId),
+                                        _ => Err(ParseError::new(
+                                            ident.span(),
+                                            format!(
+                                        "This seed definition is invalid.\n{}",
+                                        SUPPORTED_FORMATS
+                                    ),
+                                        )),
+                                    }
                                 }
                             }
+                            // #[seeds(some_pubkey("description of some pubkey", type?))]
+                            Meta::List(MetaList { path, nested, .. }) => {
+                                let ident = path.get_ident().ok_or_else(|| {
+                                ParseError::new(
+                                    path.segments.first().map(|s| s.ident.span()).unwrap_or_else(Span::call_site),
+                                    "Seed attributes must be simple identifiers",
+                                )
+                            })?;
+                                let (desc, ty_str) =
+                                    param_args(nested, &ident.span())?;
+                                let seed = Seed::Param(
+                                    ident.to_string(),
+                                    desc,
+                                    ty_str,
+                                );
+                                Ok(seed)
+                            }
+                            Meta::NameValue(val) => Err(ParseError::new(
+                                val.path
+                                    .get_ident()
+                                    .map(|i| i.span())
+                                    .unwrap_or_else(|| {
+                                        val.path
+                                            .segments
+                                            .first()
+                                            .map(|s| s.ident.span())
+                                            .unwrap_or_else(Span::call_site)
+                                    }),
+                                format!(
+                                    "This seed definition is invalid.\n{}",
+                                    SUPPORTED_FORMATS
+                                ),
+                            )),
                         }
-                        // #[seeds(some_pubkey("description of some pubkey", type?))]
-                        Meta::List(MetaList { path, nested, .. }) => {
-                            let ident = path.get_ident().unwrap();
-                            let (desc, ty_str) =
-                                param_args(nested, &ident.span())?;
-                            let seed =
-                                Seed::Param(ident.to_string(), desc, ty_str);
-                            Ok(seed)
-                        }
-                        Meta::NameValue(val) => Err(ParseError::new(
-                            val.path.get_ident().unwrap().span(),
-                            format!(
-                                "This seed definition is invalid.\n{}",
-                                SUPPORTED_FORMATS
-                            ),
-                        )),
                     }
-                }
-                // #[seeds("some:literal:string")]
-                NestedMeta::Lit(lit) => {
-                    let seed = Seed::Literal(extract_lit_str(lit)?);
-                    Ok(seed)
-                }
-            }?;
-            seeds.push(seed);
-        }
+                    // #[seeds("some:literal:string")]
+                    NestedMeta::Lit(lit) => {
+                        let seed = Seed::Literal(extract_lit_str(lit)?);
+                        Ok(seed)
+                    }
+                }?;
+                seeds.push(seed);
+            }
 
             let seeds_struct_attr = StructAttr::Seeds(Seeds(seeds));
             struct_attrs.insert(seeds_struct_attr);
@@ -243,12 +270,13 @@ impl TryFrom<&[Attribute]> for StructAttrs {
             for arg in nested_args.iter() {
                 match arg {
                     NestedMeta::Lit(Lit::Int(int_lit)) => {
-                        let byte_value = int_lit.base10_parse::<u8>().map_err(|_| {
-                            ParseError::new(
+                        let byte_value =
+                            int_lit.base10_parse::<u8>().map_err(|_| {
+                                ParseError::new(
                                 int_lit.span(),
                                 "Sentinel values must be u8 integers (0-255)",
                             )
-                        })?;
+                            })?;
                         sentinel_bytes.push(byte_value);
                     }
                     _ => {
@@ -267,7 +295,8 @@ impl TryFrom<&[Attribute]> for StructAttrs {
                 ));
             }
 
-            let pod_sentinel_struct_attr = StructAttr::PodSentinel(sentinel_bytes);
+            let pod_sentinel_struct_attr =
+                StructAttr::PodSentinel(sentinel_bytes);
             struct_attrs.insert(pod_sentinel_struct_attr);
         }
 
