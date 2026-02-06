@@ -141,6 +141,21 @@ fn type_valid_single_struct_shank_type() {
 }
 
 #[test]
+fn type_padding() {
+    let file = fixtures_dir().join("padding.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail")
+        .expect("File contains IDL");
+
+    let expected_idl: Idl = serde_json::from_str(include_str!(
+        "./fixtures/types/padding.json"
+    ))
+    .unwrap();
+
+    assert_eq!(idl, expected_idl);
+}
+
+#[test]
 fn type_valid_single_enum_shank_type() {
     let file = fixtures_dir().join("valid_single_enum_shank_type.rs");
     let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
