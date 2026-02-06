@@ -410,7 +410,7 @@ pub fn shank_context(input: TokenStream) -> TokenStream {
 /// with `ShankType`, `BorshSerialize` or `BorshDeserialize`.
 #[proc_macro_derive(
     ShankType,
-    attributes(idl_name, idl_type, skip, pod_sentinel)
+    attributes(padding, idl_name, idl_type, skip, pod_sentinel)
 )]
 pub fn shank_type(_input: TokenStream) -> TokenStream {
     // returns the token stream that was passed in (the macro is only an annotation for shank-idl
