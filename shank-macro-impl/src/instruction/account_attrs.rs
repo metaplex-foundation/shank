@@ -2,8 +2,8 @@ use std::convert::TryFrom;
 
 use proc_macro2::Span;
 use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta, MetaList,
-    MetaNameValue, NestedMeta, Result as ParseResult, Token,
+    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
+    MetaList, MetaNameValue, NestedMeta, Result as ParseResult, Token,
 };
 
 const IX_ACCOUNT: &str = "account";
@@ -35,7 +35,9 @@ impl InstructionAccount {
         }
     }
 
-    pub fn from_account_attr(attr: &Attribute) -> ParseResult<InstructionAccount> {
+    pub fn from_account_attr(
+        attr: &Attribute,
+    ) -> ParseResult<InstructionAccount> {
         let meta = &attr.parse_meta()?;
 
         match meta {
@@ -73,7 +75,9 @@ impl InstructionAccount {
         let mut optional = false;
 
         for meta in nested {
-            if let Some((ident, name, value)) = string_assign_from_nested_meta(meta)? {
+            if let Some((ident, name, value)) =
+                string_assign_from_nested_meta(meta)?
+            {
                 // name/desc
                 match name.as_str() {
                     "desc" | "description" | "docs" => desc = Some(value),
@@ -84,14 +88,14 @@ impl InstructionAccount {
                         ))
                     }
                     "name" => account_name = Some(value),
-                    _ => {
-                        return Err(ParseError::new_spanned(
-                            ident,
-                            "Only desc/description or name can be assigned strings",
-                        ))
-                    }
+                    _ => return Err(ParseError::new_spanned(
+                        ident,
+                        "Only desc/description or name can be assigned strings",
+                    )),
                 };
-            } else if let Some((ident, name)) = identifier_from_nested_meta(meta) {
+            } else if let Some((ident, name)) =
+                identifier_from_nested_meta(meta)
+            {
                 // signer, writable, optional ...
                 match name.as_str() {
                     "signer" | "sign" | "sig" | "s" => signer = true,
@@ -139,7 +143,9 @@ impl InstructionAccount {
                 desc,
                 optional,
             }),
-            None => Err(ParseError::new_spanned(nested, "Missing account name")),
+            None => {
+                Err(ParseError::new_spanned(nested, "Missing account name"))
+            }
         }
     }
 }
@@ -154,21 +160,6 @@ impl TryFrom<&[Attribute]> for InstructionAccounts {
             .map(InstructionAccount::from_account_attr)
             .collect::<ParseResult<Vec<InstructionAccount>>>()?;
 
-        for (idx, acc) in accounts.iter().enumerate() {
-            match acc.index {
-                Some(acc_idx) if acc_idx != idx as u32 => {
-                    return Err(ParseError::new_spanned(
-                        &acc.ident,
-                        format!(
-                            "Account index {} does not match its position {}",
-                            acc_idx, idx,
-                        ),
-                    ));
-                }
-                _ => {}
-            }
-        }
-
         Ok(InstructionAccounts(accounts))
     }
 }
@@ -180,7 +171,9 @@ fn string_assign_from_nested_meta(
     nested_meta: &NestedMeta,
 ) -> ParseResult<Option<(Ident, String, String)>> {
     match nested_meta {
-        NestedMeta::Meta(Meta::NameValue(MetaNameValue { path, lit, .. })) => {
+        NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+            path, lit, ..
+        })) => {
             let ident = path.get_ident();
             if let Some(ident) = ident {
                 let token = match lit {
@@ -199,10 +192,14 @@ fn string_assign_from_nested_meta(
     }
 }
 
-pub fn identifier_from_nested_meta(nested_meta: &NestedMeta) -> Option<(Ident, String)> {
+pub fn identifier_from_nested_meta(
+    nested_meta: &NestedMeta,
+) -> Option<(Ident, String)> {
     match nested_meta {
         NestedMeta::Meta(meta) => match meta {
-            Meta::Path(_) => meta.path().get_ident().map(|x| (x.clone(), x.to_string())),
+            Meta::Path(_) => {
+                meta.path().get_ident().map(|x| (x.clone(), x.to_string()))
+            }
             // ignore named values and lists
             _ => None,
         },
