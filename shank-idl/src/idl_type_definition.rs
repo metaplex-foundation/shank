@@ -5,10 +5,17 @@ use serde::{Deserialize, Serialize};
 use shank_macro_impl::{
     custom_type::{CustomEnum, CustomStruct},
     parsed_enum::ParsedEnum,
-    parsed_struct::{ParsedStruct, StructAttr},
+    parsed_struct::{ParsedStruct, StructAttr, StructAttrs},
 };
 
 use crate::{idl_field::IdlField, idl_variant::IdlEnumVariant};
+
+fn extract_pod_sentinel(struct_attrs: &StructAttrs) -> Option<Vec<u8>> {
+    struct_attrs.items_ref().iter().find_map(|attr| match attr {
+        StructAttr::PodSentinel(sentinel) => Some(sentinel.clone()),
+        _ => None,
+    })
+}
 
 // -----------------
 // IdlTypeDefinitionTy
@@ -69,17 +76,7 @@ impl TryFrom<ParsedStruct> for IdlTypeDefinition {
 
     fn try_from(strct: ParsedStruct) -> Result<Self> {
         let name = strct.ident.to_string();
-
-        // Extract pod_sentinel from struct attributes
-        let pod_sentinel =
-            strct
-                .struct_attrs
-                .items_ref()
-                .iter()
-                .find_map(|attr| match attr {
-                    StructAttr::PodSentinel(sentinel) => Some(sentinel.clone()),
-                    _ => None,
-                });
+        let pod_sentinel = extract_pod_sentinel(&strct.struct_attrs);
 
         let ty: IdlTypeDefinitionTy = strct.try_into()?;
         Ok(Self {
@@ -95,14 +92,7 @@ impl TryFrom<CustomStruct> for IdlTypeDefinition {
 
     fn try_from(strct: CustomStruct) -> Result<Self> {
         let name = strct.ident.to_string();
-
-        // Extract pod_sentinel from struct attributes
-        let pod_sentinel = strct.0.struct_attrs.items_ref().iter().find_map(
-            |attr| match attr {
-                StructAttr::PodSentinel(sentinel) => Some(sentinel.clone()),
-                _ => None,
-            },
-        );
+        let pod_sentinel = extract_pod_sentinel(&strct.0.struct_attrs);
 
         let ty: IdlTypeDefinitionTy = strct.0.try_into()?;
         Ok(Self {
@@ -118,17 +108,7 @@ impl TryFrom<CustomEnum> for IdlTypeDefinition {
 
     fn try_from(enm: CustomEnum) -> Result<Self> {
         let name = enm.ident.to_string();
-
-        // Extract pod_sentinel from enum attributes
-        let pod_sentinel =
-            enm.0
-                .struct_attrs
-                .items_ref()
-                .iter()
-                .find_map(|attr| match attr {
-                    StructAttr::PodSentinel(sentinel) => Some(sentinel.clone()),
-                    _ => None,
-                });
+        let pod_sentinel = extract_pod_sentinel(&enm.0.struct_attrs);
 
         let ty: IdlTypeDefinitionTy = enm.0.try_into()?;
         Ok(Self {

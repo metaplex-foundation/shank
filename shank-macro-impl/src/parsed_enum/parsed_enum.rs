@@ -49,8 +49,7 @@ impl TryFrom<&ItemEnum> for ParsedEnum {
             })
             .collect::<ParseResult<Vec<ParsedEnumVariant>>>()?;
 
-        let struct_attrs = StructAttrs::try_from(attrs.as_slice())
-            .unwrap_or_default();
+        let struct_attrs = StructAttrs::try_from(attrs.as_slice())?;
 
         Ok(ParsedEnum {
             ident: ident.clone(),
