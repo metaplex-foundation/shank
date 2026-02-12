@@ -78,7 +78,9 @@ fn account_from_single_file_idl_type() {
 
 #[test]
 fn account_from_single_file_field_attributes() {
-    let file = fixtures_dir().join("single_file").join("field_attributes.rs");
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("field_attributes.rs");
     let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
         .expect("Parsing should not fail")
         .expect("File contains IDL");
@@ -97,19 +99,95 @@ fn account_from_single_file_podded_types() {
 }
 
 #[test]
+fn account_from_single_file_pod_option_enum_sentinel() {
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("pod_option_enum_sentinel.rs");
+    let idl = parse_file(file, &ParseIdlConfig::optional_program_address())
+        .expect("Parsing should not fail for enum with pod_sentinel")
+        .expect("File contains IDL");
+
+    // Verify the Condition type has its sentinel preserved
+    let condition_type = idl
+        .types
+        .iter()
+        .find(|t| t.name == "Condition")
+        .expect("Should have Condition type");
+    assert!(
+        condition_type.pod_sentinel.is_some(),
+        "Condition enum should have pod_sentinel"
+    );
+    assert_eq!(
+        condition_type.pod_sentinel.as_ref().unwrap(),
+        &vec![255u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Sentinel should match the bytes from #[pod_sentinel(255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)]"
+    );
+
+    // Verify the account field uses fixedSizeOption with the sentinel
+    let account = idl
+        .accounts
+        .iter()
+        .find(|a| a.name == "AccountWithEnumPodOption")
+        .expect("Should have AccountWithEnumPodOption");
+    match &account.ty {
+        shank_idl::idl_type_definition::IdlTypeDefinitionTy::Struct {
+            fields,
+        } => {
+            let field = fields
+                .iter()
+                .find(|f| f.name == "optionalCondition")
+                .expect("Should have optionalCondition field");
+            match &field.ty {
+                shank_idl::idl_type::IdlType::FixedSizeOption {
+                    sentinel,
+                    ..
+                } => {
+                    assert!(
+                        sentinel.is_some(),
+                        "FixedSizeOption should have sentinel populated"
+                    );
+                    assert_eq!(
+                        sentinel.as_ref().unwrap(),
+                        &vec![
+                            255u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                        ]
+                    );
+                }
+                other => panic!("Expected FixedSizeOption, got {:?}", other),
+            }
+        }
+        _ => panic!("Expected struct"),
+    }
+}
+
+#[test]
 fn account_from_single_file_pod_option_missing_sentinel() {
-    let file = fixtures_dir().join("single_file").join("pod_option_missing_sentinel.rs");
+    let file = fixtures_dir()
+        .join("single_file")
+        .join("pod_option_missing_sentinel.rs");
     let result = parse_file(file, &ParseIdlConfig::optional_program_address());
 
-    assert!(result.is_err(), "Expected validation error for missing sentinel");
+    assert!(
+        result.is_err(),
+        "Expected validation error for missing sentinel"
+    );
     let err = result.unwrap_err();
     let err_msg = err.to_string();
-    assert!(err_msg.contains("PodOption validation errors"),
-        "Error message should mention PodOption validation: {}", err_msg);
-    assert!(err_msg.contains("CustomTypeWithoutSentinel"),
-        "Error message should mention the custom type: {}", err_msg);
-    assert!(err_msg.contains("does not define #[pod_sentinel(...)"),
-        "Error message should mention missing pod_sentinel: {}", err_msg);
+    assert!(
+        err_msg.contains("PodOption validation errors"),
+        "Error message should mention PodOption validation: {}",
+        err_msg
+    );
+    assert!(
+        err_msg.contains("CustomTypeWithoutSentinel"),
+        "Error message should mention the custom type: {}",
+        err_msg
+    );
+    assert!(
+        err_msg.contains("does not define #[pod_sentinel(...)"),
+        "Error message should mention missing pod_sentinel: {}",
+        err_msg
+    );
 }
 
 #[test]

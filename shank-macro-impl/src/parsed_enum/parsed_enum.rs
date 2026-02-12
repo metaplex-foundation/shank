@@ -3,8 +3,9 @@ use std::convert::TryFrom;
 use syn::{Attribute, Error as ParseError, ItemEnum, Result as ParseResult};
 
 use super::ParsedEnumVariant;
+use crate::parsed_struct::StructAttrs;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct ParsedEnum {
     /// The enum itself, i.e. CreateOwner
     pub ident: syn::Ident,
@@ -14,6 +15,9 @@ pub struct ParsedEnum {
 
     /// Attributes found on the enum
     pub attrs: Vec<Attribute>,
+
+    /// Parsed enum-level attributes (e.g. pod_sentinel)
+    pub struct_attrs: StructAttrs,
 }
 
 impl TryFrom<&ItemEnum> for ParsedEnum {
@@ -45,10 +49,13 @@ impl TryFrom<&ItemEnum> for ParsedEnum {
             })
             .collect::<ParseResult<Vec<ParsedEnumVariant>>>()?;
 
+        let struct_attrs = StructAttrs::try_from(attrs.as_slice())?;
+
         Ok(ParsedEnum {
             ident: ident.clone(),
             variants,
             attrs: attrs.clone(),
+            struct_attrs,
         })
     }
 }
