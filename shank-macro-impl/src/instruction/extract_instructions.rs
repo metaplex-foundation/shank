@@ -120,14 +120,11 @@ mod tests {
     }
 
     #[test]
-    fn extract_valid_instruction_and_invalid_account_idx() {
+    fn extract_valid_instruction_with_sparse_idx() {
         let res = parse_instructions(vec![
             instruction_invalid_account_idx(),
             instruction_valid(),
         ]);
-        assert!(res
-            .unwrap_err()
-            .to_string()
-            .contains("Account index 1 does not match"));
+        assert!(res.is_ok());
     }
 }

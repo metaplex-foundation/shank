@@ -378,34 +378,43 @@ fn account_invalid_empty_name() {
 }
 
 #[test]
-fn account_invalid_indexes() {
-    assert_matches!(parse_first_enum_variant_attrs(quote! {
-        #[derive(ShankInstruction)]
-        pub enum Instructions {
-            #[account(0, name ="authority", sig, desc = "Signer account")]
-            #[account(1, name ="storage", mut, desc = "Writable account")]
-            #[account(3, name ="funnel", desc = "Readonly account")]
-            Indexed
-        }
-    }) ,
-        Err(err) if err.to_string().contains("index 3 does not match"));
 
-    assert_matches!(parse_first_enum_variant_attrs(quote! {
-        #[derive(ShankInstruction)]
-        pub enum Instructions {
-            #[account(1, name ="authority", sig, desc = "Signer account")]
-            Indexed
-        }
-    }) ,
-        Err(err) if err.to_string().contains("index 1 does not match"));
-    assert_matches!(parse_first_enum_variant_attrs(quote! {
-        #[derive(ShankInstruction)]
-        pub enum Instructions {
-            #[account(0, name ="authority", sig, desc = "Signer account")]
-            #[account(2, name ="storage", mut, desc = "Writable account")]
-            #[account(2, name ="funnel", desc = "Readonly account")]
-            Indexed
-        }
-    }) ,
-        Err(err) if err.to_string().contains("index 2 does not match"));
+fn account_valid_sparse_indexes() {
+    assert_matches!(
+        parse_first_enum_variant_attrs(quote! {
+            #[derive(ShankInstruction)]
+            pub enum Instructions {
+                #[account(0, name ="authority", sig, desc = "Signer account")]
+                #[account(1, name ="storage", mut, desc = "Writable account")]
+                #[account(3, name ="funnel", desc = "Readonly account")]
+                Indexed
+            }
+        }),
+        Ok(_)
+    );
+
+    assert_matches!(
+        parse_first_enum_variant_attrs(quote! {
+            #[derive(ShankInstruction)]
+            pub enum Instructions {
+                #[account(1, name ="authority", sig, desc = "Signer account")]
+                Indexed
+            }
+        }),
+        Ok(_)
+    );
+
+    // This returns Ok here because duplicate checks are done at Instruction level, not InstructionAccounts level
+    assert_matches!(
+        parse_first_enum_variant_attrs(quote! {
+            #[derive(ShankInstruction)]
+            pub enum Instructions {
+                #[account(0, name ="authority", sig, desc = "Signer account")]
+                #[account(2, name ="storage", mut, desc = "Writable account")]
+                #[account(2, name ="funnel", desc = "Readonly account")]
+                Indexed
+            }
+        }),
+        Ok(_)
+    );
 }

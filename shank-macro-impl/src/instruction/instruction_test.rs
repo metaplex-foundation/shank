@@ -206,3 +206,37 @@ fn parse_non_instruction_enum() {
         "should be none"
     );
 }
+
+// duplicate index tests
+#[test]
+fn fail_duplicate_account_indices() {
+    let result = parse_instruction(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instruction {
+            #[account(0, name = "creator", sig)]
+            #[account(0, name = "thing", mut)]
+            CreateThing,
+        }
+    });
+
+    assert!(result.is_err(), "Should have failed due to duplicate index 0");
+    let err = result.err().unwrap();
+    assert_eq!(err.to_string(), "Duplicate account index 0 found in instruction variant 'CreateThing'");
+}
+
+#[test]
+fn fail_duplicate_account_indices_mixed() {
+    let result = parse_instruction(quote! {
+        #[derive(ShankInstruction)]
+        pub enum Instruction {
+            #[account(0, name = "creator", sig)]
+            #[account(1, name = "thing", mut)]
+            #[account(0, name = "duplicate", mut)]
+            CreateThing,
+        }
+    });
+
+    assert!(result.is_err(), "Should have failed due to duplicate index 0");
+    let err = result.err().unwrap();
+    assert_eq!(err.to_string(), "Duplicate account index 0 found in instruction variant 'CreateThing'");
+}
