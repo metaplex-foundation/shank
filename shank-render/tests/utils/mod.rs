@@ -28,6 +28,5 @@ pub fn process_seeds(code: TokenStream) -> ParseResult<Vec<ProcessedSeed>> {
 }
 
 pub fn pretty_print(code: TokenStream) -> String {
-    let syn_tree = syn::parse_file(code.to_string().as_str()).unwrap();
-    prettyplease::unparse(&syn_tree)
+    prettyplease::unparse(&syn::parse2(code).unwrap())
 }
