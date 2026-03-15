@@ -141,6 +141,21 @@ impl TryFrom<&ParsedEnumVariant> for InstructionVariant {
             Err(_) => (attrs.try_into()?, attrs.into()),
         };
 
+        // Validate unique indices in accounts
+        let mut indices = HashSet::new();
+        for account in &accounts.0 {
+            if let Some(index) = account.index {
+                // Track seen indices using a HashSet for better efficiency.
+                if !indices.insert(index) {
+                    // Detect duplicate account indices and error on the current variant using ident.span() as fallback.
+                    return Err(ParseError::new(
+                        ident.span(),
+                         format!("Duplicate account index {} found in instruction variant '{}'", index, ident)
+                    ));
+                }
+            }
+        }
+
         Ok(Self {
             ident: ident.clone(),
             field_tys,
