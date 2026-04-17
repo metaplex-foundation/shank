@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.48"
-proc-macro2 = "1.0.32"
+proc-macro2 = { version = "1.0.32", features = ["span-locations"] }
 quote = "1.0.21"
 serde = { version = "1.0.130", features = ["derive"] }
 syn = { version = "1.0.82", features = ["extra-traits", "full"] }
