@@ -102,7 +102,7 @@ impl Parse for ParsedStruct {
 
 /// Helper function to check if a field has the skip attribute
 fn field_has_skip_attr(field: &Field) -> bool {
-    field.attrs.iter().any(|attr| attr.path.is_ident("skip"))
+    field.attrs.iter().any(|attr| attr.path().is_ident("skip"))
 }
 
 impl TryFrom<&ItemStruct> for ParsedStruct {

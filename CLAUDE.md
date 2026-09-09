@@ -63,7 +63,7 @@ Test files are organized in each crate's `tests/` directory with fixture files d
 
 ## Development Notes
 
-- Uses Rust 2018 edition
+- The shank crates themselves use the Rust 2018 edition; programs analyzed by `shank idl` may use any edition (2015 through 2024 and newer, see `shank-idl/tests/editions.rs`)
 - Release configuration in `release.toml` 
 - Only releases from `master` branch
 - Uses `rustfmt.toml` for consistent formatting

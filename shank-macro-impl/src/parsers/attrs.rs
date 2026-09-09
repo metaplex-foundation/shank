@@ -1,11 +1,9 @@
 use proc_macro2::Ident;
-use syn::{
-    punctuated::Punctuated, Attribute, Meta, MetaList, NestedMeta, Token,
-};
+use syn::{Attribute, Meta};
 
-fn flattened_idents_from_nested_meta(
-    nested: &Punctuated<NestedMeta, Token![,]>,
-) -> Vec<Ident> {
+use super::{parse_nested_metas_of_list, NestedMeta, NestedMetas};
+
+fn flattened_idents_from_nested_meta(nested: &NestedMetas) -> Vec<Ident> {
     nested
         .iter()
         .flat_map(|nested| match nested {
@@ -20,55 +18,40 @@ fn flattened_idents_from_nested_meta(
         .collect()
 }
 
+/// Returns the names listed in `attr` if it is a `#[derive(..)]` attribute.
+fn derive_names_of_attr(attr: &Attribute) -> Vec<Ident> {
+    match &attr.meta {
+        Meta::List(list)
+            if list.path.segments.iter().any(|x| x.ident == "derive") =>
+        {
+            match parse_nested_metas_of_list(list) {
+                Ok(nested) => flattened_idents_from_nested_meta(&nested),
+                Err(err) => {
+                    eprintln!("{:#?}", err);
+                    vec![]
+                }
+            }
+        }
+        _ => vec![],
+    }
+}
+
 pub fn get_derive_names(attrs: &[Attribute]) -> Vec<String> {
     attrs
         .iter()
         .flat_map(|attr| {
-            let meta = &attr.parse_meta();
-            match meta {
-                Ok(Meta::List(MetaList { path, nested, .. })) => {
-                    let derive = path
-                        .segments
-                        .iter()
-                        .enumerate()
-                        .find(|(_, x)| x.ident == "derive");
-
-                    match derive {
-                        Some(_) => flattened_idents_from_nested_meta(nested)
-                            .into_iter()
-                            .map(|x| x.to_string())
-                            .collect::<Vec<String>>(),
-                        None => vec![],
-                    }
-                }
-                Ok(_) => vec![],
-                Err(_) => vec![],
-            }
+            derive_names_of_attr(attr)
+                .into_iter()
+                .map(|x| x.to_string())
+                .collect::<Vec<String>>()
         })
         .collect()
 }
 
 pub fn attr_is_derive(attr: &&Attribute, derive: &str) -> bool {
-    let meta = &attr.parse_meta();
-
-    match meta {
-        Ok(Meta::List(MetaList { path, nested, .. })) => {
-            let found_derive =
-                path.segments.iter().find(|x| x.ident == "derive");
-
-            match found_derive {
-                Some(_) => flattened_idents_from_nested_meta(nested)
-                    .into_iter()
-                    .any(|ident| ident == derive),
-                None => false,
-            }
-        }
-        Ok(_) => false,
-        Err(err) => {
-            eprintln!("{:#?}", err);
-            false
-        }
-    }
+    derive_names_of_attr(attr)
+        .into_iter()
+        .any(|ident| ident == derive)
 }
 
 pub fn get_derive_attr<'a>(

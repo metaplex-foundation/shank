@@ -1,0 +1,165 @@
+{
+  "version": "0.2.0",
+  "name": "edition_2024_crate",
+  "instructions": [
+    {
+      "name": "Create",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Pays for the counter"
+          ]
+        },
+        {
+          "name": "counter",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The counter PDA"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "System program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "initial",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "Increment",
+      "accounts": [
+        {
+          "name": "counter",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The counter PDA"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "log",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Optional log account"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "incrementArgs",
+          "type": {
+            "defined": "IncrementArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Counter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "count",
+            "type": "u64"
+          },
+          {
+            "name": "lastUpdatedAt",
+            "type": "i64",
+            "attrs": [
+              "idl-name"
+            ]
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            },
+            "attrs": [
+              "padding"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "IncrementArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "reason",
+            "type": {
+              "defined": "Reason"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Reason",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Manual"
+          },
+          {
+            "name": "Scheduled",
+            "fields": [
+              {
+                "name": "at",
+                "type": "i64"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+  }
+}

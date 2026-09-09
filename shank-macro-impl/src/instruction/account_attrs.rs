@@ -2,9 +2,11 @@ use std::convert::TryFrom;
 
 use proc_macro2::Span;
 use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
-    MetaList, MetaNameValue, NestedMeta, Result as ParseResult, Token,
+    Attribute, Error as ParseError, Expr, ExprLit, Ident, Lit, Meta,
+    MetaNameValue, Result as ParseResult,
 };
+
+use crate::parsers::{parse_nested_metas, NestedMeta, NestedMetas};
 
 const IX_ACCOUNT: &str = "account";
 
@@ -26,7 +28,7 @@ pub struct InstructionAccounts(pub Vec<InstructionAccount>);
 impl InstructionAccount {
     fn is_account_attr(attr: &Attribute) -> Option<&Attribute> {
         match attr
-            .path
+            .path()
             .get_ident()
             .map(|x| x.to_string().as_str() == IX_ACCOUNT)
         {
@@ -38,26 +40,20 @@ impl InstructionAccount {
     pub fn from_account_attr(
         attr: &Attribute,
     ) -> ParseResult<InstructionAccount> {
-        let meta = &attr.parse_meta()?;
-
-        match meta {
-            Meta::List(MetaList { nested, .. }) => {
-                let ident = attr.path.get_ident().map_or_else(
-                    || Ident::new("attr_ident", Span::call_site()),
-                    |x| x.clone(),
-                );
-                Self::parse_account_attr_args(ident, nested)
-            }
-            Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
-                attr,
-                "#[account] attr requires list of arguments",
-            )),
-        }
+        let nested = parse_nested_metas(
+            attr,
+            "#[account] attr requires list of arguments",
+        )?;
+        let ident = attr.path().get_ident().map_or_else(
+            || Ident::new("attr_ident", Span::call_site()),
+            |x| x.clone(),
+        );
+        Self::parse_account_attr_args(ident, &nested)
     }
 
     fn parse_account_attr_args(
         ident: Ident,
-        nested: &Punctuated<NestedMeta, Token![,]>,
+        nested: &NestedMetas,
     ) -> ParseResult<InstructionAccount> {
         if nested.is_empty() {
             return Err(ParseError::new_spanned(
@@ -172,12 +168,16 @@ fn string_assign_from_nested_meta(
 ) -> ParseResult<Option<(Ident, String, String)>> {
     match nested_meta {
         NestedMeta::Meta(Meta::NameValue(MetaNameValue {
-            path, lit, ..
+            path,
+            value,
+            ..
         })) => {
             let ident = path.get_ident();
             if let Some(ident) = ident {
-                let token = match lit {
-                    Lit::Str(lit) => Ok(lit.value()),
+                let token = match value {
+                    Expr::Lit(ExprLit {
+                        lit: Lit::Str(lit), ..
+                    }) => Ok(lit.value()),
                     _ => Err(ParseError::new_spanned(
                         ident,
                         "#[account(desc)] arg needs to be assigning to a string",
