@@ -19,11 +19,13 @@ fn flattened_idents_from_nested_meta(nested: &NestedMetas) -> Vec<Ident> {
 }
 
 /// Returns the names listed in `attr` if it is a `#[derive(..)]` attribute.
+///
+/// The builtin `derive` macro may be path qualified, e.g.
+/// `#[::core::prelude::v1::derive(..)]`, so only the last path segment is
+/// compared.
 fn derive_names_of_attr(attr: &Attribute) -> Vec<Ident> {
     match &attr.meta {
-        Meta::List(list)
-            if list.path.segments.iter().any(|x| x.ident == "derive") =>
-        {
+        Meta::List(list) if is_derive_path(&list.path) => {
             match parse_nested_metas_of_list(list) {
                 Ok(nested) => flattened_idents_from_nested_meta(&nested),
                 Err(err) => {
@@ -34,6 +36,10 @@ fn derive_names_of_attr(attr: &Attribute) -> Vec<Ident> {
         }
         _ => vec![],
     }
+}
+
+fn is_derive_path(path: &syn::Path) -> bool {
+    path.segments.last().is_some_and(|x| x.ident == "derive")
 }
 
 pub fn get_derive_names(attrs: &[Attribute]) -> Vec<String> {
@@ -59,4 +65,50 @@ pub fn get_derive_attr<'a>(
     derive: &str,
 ) -> Option<&'a Attribute> {
     attrs.iter().find(|attr| attr_is_derive(attr, derive))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use quote::quote;
+    use syn::ItemStruct;
+
+    fn derive_names(code: proc_macro2::TokenStream) -> Vec<String> {
+        let item = syn::parse2::<ItemStruct>(code).expect("parses");
+        get_derive_names(&item.attrs)
+    }
+
+    #[test]
+    fn derive_names_of_plain_derive() {
+        assert_eq!(
+            derive_names(quote! {
+                #[derive(Debug, ShankAccount)]
+                #[repr(C)]
+                struct Foo;
+            }),
+            vec!["Debug", "ShankAccount"]
+        );
+    }
+
+    #[test]
+    fn derive_names_of_path_qualified_derive() {
+        assert_eq!(
+            derive_names(quote! {
+                #[::core::prelude::v1::derive(ShankType)]
+                struct Foo;
+            }),
+            vec!["ShankType"]
+        );
+    }
+
+    #[test]
+    fn derive_names_ignore_other_attrs_mentioning_derive() {
+        assert!(derive_names(quote! {
+            #[derive::something(ShankType)]
+            #[derivex(ShankType)]
+            #[not_derive = "ShankType"]
+            struct Foo;
+        })
+        .is_empty());
+    }
 }

@@ -84,11 +84,20 @@ impl Manifest {
     /// package/lib name and version, so it should keep working for any
     /// edition, including future ones.
     ///
-    /// Returns `None` if the manifest does not parse for a different reason.
+    /// Only editions that look like a Rust edition, i.e. a year like `"2030"`,
+    /// are ignored. Returns `None` for malformed editions or if the manifest
+    /// does not parse for a different reason, so the original error surfaces.
     fn parse_ignoring_edition(content: &str) -> Option<cargo_toml::Manifest> {
         let mut table: toml::Table = content.parse().ok()?;
         let package = table.get_mut("package")?.as_table_mut()?;
-        package.remove("edition")?;
+        if !package
+            .get("edition")?
+            .as_str()
+            .map_or(false, is_edition_year)
+        {
+            return None;
+        }
+        package.remove("edition");
         cargo_toml::Manifest::deserialize(toml::Value::Table(table)).ok()
     }
 
@@ -154,6 +163,11 @@ impl Manifest {
     }
 }
 
+/// Rust editions are named after a year, e.g. `2021` or `2024`.
+fn is_edition_year(edition: &str) -> bool {
+    edition.len() == 4 && edition.bytes().all(|b| b.is_ascii_digit())
+}
+
 impl Deref for Manifest {
     type Target = cargo_toml::Manifest;
 
@@ -196,5 +210,27 @@ name = "future_lib"
             Manifest::parse_ignoring_edition("[package]\nname = 1\n").is_none()
         );
         assert!(Manifest::parse_ignoring_edition("not toml at all").is_none());
+    }
+
+    #[test]
+    fn parse_ignoring_edition_rejects_malformed_editions() {
+        for edition in
+            ["\"not-an-edition\"", "\"20240\"", "\"24\"", "2024", "true"]
+        {
+            let manifest = format!(
+                "[package]\nname = \"p\"\nversion = \"0.1.0\"\nedition = {}\n",
+                edition
+            );
+            assert!(
+                cargo_toml::Manifest::from_str(&manifest).is_err(),
+                "cargo_toml should reject edition {}",
+                edition
+            );
+            assert!(
+                Manifest::parse_ignoring_edition(&manifest).is_none(),
+                "shank should not ignore malformed edition {}",
+                edition
+            );
+        }
     }
 }

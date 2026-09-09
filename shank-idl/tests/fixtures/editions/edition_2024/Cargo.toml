@@ -1,3 +1,5 @@
+# Test fixture for `shank idl`: like the other fixture crates it is only
+# parsed, never built, hence the missing `shank`/`solana-program` deps.
 [package]
 name = "edition_2024_crate"
 version = "0.2.0"

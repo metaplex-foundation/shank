@@ -18,6 +18,8 @@ use syn::{
 
 /// One comma separated argument of a list-style attribute.
 #[derive(Debug, Clone)]
+// Mirrors syn 1's `NestedMeta`; boxing `Meta` would complicate every match.
+#[allow(clippy::large_enum_variant)]
 pub enum NestedMeta {
     /// A path (`writable`), a list (`pubkey("desc")`) or an assignment
     /// (`name = "foo"`).
