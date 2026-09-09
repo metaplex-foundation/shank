@@ -93,7 +93,7 @@ impl Manifest {
         if !package
             .get("edition")?
             .as_str()
-            .map_or(false, is_edition_year)
+            .is_some_and(is_edition_year)
         {
             return None;
         }
