@@ -1,8 +1,9 @@
 use std::convert::TryFrom;
 
 use syn::{
-    Attribute, Error as ParseError, Expr, ExprPath, ExprType, GenericArgument,
-    Path, PathArguments, Result as ParseResult, Type, TypePath,
+    parse::{Parse, ParseStream},
+    Attribute, Error as ParseError, GenericArgument, Ident, Path,
+    PathArguments, Result as ParseResult, Token, Type, TypePath,
 };
 
 const INSTRUCTION_ARGUMENT: &str = "args";
@@ -20,7 +21,7 @@ pub struct BuilderArguments(pub Vec<BuilderArgument>);
 impl BuilderArgument {
     fn is_argument_attr(attr: &Attribute) -> Option<&Attribute> {
         match attr
-            .path
+            .path()
             .get_ident()
             .map(|x| x.to_string().as_str() == INSTRUCTION_ARGUMENT)
         {
@@ -35,23 +36,13 @@ impl BuilderArgument {
         Self::parse_argument_tokens(attr.parse_args()?)
     }
 
-    fn parse_argument_tokens(tokens: ExprType) -> ParseResult<BuilderArgument> {
-        let clone = tokens.clone();
-        // name
-        let name = match *clone.expr {
-            Expr::Path(ExprPath {
-                path: Path { segments, .. },
-                ..
-            }) => segments.first().unwrap().ident.to_string(),
-            _ => {
-                return Err(ParseError::new_spanned(
-                    tokens,
-                    "#[args] requires an expression 'name: type'",
-                ))
-            }
-        };
+    fn parse_argument_tokens(
+        tokens: ArgumentTokens,
+    ) -> ParseResult<BuilderArgument> {
+        let ArgumentTokens { name, ty } = tokens;
+        let name = name.to_string();
         // type
-        match *clone.ty {
+        match ty {
             Type::Path(TypePath {
                 path: Path { segments, .. },
                 ..
@@ -85,11 +76,39 @@ impl BuilderArgument {
                     generic_ty,
                 })
             }
-            _ => Err(ParseError::new_spanned(
-                tokens,
+            ty => Err(ParseError::new_spanned(
+                ty,
                 "#[args] requires an expression 'name: type'",
             )),
         }
+    }
+}
+
+/// The `name: Type` inside `#[args(name: Type)]`.
+///
+/// syn 1 parsed this as a type ascription expression (`ExprType`) which
+/// syn 2 no longer supports, so we parse the two parts explicitly.
+struct ArgumentTokens {
+    name: Ident,
+    ty: Type,
+}
+
+impl Parse for ArgumentTokens {
+    fn parse(input: ParseStream) -> ParseResult<Self> {
+        let name: Ident = input.parse().map_err(|err| {
+            ParseError::new(
+                err.span(),
+                "#[args] requires an expression 'name: type'",
+            )
+        })?;
+        input.parse::<Token![:]>().map_err(|err| {
+            ParseError::new(
+                err.span(),
+                "#[args] requires an expression 'name: type'",
+            )
+        })?;
+        let ty: Type = input.parse()?;
+        Ok(ArgumentTokens { name, ty })
     }
 }
 

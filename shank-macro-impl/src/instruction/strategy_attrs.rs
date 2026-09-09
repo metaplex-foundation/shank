@@ -15,7 +15,7 @@ pub struct InstructionStrategies(pub HashSet<InstructionStrategy>);
 
 impl InstructionStrategy {
     pub fn from_account_attr(attr: &Attribute) -> Option<InstructionStrategy> {
-        match attr.path.get_ident().map(|x| {
+        match attr.path().get_ident().map(|x| {
             x.to_string().as_str() == LEGACY_OPTIONAL_ACCOUNTS_STRATEGY
         }) {
             Some(true) => Some(InstructionStrategy::LegacyOptionalAccounts),

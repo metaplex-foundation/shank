@@ -2,11 +2,13 @@ use std::{collections::HashSet, convert::TryFrom, slice::Iter};
 
 use proc_macro2::Span;
 use syn::{
-    punctuated::Punctuated, token::Comma, Attribute, Error as ParseError, Lit,
-    Meta, MetaList, NestedMeta, Path, Result as ParseResult,
+    Attribute, Error as ParseError, Lit, Meta, Path, Result as ParseResult,
 };
 
 use super::{ProcessedSeed, Seed};
+use crate::parsers::{
+    parse_nested_metas, parse_nested_metas_of_list, NestedMeta, NestedMetas,
+};
 
 const SUPPORTED_FORMATS: &str = r##"Examples of supported seeds:
 #[seeds("literal", program_id, pubkey("description"), byte("desc", u8), other_type("desc", u32))]"##;
@@ -116,7 +118,7 @@ impl TryFrom<&[Attribute]> for StructAttrs {
         // Parse seeds attributes
         let seed_attrs: Vec<&Attribute> = attrs
             .iter()
-            .filter(|attr| attr.path.is_ident("seeds"))
+            .filter(|attr| attr.path().is_ident("seeds"))
             .collect();
 
         if seed_attrs.len() > 1 {
@@ -132,7 +134,7 @@ impl TryFrom<&[Attribute]> for StructAttrs {
         // Parse pod_sentinel attributes
         let pod_sentinel_attrs: Vec<&Attribute> = attrs
             .iter()
-            .filter(|attr| attr.path.is_ident("pod_sentinel"))
+            .filter(|attr| attr.path().is_ident("pod_sentinel"))
             .collect();
 
         if pod_sentinel_attrs.len() > 1 {
@@ -149,16 +151,10 @@ impl TryFrom<&[Attribute]> for StructAttrs {
 
         // Process seeds attribute if present
         if let Some(seed_attr) = seed_attrs.first() {
-            let seed_attrs_meta = seed_attr.parse_meta()?;
-            let nested_args: Punctuated<NestedMeta, Comma> = {
-                use syn::Meta::*;
-                match seed_attrs_meta {
-                    List(MetaList { nested, .. }) => nested,
-                    Path(_) | NameValue(_) => {
-                        return Err(ParseError::new(Span::call_site(), "seeds requires a comma-separated list of seeds, e.g., #[seeds(\"const\", pubkey(\"description\"))]"));
-                    }
-                }
-            };
+            let nested_args = parse_nested_metas(
+                seed_attr,
+                "seeds requires a comma-separated list of seeds, e.g., #[seeds(\"const\", pubkey(\"description\"))]",
+            )?;
             let mut seeds = vec![];
             for arg in nested_args.iter() {
                 let seed = match arg {
@@ -202,15 +198,17 @@ impl TryFrom<&[Attribute]> for StructAttrs {
                                 }
                             }
                             // #[seeds(some_pubkey("description of some pubkey", type?))]
-                            Meta::List(MetaList { path, nested, .. }) => {
+                            Meta::List(list) => {
+                                let path = &list.path;
                                 let ident = path.get_ident().ok_or_else(|| {
                                 ParseError::new(
                                     path.segments.first().map(|s| s.ident.span()).unwrap_or_else(Span::call_site),
                                     "Seed attributes must be simple identifiers",
                                 )
                             })?;
+                                let nested = parse_nested_metas_of_list(list)?;
                                 let (desc, ty_str) =
-                                    param_args(nested, &ident.span())?;
+                                    param_args(&nested, &ident.span())?;
                                 let seed = Seed::Param(
                                     ident.to_string(),
                                     desc,
@@ -251,19 +249,10 @@ impl TryFrom<&[Attribute]> for StructAttrs {
 
         // Process pod_sentinel attribute if present
         if let Some(pod_sentinel_attr) = pod_sentinel_attrs.first() {
-            let pod_sentinel_meta = pod_sentinel_attr.parse_meta()?;
-            let nested_args: Punctuated<NestedMeta, Comma> = {
-                use syn::Meta::*;
-                match pod_sentinel_meta {
-                    List(MetaList { nested, .. }) => nested,
-                    Path(_) | NameValue(_) => {
-                        return Err(ParseError::new(
-                            Span::call_site(),
-                            "pod_sentinel requires a comma-separated list of u8 bytes, e.g., #[pod_sentinel(255, 255)]",
-                        ));
-                    }
-                }
-            };
+            let nested_args = parse_nested_metas(
+                pod_sentinel_attr,
+                "pod_sentinel requires a comma-separated list of u8 bytes, e.g., #[pod_sentinel(255, 255)]",
+            )?;
 
             // Parse comma-separated byte literals: #[pod_sentinel(255, 255, 255)]
             let mut sentinel_bytes = vec![];
@@ -305,7 +294,7 @@ impl TryFrom<&[Attribute]> for StructAttrs {
 }
 
 fn param_args(
-    meta: &Punctuated<NestedMeta, Comma>,
+    meta: &NestedMetas,
     span: &Span,
 ) -> ParseResult<(String, Option<String>)> {
     let mut iter = meta.iter();
@@ -353,14 +342,6 @@ fn param_args(
 fn extract_lit_str(lit: &Lit) -> ParseResult<String> {
     match lit {
         Lit::Str(str) => Ok(str.value()),
-        Lit::ByteStr(_)
-        | Lit::Byte(_)
-        | Lit::Char(_)
-        | Lit::Int(_)
-        | Lit::Float(_)
-        | Lit::Bool(_)
-        | Lit::Verbatim(_) => {
-            Err(ParseError::new(lit.span(), "Expected a literal string"))
-        }
+        _ => Err(ParseError::new(lit.span(), "Expected a literal string")),
     }
 }

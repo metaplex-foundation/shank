@@ -1,10 +1,8 @@
 use std::convert::TryFrom;
 
+use crate::parsers::{parse_nested_metas_of_list, NestedMeta};
 use crate::types::RustType;
-use syn::{
-    Attribute, Error as ParseError, Lit, Meta, NestedMeta,
-    Result as ParseResult,
-};
+use syn::{Attribute, Error as ParseError, Lit, Meta, Result as ParseResult};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StructFieldAttr {
@@ -34,22 +32,33 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
         let mut result = Vec::new();
 
         for attr in attrs {
-            if attr.path.is_ident("padding") {
+            if attr.path().is_ident("padding") {
                 result.push(StructFieldAttr::Padding);
-            } else if attr.path.is_ident("skip") {
+            } else if attr.path().is_ident("skip") {
                 result.push(StructFieldAttr::Skip);
-            } else if attr.path.is_ident("idl_name") {
-                match attr.parse_meta() {
-                    Ok(Meta::List(meta_list)) => {
-                        if meta_list.nested.len() != 1 {
+            } else if attr.path().is_ident("idl_name") {
+                match &attr.meta {
+                    Meta::List(meta_list) => {
+                        let nested = parse_nested_metas_of_list(meta_list)
+                            .map_err(|err| {
+                                ParseError::new_spanned(
+                                    attr,
+                                    format!("Failed to parse idl_name attribute: {}", err)
+                                )
+                            })?;
+                        if nested.len() != 1 {
                             return Err(ParseError::new_spanned(
                                 attr,
                                 "idl_name attribute must have exactly one argument"
                             ));
                         }
 
-                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) = meta_list.nested.first() {
-                            result.push(StructFieldAttr::IdlName(lit_str.value()));
+                        if let Some(NestedMeta::Lit(Lit::Str(lit_str))) =
+                            nested.first()
+                        {
+                            result.push(StructFieldAttr::IdlName(
+                                lit_str.value(),
+                            ));
                         } else {
                             return Err(ParseError::new_spanned(
                                 attr,
@@ -57,25 +66,31 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
                             ));
                         }
                     }
-                    Ok(_) => {
+                    _ => {
                         return Err(ParseError::new_spanned(
                             attr,
                             "idl_name attribute must be a list with a string literal, e.g., #[idl_name(\"fieldName\")]"
                         ));
                     }
-                    Err(err) => {
-                        return Err(ParseError::new_spanned(
-                            attr,
-                            format!("Failed to parse idl_name attribute: {}", err)
-                        ));
-                    }
                 }
-            } else if attr.path.is_ident("idl_type") {
-                match attr.parse_meta() {
-                    Ok(Meta::List(meta_list)) => {
+            } else if attr.path().is_ident("idl_type") {
+                match &attr.meta {
+                    Meta::List(meta_list) => {
+                        let nested_metas = parse_nested_metas_of_list(
+                            meta_list,
+                        )
+                        .map_err(|err| {
+                            ParseError::new_spanned(
+                                attr,
+                                format!(
+                                    "Failed to parse idl_type attribute: {}",
+                                    err
+                                ),
+                            )
+                        })?;
                         let mut found_valid_type = false;
 
-                        for nested in meta_list.nested.iter() {
+                        for nested in nested_metas.iter() {
                             let type_str = match nested {
                                 // Handle string literal format: #[idl_type("TypeName")]
                                 NestedMeta::Lit(Lit::Str(lit_str)) => {
@@ -112,9 +127,9 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
                             if let Some(type_str) = type_str {
                                 match RustType::try_from(type_str.as_str()) {
                                     Ok(rust_type) => {
-                                        result.push(
-                                            StructFieldAttr::IdlType(rust_type),
-                                        );
+                                        result.push(StructFieldAttr::IdlType(
+                                            rust_type,
+                                        ));
                                         found_valid_type = true;
                                         break;
                                     }
@@ -130,24 +145,15 @@ impl TryFrom<&[Attribute]> for StructFieldAttrs {
 
                         if !found_valid_type {
                             return Err(ParseError::new_spanned(
-                                &meta_list.nested,
+                                &nested_metas,
                                 "No valid type found in idl_type attribute",
                             ));
                         }
                     }
-                    Ok(_) => {
+                    _ => {
                         return Err(ParseError::new_spanned(
                             attr,
                             "idl_type attribute must be a list, e.g., #[idl_type(TypeName)] or #[idl_type(\"TypeName\")]"
-                        ));
-                    }
-                    Err(err) => {
-                        return Err(ParseError::new_spanned(
-                            attr,
-                            format!(
-                                "Failed to parse idl_type attribute: {}",
-                                err
-                            ),
                         ));
                     }
                 }

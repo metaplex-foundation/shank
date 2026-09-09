@@ -2,12 +2,10 @@ use std::convert::TryFrom;
 
 use proc_macro2::Span;
 
-use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Lit, Meta,
-    MetaList, NestedMeta, Result as ParseResult, Token,
-};
+use syn::{Attribute, Error as ParseError, Ident, Lit, Result as ParseResult};
 
 use crate::parsed_enum::{ParsedEnum, ParsedEnumVariant};
+use crate::parsers::{parse_nested_metas, NestedMeta, NestedMetas};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProgramError {
@@ -22,7 +20,7 @@ const THIS_ERROR: &str = "error";
 impl ProgramError {
     fn is_error_attr(attr: &Attribute) -> Option<&Attribute> {
         match attr
-            .path
+            .path()
             .get_ident()
             .map(|x| x.to_string().as_str() == THIS_ERROR)
         {
@@ -35,29 +33,24 @@ impl ProgramError {
         variant_ident: &Ident,
         variant_discriminant: u32,
     ) -> ParseResult<ProgramError> {
-        let meta = &attr.parse_meta()?;
-        match meta {
-            Meta::List(MetaList { nested, .. }) => {
-                let ident = attr.path.get_ident().map_or_else(
-                    || Ident::new("attr_ident", Span::call_site()),
-                    |x| x.clone(),
-                );
-                Self::parse_account_error_args(
-                    nested,
-                    &ident,
-                    variant_ident,
-                    variant_discriminant,
-                )
-            }
-            Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
-                attr,
-                "#[error] attr requires list of arguments",
-            )),
-        }
+        let nested = parse_nested_metas(
+            attr,
+            "#[error] attr requires list of arguments",
+        )?;
+        let ident = attr.path().get_ident().map_or_else(
+            || Ident::new("attr_ident", Span::call_site()),
+            |x| x.clone(),
+        );
+        Self::parse_account_error_args(
+            &nested,
+            &ident,
+            variant_ident,
+            variant_discriminant,
+        )
     }
 
     fn parse_account_error_args(
-        nested: &Punctuated<NestedMeta, Token![,]>,
+        nested: &NestedMetas,
         attr_ident: &Ident,
         variant_ident: &Ident,
         variant_discriminant: u32,

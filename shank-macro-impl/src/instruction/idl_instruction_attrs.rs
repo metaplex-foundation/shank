@@ -2,11 +2,9 @@ use std::convert::TryFrom;
 use std::fmt;
 
 use proc_macro2::Span;
-use syn::{
-    punctuated::Punctuated, Attribute, Error as ParseError, Ident, Meta, MetaList, NestedMeta,
-    Result as ParseResult, Token,
-};
+use syn::{Attribute, Error as ParseError, Ident, Result as ParseResult};
 
+use crate::parsers::{parse_nested_metas, NestedMetas};
 use crate::{instruction::account_attrs::identifier_from_nested_meta, types::{RustType, RustTypeContext, Primitive}};
 use crate::types::{TypeKind, Composite, Value};
 
@@ -25,7 +23,7 @@ pub enum IdlInstruction {
 
 impl IdlInstruction {
     fn is_idl_instruction_attr(attr: &Attribute) -> Option<&Attribute> {
-        match attr.path.get_ident().map(|x| {
+        match attr.path().get_ident().map(|x| {
             x.to_string().as_str() == IX_IDL
         }) {
             Some(true) => Some(attr),
@@ -34,25 +32,20 @@ impl IdlInstruction {
     }
 
     fn from_idl_instruction_attr(attr: &Attribute) -> ParseResult<IdlInstruction> {
-        let meta = &attr.parse_meta()?;
-        match meta {
-            Meta::List(MetaList { nested, .. }) => {
-                let ident = attr.path.get_ident().map_or_else(
-                    || Ident::new("attr_ident", Span::call_site()),
-                    |x| x.clone(),
-                );
-                Self::parse_idl_instruction_attr_args(ident, nested)
-            }
-            Meta::Path(_) | Meta::NameValue(_) => Err(ParseError::new_spanned(
-                attr,
-                "#[idl_instruction] attr requires list of arguments",
-            )),
-        }
+        let nested = parse_nested_metas(
+            attr,
+            "#[idl_instruction] attr requires list of arguments",
+        )?;
+        let ident = attr.path().get_ident().map_or_else(
+            || Ident::new("attr_ident", Span::call_site()),
+            |x| x.clone(),
+        );
+        Self::parse_idl_instruction_attr_args(ident, &nested)
     }
 
     fn parse_idl_instruction_attr_args(
         _ident: Ident,
-        nested: &Punctuated<NestedMeta, Token![,]>,
+        nested: &NestedMetas,
     ) -> ParseResult<IdlInstruction> {
         if nested.is_empty() {
             return Err(ParseError::new_spanned(
