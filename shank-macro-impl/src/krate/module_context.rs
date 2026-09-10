@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use syn::{Error as ParseError, Result as ParseResult};
+use syn::Error as ParseError;
 
 /// Module parse context
 ///
@@ -42,7 +42,16 @@ impl ParsedModule {
     ) -> Result<BTreeMap<String, ParsedModule>, anyhow::Error> {
         let mut modules = BTreeMap::new();
 
-        let root_file = syn::parse_file(&root_content)?;
+        let root_file = syn::parse_file(&root_content).map_err(|e| {
+            let loc = e.span().start();
+            anyhow::anyhow!(
+                "failed to parse {}:{}:{}: {}",
+                root.display(),
+                loc.line,
+                loc.column,
+                e,
+            )
+        })?;
         let root_mod = Self::new(
             String::new(),
             root.to_owned(),
@@ -90,7 +99,7 @@ impl ParsedModule {
         parent_file: &Path,
         parent_path: &str,
         item: syn::ItemMod,
-    ) -> ParseResult<Self> {
+    ) -> anyhow::Result<Self> {
         Ok(match item.content {
             Some((_, items)) => {
                 // The module content is within the parent file being parsed
@@ -126,7 +135,17 @@ impl ParsedModule {
                     .map_err(|_| {
                         ParseError::new_spanned(&item, "could not read file")
                     })?;
-                let mod_file = syn::parse_file(&mod_file_content)?;
+                let mod_file =
+                    syn::parse_file(&mod_file_content).map_err(|e| {
+                        let loc = e.span().start();
+                        anyhow::anyhow!(
+                            "failed to parse {}:{}:{}: {}",
+                            mod_file_path.display(),
+                            loc.line,
+                            loc.column,
+                            e,
+                        )
+                    })?;
 
                 Self::new(
                     parent_path.to_owned(),
