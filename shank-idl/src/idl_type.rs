@@ -119,7 +119,7 @@ impl TryFrom<RustType> for IdlType {
                     // Check for podded/bytemuck types first
                     if let Some(podded_type) = map_podded_type(&name) {
                         podded_type
-                    } else if name == "Pubkey" {
+                    } else if name == "Pubkey" || name == "Address" {
                         IdlType::PublicKey
                     } else {
                         IdlType::Defined(name)
@@ -296,6 +296,13 @@ mod tests {
     #[test]
     fn idl_from_rust_type_publickey() {
         let rust_ty = RustType::owned_custom_value("pk", "Pubkey");
+        let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
+        assert_eq!(idl_ty, IdlType::PublicKey);
+    }
+
+    #[test]
+    fn idl_from_rust_type_address() {
+        let rust_ty = RustType::owned_custom_value("addr", "Address");
         let idl_ty: IdlType = rust_ty.try_into().expect("Failed to convert");
         assert_eq!(idl_ty, IdlType::PublicKey);
     }
